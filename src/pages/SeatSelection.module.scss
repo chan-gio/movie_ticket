@@ -1,0 +1,199 @@
+.seatSelection {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .secondaryNavbar {
+    background-color: #5f2eea;
+    padding: 10px 20px;
+    color: white;
+  }
+  
+  .movieTitle {
+    color: white;
+    margin: 0;
+  }
+  
+  .changeButton {
+    border-radius: 20px;
+    opacity: 0.8;
+    color: #5f2eea;
+    background-color: white;
+    border: none;
+    &:hover {
+      background-color: #f0f0f0;
+    }
+  }
+  
+  .mainContent {
+    background-color: #f5f5f5;
+    padding: 20px 0;
+  }
+  
+  .seatCard {
+    border-radius: 24px;
+    border: none;
+    padding: 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .screen {
+    text-align: center;
+  }
+  
+  .screenText {
+    font-size: 14px;
+    margin: 0;
+  }
+  
+  .screenLine {
+    height: 8px;
+    background: #9570fe;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  
+  .seatGrid {
+    margin: 20px 0;
+    table {
+      width: 100%;
+      td {
+        padding: 5px;
+        text-align: center;
+      }
+    }
+  }
+  
+  .seat {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background-color: #d6d8e7;
+    border: none;
+    font-size: 12px;
+    padding: 0;
+    &:hover {
+      background-color: #b0b2c3;
+    }
+  }
+  
+  .seatSelected {
+    background-color: #5f2eea;
+    color: white;
+  }
+  
+  .seatGap {
+    width: 26px;
+  }
+  
+  .seatingKeyTitle {
+    font-size: 20px;
+    margin: 20px 0 10px;
+  }
+  
+  .availableBox {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background-color: #d6d8e7;
+    border: none;
+  }
+  
+  .selectBox {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background-color: #5f2eea;
+    border: none;
+  }
+  
+  .loveBox {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background-color: #f589d7;
+    border: none;
+  }
+  
+  .soldBox {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background-color: #6e7191;
+    border: none;
+  }
+  
+  .checkoutButtons {
+    margin-top: 20px;
+  }
+  
+  .changeMovieButton {
+    border-radius: 16px;
+    border-color: #5f2eea;
+    color: #5f2eea;
+  }
+  
+  .checkoutButton {
+    border-radius: 16px;
+    min-height: 56px;
+  }
+  
+  .orderCard {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cinemaInfo {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .cinemaLogo {
+    height: 40px;
+    width: auto;
+  }
+  
+  .label {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+  }
+  
+  .value {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    margin: 0;
+  }
+  
+  .divider {
+    border-top: 1px solid #e5e7eb;
+    margin: 10px 0;
+  }
+  
+  .totalLabel {
+    font-size: 16px;
+    margin: 0;
+  }
+  
+  .totalValue {
+    font-size: 21px;
+    font-weight: bold;
+    color: #5f2eea;
+    text-align: right;
+    margin: 0;
+  }
+  
+  @media (max-width: 767px) {
+    .seatCard {
+      padding: 20px;
+    }
+  
+    .checkoutButtons {
+      .ant-col {
+        margin-bottom: 10px;
+      }
+    }
+  }

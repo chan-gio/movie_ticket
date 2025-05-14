@@ -1,0 +1,213 @@
+.adminLayout {
+    min-height: 100vh;
+  }
+  
+  .adminNavbar {
+    background-color: #1f2937;
+    padding: 15px 0;
+  }
+  
+  .navbarContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  
+  .navbarBrand {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: none;
+  
+    &:hover {
+      color: #d1d5db;
+    }
+  }
+  
+  .logoutButton {
+    background-color: #f0f0f0;
+    border: none;
+    color: #1f2937;
+    font-weight: 600;
+  
+    &:hover {
+      background-color: #d1d5db;
+    }
+  }
+  
+  .sider {
+    background-color: #f0f0f0;
+  }
+  
+  .menu {
+    background-color: #f0f0f0;
+  
+    :global(.ant-menu-item) {
+      a {
+        color: #1f2937;
+        &:hover {
+          color: #5f2eea;
+        }
+      }
+    }
+  
+    :global(.ant-menu-item-selected) {
+      background-color: #d1d5db !important;
+      a {
+        color: #5f2eea;
+      }
+    }
+  }
+  
+  .content {
+    padding: 20px;
+    background-color: #f5f5f5;
+  }
+  
+  .card {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .posterCard {
+    border-radius: 24px;
+    border: none;
+    text-align: center;
+  }
+  
+  .posterImage {
+    width: 90%;
+    border-radius: 24px;
+  }
+  
+  .profileImage {
+    border-radius: 50%;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  :global(.ant-form-item) {
+    margin-bottom: 16px;
+  }
+  
+  :global(.ant-input),
+  :global(.ant-select-selector),
+  :global(.ant-picker) {
+    border-radius: 16px !important;
+  }
+  
+  .select {
+    width: 100%;
+    :global(.ant-select-selector) {
+      background-color: #eff0f6 !important;
+      border: none !important;
+      padding-left: 40px !important;
+    }
+    :global(.ant-select-arrow) {
+      right: 11px;
+    }
+  }
+  
+  .cinemaGrid {
+    margin-top: 16px;
+  }
+  
+  .cinemaLogo {
+    width: 100%;
+    height: auto;
+  }
+  
+  .showtimeTitle {
+    margin-top: 24px;
+  }
+  
+  .datePicker {
+    width: 100%;
+    :global(.ant-picker-input) {
+      padding-left: 40px !important;
+    }
+  }
+  
+  .showtimeGrid {
+    margin-top: 16px;
+  }
+  
+  .addButton {
+    border-color: #5f2eea;
+    color: #5f2eea;
+    &:hover {
+      background-color: #5f2eea;
+      color: white;
+    }
+  }
+  
+  .chartCard {
+    border-radius: 24px;
+    border: none;
+    background-color: #f0f0f0;
+  }
+  
+  .salesCard {
+    border-radius: 24px;
+    border: none;
+  }
+  
+  .timePeriod {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  
+    :global(.ant-radio-button-wrapper) {
+      flex: 1;
+      text-align: center;
+      border-radius: 0;
+      border: none;
+      &:first-child {
+        border-radius: 8px 0 0 8px;
+      }
+      &:last-child {
+        border-radius: 0 8px 8px 0;
+      }
+      &:global(.ant-radio-button-wrapper-checked) {
+        border-bottom: 2px solid #5f2eea;
+        background-color: transparent;
+        color: #5f2eea;
+      }
+    }
+  }
+  
+  @media (max-width: 767px) {
+    .sider {
+      display: none;
+    }
+  
+    .content {
+      padding: 10px;
+    }
+  
+    .posterCard {
+      margin: 0 auto;
+      max-width: 300px;
+    }
+  
+    .cinemaGrid {
+      .ant-col {
+        flex: 0 0 33.33%;
+        max-width: 33.33%;
+      }
+    }
+  
+    .showtimeGrid {
+      .ant-col {
+        flex: 0 0 25%;
+        max-width: 25%;
+      }
+    }
+  }
