@@ -1,0 +1,75 @@
+.hero {
+  padding-top: 50px;
+}
+
+.heroSubtitle {
+  font-size: 21px;
+  color: #6b7280;
+  margin: 0;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+  }
+}
+
+.heroTitle {
+  font-size: 56px;
+  font-weight: bold;
+  color: #5f2eea;
+  margin: 0;
+
+  @media (max-width: 991px) {
+    font-size: 48px;
+  }
+
+  @media (max-width: 767px) {
+    font-size: 36px;
+  }
+}
+
+.imageContainer {
+  display: flex;
+  gap: 4px; /* Minimal gap between images */
+  justify-content: flex-end; /* Align images to the right */
+  flex-wrap: nowrap; /* Keep images in a single row */
+  overflow-x: auto; /* Allow scrolling if images overflow */
+
+  @media (max-width: 575px) {
+    gap: 2px; /* Smaller gap for mobile */
+    justify-content: center; /* Center images on mobile */
+  }
+}
+
+.imgGradient {
+  position: relative;
+  display: inline-block;
+  transition: all 1s; /* Match searchForm transition duration */
+  z-index: 1; /* Default stacking */
+
+  &:hover {
+    z-index: 2; /* Bring hovered image to front */
+  }
+}
+
+.heroImage {
+  width: 110px;
+  height: 350px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 16px;
+  box-shadow: 4px 7px 18px -1px rgba(0, 0, 0, 0.45);
+  transition: all 1s; /* Match searchForm transition duration */
+
+  .imgGradient:hover & {
+    width: 300px; /* Double the width for maximum expansion */
+  }
+
+  @media (max-width: 575px) {
+    width: 94.82px;
+    height: 311.98px;
+
+    .imgGradient:hover & {
+      width: 189.64px; /* Double the width for mobile */
+    }
+  }
+}
