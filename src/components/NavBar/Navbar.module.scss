@@ -90,6 +90,10 @@
     }
   }
   
+    :global(.ant-input-affix-wrapper) {
+        border: none;
+    }
+
   .searchInput {
     :global(.ant-input) {
       position: absolute;
