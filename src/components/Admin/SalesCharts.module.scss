@@ -1,0 +1,34 @@
+.chartCard {
+    border-radius: 24px;
+    border: none;
+    background-color: #f0f0f0;
+  }
+  
+  .salesCard {
+    border-radius: 24px;
+    border: none;
+  }
+  
+  .timePeriod {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  
+    :global(.ant-radio-button-wrapper) {
+      flex: 1;
+      text-align: center;
+      border-radius: 0;
+      border: none;
+      &:first-child {
+        border-radius: 8px 0 0 8px;
+      }
+      &:last-child {
+        border-radius: 0 8px 8px 0;
+      }
+      &:global(.ant-radio-button-wrapper-checked) {
+        border-bottom: 2px solid #5f2eea;
+        background-color: transparent;
+        color: #5f2eea;
+      }
+    }
+  }

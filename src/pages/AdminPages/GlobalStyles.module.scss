@@ -1,0 +1,38 @@
+:global(.ant-form-item) {
+    margin-bottom: 16px;
+  }
+  
+  :global(.ant-input),
+  :global(.ant-select-selector),
+  :global(.ant-picker) {
+    border-radius: 16px !important;
+  }
+  
+  @media (max-width: 767px) {
+    .sider {
+      display: none;
+    }
+  
+    .content {
+      padding: 10px;
+    }
+  
+    .posterCard {
+      margin: 0 auto;
+      max-width: 300px;
+    }
+  
+    .cinemaGrid {
+      .ant-col {
+        flex: 0 0 33.33%;
+        max-width: 33.33%;
+      }
+    }
+  
+    .showtimeGrid {
+      .ant-col {
+        flex: 0 0 25%;
+        max-width: 25%;
+      }
+    }
+  }

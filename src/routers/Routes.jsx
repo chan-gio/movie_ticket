@@ -9,6 +9,14 @@ const SeatSelection = lazy(() => import('../pages/UserPages/SeatPage/SeatSelecti
 const Payment = lazy(() => import('../pages/UserPages/PaymentPage/Payment'));
 const Confirmation = lazy(() => import('../pages/UserPages/ConfirmationPage/Confirmation'));
 const Admin = lazy(() => import('../pages/AdminPages/Admin'));
+const AdminDashboard = lazy(() => import('../pages/AdminPages/AdminDashboard'));
+const AdminProfile = lazy(() => import('../pages/AdminPages/AdminProfile'));
+const AdminSettings = lazy(() => import('../pages/AdminPages/AdminSettings'));
+const AdminManageUser = lazy(() => import('../pages/AdminPages/AdminManageUser'));
+const AdminManageMovie = lazy(() => import('../pages/AdminPages/AdminManageMovie'));
+const AdminManageMovieForm = lazy(() => import('../pages/AdminPages/AdminManageMovieForm'));
+const AdminManageGenre = lazy(() => import('../pages/AdminPages/AdminManageGenre'));
+const AdminManageGenreForm = lazy(() => import('../pages/AdminPages/AdminManageGenreForm'));
 
 // Define routes using an array of objects
 const Routes = [
@@ -19,22 +27,17 @@ const Routes = [
   { path: '/seats', component: <SeatSelection /> },
   { path: '/payment', component: <Payment /> },
   { path: '/confirmation', component: <Confirmation /> },
-  {
-    path: '/admin',
-    component: <Admin />,
-    children: [
-      { path: '', component: null }, // Dashboard (handled in Admin.jsx)
-      { path: 'profile', component: null },
-      { path: 'settings', component: null },
-      { path: 'manage_user', component: null },
-      { path: 'manage_movie', component: null },
-      { path: 'manage_movie/add', component: null },
-      { path: 'manage_movie/edit/:id', component: null },
-      { path: 'manage_genre', component: null },
-      { path: 'manage_genre/add', component: null },
-      { path: 'manage_genre/edit/:id', component: null },
-    ],
-  },
+  
+  { path: '/admin', component: <Admin><AdminDashboard /></Admin> },
+  { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
+  { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
+  { path: '/admin/manage_user', component: <Admin><AdminManageUser /></Admin> },
+  { path: '/admin/manage_movie', component: <Admin><AdminManageMovie /></Admin> },
+  { path: '/admin/manage_movie/add', component: <Admin><AdminManageMovieForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_movie/edit/:id', component: <Admin><AdminManageMovieForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_genre', component: <Admin><AdminManageGenre /></Admin> },
+  { path: '/admin/manage_genre/add', component: <Admin><AdminManageGenreForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_genre/edit/:id', component: <Admin><AdminManageGenreForm isEditMode={true} /></Admin> },
 ];
 
 export { Routes };

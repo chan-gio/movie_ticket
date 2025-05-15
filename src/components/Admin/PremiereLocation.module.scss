@@ -1,0 +1,26 @@
+.card {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .select {
+    width: 100%;
+    :global(.ant-select-selector) {
+      background-color: #eff0f6 !important;
+      border: none !important;
+      padding-left: 40px !important;
+    }
+    :global(.ant-select-arrow) {
+      right: 11px;
+    }
+  }
+  
+  .cinemaGrid {
+    margin-top: 16px;
+  }
+  
+  .cinemaLogo {
+    width: 100%;
+    height: auto;
+  }
