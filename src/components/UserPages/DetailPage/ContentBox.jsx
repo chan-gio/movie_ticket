@@ -14,7 +14,7 @@ const ContentBox = ({ movie }) => {
   };
 
   return (
-    <>
+    <div style={{margin: "40px 0px"}}>
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
           <Card className={styles.posterCard}>
@@ -53,7 +53,7 @@ const ContentBox = ({ movie }) => {
           <Paragraph>{movie.synopsis}</Paragraph>
         </Col>
       </Row>
-    </>
+    </div>
   );
 };
 

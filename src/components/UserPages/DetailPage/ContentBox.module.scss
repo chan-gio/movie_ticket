@@ -1,0 +1,53 @@
+.posterCard {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08); /* Bóng đổ nhẹ hơn một chút */
+  border-radius: 12px; /* Góc bo tròn nhỏ hơn so với 16px ban đầu */
+  overflow: hidden;
+  text-align: center;
+  border: none; /* Đảm bảo không có viền */
+}
+
+.posterImage {
+  width: 100%;
+  height: auto;
+  border-radius: 12px; /* Đồng bộ với posterCard */
+  object-fit: cover;
+}
+
+.genre {
+  font-size: 16px;
+  color: #7e7e7e; /* Màu xám nhạt */
+  margin-top: -16px; /* Kéo gần hơn với tiêu đề */
+  font-style: italic; /* Chữ nghiêng để giống mẫu */
+}
+
+.label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #7e7e7e; /* Màu xám nhạt */
+  margin-bottom: 4px; /* Khoảng cách nhỏ hơn so với đoạn văn bản bên dưới */
+}
+
+.divider {
+  margin: 32px 0; /* Khoảng cách lớn hơn một chút so với 24px ban đầu */
+  border-bottom: 1px solid #e5e5e5; /* Màu nhạt hơn #eee một chút */
+}
+
+:global(h2) {
+  margin-bottom: 8px;
+  font-size: 32px; /* Tăng kích thước chữ tiêu đề để giống mẫu */
+  font-weight: 700; /* Chữ đậm hơn */
+  color: #000; /* Màu đen */
+}
+
+:global(h4) {
+  font-size: 20px; /* Kích thước chữ cho Synopsis title */
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 16px; /* Khoảng cách với đoạn văn bản bên dưới */
+}
+
+:global(p) {
+  font-size: 16px; /* Kích thước chữ cho các đoạn văn bản */
+  color: #333; /* Màu đen nhạt hơn một chút so với đen hoàn toàn */
+  line-height: 1.6; /* Giãn dòng cho dễ đọc */
+}

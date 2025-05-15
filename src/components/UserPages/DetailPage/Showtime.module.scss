@@ -1,0 +1,81 @@
+.alignCenter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.showtimes {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 24px;
+}
+
+.showtimesTitle {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+}
+
+.comboBoxes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.select {
+  width: 250px;
+  height: 40px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  font-size: 14px;
+  color: #000;
+}
+
+.select :global(.ant-select-selector) {
+  background-color: #fff !important;
+  border: none !important;
+  height: 100% !important;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.select :global(.ant-select-selection-placeholder) {
+  color: #bfbfbf;
+}
+
+.select :global(.ant-select-selection-item) {
+  color: #000;
+}
+
+.select :global(.ant-select-arrow) {
+  color: #bfbfbf;
+}
+
+.select :global(.anticon) {
+  color: #bfbfbf;
+  font-size: 14px;
+}
+
+.cinemaGrid {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.noData {
+  text-align: center;
+  color: #7e7e7e;
+  font-size: 16px;
+  margin-top: 24px;
+}

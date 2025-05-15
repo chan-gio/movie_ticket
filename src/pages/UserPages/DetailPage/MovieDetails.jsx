@@ -12,7 +12,7 @@ const { Option } = Select;
 const movie = {
   id: 1,
   title: "Movie 1",
-  picture: "https://via.placeholder.com/200x300",
+  picture: "https://play-lh.googleusercontent.com/nxWjOiNZKJZ8mfVLTqxWprprDXhO-D1S1C_S-m7VLWHBp32IziTVMs1u5R6ISb79zTKK",
   genre: "Action, Adventure",
   releaseDate: "2025-01-15",
   directed: "John Director",
@@ -34,6 +34,14 @@ const showtimes = [
   {
     id: 2,
     cinema: "Cinema 2",
+    picture: "https://via.placeholder.com/100",
+    address: "456 Elm St, City B",
+    times: ["11:00 AM", "3:00 PM", "7:00 PM"],
+    price: 12,
+  },
+  {
+    id: 3,
+    cinema: "Cinema 3",
     picture: "https://via.placeholder.com/100",
     address: "456 Elm St, City B",
     times: ["11:00 AM", "3:00 PM", "7:00 PM"],

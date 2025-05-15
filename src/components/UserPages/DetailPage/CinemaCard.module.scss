@@ -1,0 +1,112 @@
+.cinemaCard {
+  background-color: #fff; /* Nền trắng */
+  border-radius: 12px; /* Bo góc nhẹ */
+  padding: 16px; /* Padding nhỏ */
+  width: 100%;
+  max-width: 360px; /* Giới hạn chiều rộng */
+  text-align: center; /* Căn giữa nội dung */
+  transition: transform 0.3s ease; /* Hiệu ứng mượt mà khi hover */
+}
+
+.cinemaCard:hover {
+  transform: scale(1.05); /* Phóng to thẻ lên 5% khi hover */
+}
+
+.cinemaTitle {
+  font-size: 18px; /* Kích thước chữ tiêu đề */
+  font-weight: 600; /* Chữ đậm */
+  margin-bottom: 4px; /* Khoảng cách nhỏ với địa chỉ */
+}
+
+.cinemaAddress {
+  font-size: 12px; /* Chữ nhỏ cho địa chỉ */
+  color: #7e7e7e; /* Màu xám nhạt */
+  margin-bottom: 16px; /* Khoảng cách với thời gian */
+}
+
+.timeButtons {
+  display: flex;
+  justify-content: center; /* Căn giữa các nút thời gian */
+  flex-wrap: wrap;
+  gap: 8px; /* Khoảng cách giữa các nút */
+  margin-bottom: 16px; /* Khoảng cách với phần giá */
+}
+
+.timeButton {
+  background-color: #fff; /* Nền trắng */
+  border: none; /* Không có viền */
+  color: #000; /* Chữ đen */
+  font-size: 14px;
+  padding: 4px 12px; /* Padding nhỏ */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Hiệu ứng mượt mà */
+}
+
+.timeButton:hover {
+  background-color: #f0f0f0; /* Hiệu ứng hover */
+}
+
+/* Khi nút thời gian được chọn */
+:global(.ant-btn-primary) {
+  background-color: #d3adf7; /* Màu tím nhạt khi được chọn */
+  border-color: #d3adf7;
+  color: #fff; /* Chữ trắng để dễ đọc */
+}
+
+:global(.ant-btn-primary:hover) {
+  background-color: #b37feb; /* Màu tím đậm hơn khi hover */
+  border-color: #b37feb;
+  color: #fff;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: center; /* Căn giữa hàng giá */
+  align-items: center;
+  margin-bottom: 16px; /* Khoảng cách với nút */
+}
+
+.priceLabel {
+  font-size: 14px;
+  color: #7e7e7e; /* Màu xám nhạt */
+  margin-right: 8px; /* Khoảng cách với giá */
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 600; /* Chữ đậm */
+  color: #000; /* Màu đen */
+}
+
+.buttonRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Khoảng cách giữa hai nút */
+}
+
+.bookButton {
+  background-color: #722ed1; /* Màu tím */
+  border-color: #722ed1;
+  border-radius: 8px; /* Bo góc */
+  font-size: 14px;
+  height: 40px; /* Chiều cao nút */
+}
+
+.bookButton:hover {
+  background-color: #531dab; /* Màu tím đậm hơn khi hover */
+  border-color: #531dab;
+}
+
+.cartButton {
+  background-color: #fff; /* Nền trắng */
+  border-color: #722ed1; /* Viền tím */
+  color: #722ed1; /* Chữ tím */
+  border-radius: 8px; /* Bo góc */
+  font-size: 14px;
+  height: 40px; /* Chiều cao nút */
+}
+
+.cartButton:hover {
+  background-color: #f5f7fa; /* Nền xám nhạt khi hover */
+  border-color: #531dab;
+  color: #531dab;
+}

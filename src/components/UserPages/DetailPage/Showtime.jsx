@@ -1,15 +1,13 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
-import { Card, Row, Col, Typography, Select, Button, Space } from "antd";
+import { Row, Col, Typography, Select, Space } from "antd";
 import { CalendarOutlined, EnvironmentOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import CinemaCard from "./CinemaCard";
 import styles from "./Showtime.module.scss";
 
 const { Title, Paragraph } = Typography;
 
-
 export default function Showtime({ dates, locations, showtimes }) {
-  const [selectedTime, setSelectedTime] = useState(null);
-
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -17,13 +15,28 @@ export default function Showtime({ dates, locations, showtimes }) {
       year: "numeric",
     });
   };
+
+  // Định nghĩa màu tiêu đề cho từng rạp
+  const getTitleColor = (cinema) => {
+    switch (cinema) {
+      case "ebv.id":
+        return "#000"; // Đen
+      case "CineOne21":
+        return "#1890ff"; // Xanh
+      case "hiflix Cinema":
+        return "#ff4d4f"; // Đỏ
+      default:
+        return "#000";
+    }
+  };
+
   return (
     <>
       <div className={styles.showtimes}>
         <Title level={3} className={styles.showtimesTitle}>
           Showtimes and Tickets
         </Title>
-        <Row gutter={[16, 16]} justify="center">
+        <Row className={styles.comboBoxes}>
           <Col xs={24} md={6}>
             <Select
               placeholder="Select date"
@@ -32,9 +45,9 @@ export default function Showtime({ dates, locations, showtimes }) {
               onChange={(value) => console.log("Selected date:", value)}
             >
               {dates.map((date) => (
-                <Option key={date} value={date}>
+                <Select.Option key={date} value={date}>
                   {formatDate(date)}
-                </Option>
+                </Select.Option>
               ))}
             </Select>
           </Col>
@@ -46,9 +59,9 @@ export default function Showtime({ dates, locations, showtimes }) {
               onChange={(value) => console.log("Selected city:", value)}
             >
               {locations.map((location) => (
-                <Option key={location} value={location}>
+                <Select.Option key={location} value={location}>
                   {location}
-                </Option>
+                </Select.Option>
               ))}
             </Select>
           </Col>
@@ -57,60 +70,13 @@ export default function Showtime({ dates, locations, showtimes }) {
           <Row gutter={[16, 16]} className={styles.cinemaGrid}>
             {showtimes.map((item) => (
               <Col xs={24} md={12} lg={8} key={item.id}>
-                <Card className={styles.cinemaCard}>
-                  <Row gutter={[8, 8]} align="middle">
-                    <Col xs={6}>
-                      <img
-                        src={item.picture}
-                        alt={item.cinema}
-                        className={styles.cinemaImage}
-                      />
-                    </Col>
-                    <Col xs={18}>
-                      <Title level={5}>{item.cinema}</Title>
-                      <Paragraph className={styles.cinemaAddress}>
-                        {item.address}
-                      </Paragraph>
-                    </Col>
-                  </Row>
-                  <div className={styles.divider} />
-                  <Space wrap className={styles.timeButtons}>
-                    {item.times.map((time) => (
-                      <Button
-                        key={time}
-                        type={selectedTime === time ? "primary" : "default"}
-                        onClick={() => setSelectedTime(time)}
-                        className={styles.timeButton}
-                      >
-                        {time}
-                      </Button>
-                    ))}
-                  </Space>
-                  <Row justify="space-between" className={styles.priceRow}>
-                    <Paragraph className={styles.priceLabel}>Price</Paragraph>
-                    <Paragraph className={styles.price}>
-                      ${item.price}/seat
-                    </Paragraph>
-                  </Row>
-                  <Row gutter={[8, 8]}>
-                    <Col xs={12}>
-                      <Link to="/seats">
-                        <Button
-                          type="primary"
-                          block
-                          className={styles.bookButton}
-                        >
-                          Book now
-                        </Button>
-                      </Link>
-                    </Col>
-                    <Col xs={12}>
-                      <Button block className={styles.cartButton}>
-                        Add to cart
-                      </Button>
-                    </Col>
-                  </Row>
-                </Card>
+                <CinemaCard
+                  cinema={item.cinema}
+                  address={item.address}
+                  times={item.times}
+                  price={item.price}
+                  titleColor={getTitleColor(item.cinema)}
+                />
               </Col>
             ))}
           </Row>
@@ -118,8 +84,6 @@ export default function Showtime({ dates, locations, showtimes }) {
           <Paragraph className={styles.noData}>There is no data</Paragraph>
         )}
       </div>
-
-      
     </>
   );
 }
