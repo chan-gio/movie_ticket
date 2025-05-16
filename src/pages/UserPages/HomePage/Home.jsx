@@ -2,10 +2,10 @@ import React from "react";
 import styles from "./Home.module.scss";
 
 // Import các component con
-import Hero from "../../../components/Hero/Hero.jsx";
-import NowShowing from "../../../components/NowShowing/NowShowing.jsx";
-import UpcomingMovies from "../../../components/UpcomingMovies/UpcomingMovies.jsx";
-import Subscribe from "../../../components/Subscribe/Subscribe.jsx";
+import Hero from "../../../components/UserPages/HomePage/Hero/Hero.jsx";
+import NowShowing from "../../../components/UserPages/HomePage/NowShowing/NowShowing.jsx";
+import UpcomingMovies from "../../../components/UserPages/HomePage/UpcomingMovies/UpcomingMovies.jsx";
+import Subscribe from "../../../components/UserPages/HomePage/Subscribe/Subscribe.jsx";
 
 const Home = () => {
   return (

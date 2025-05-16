@@ -5,7 +5,7 @@ import styles from "./UpcomingMovies.module.scss";
 import MovieCard from "../MovieCard/MovieCard";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import comingSoon from "../../assets/comingSoon.png";
+import comingSoon from "../../../../assets/comingSoon.png";
 
 const { Title } = Typography;
 

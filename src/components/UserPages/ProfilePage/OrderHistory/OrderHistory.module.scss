@@ -1,0 +1,66 @@
+.profile {
+  width: 700px;;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.mainContent {
+  padding-bottom: 40px;
+}
+
+.accountCard {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabContent {
+  min-height: 400px;
+  padding: 20px;
+}
+
+.detailCard {
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 20px;
+}
+
+:global(.orderCard) {
+  width: 700px;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 20px;
+}
+
+.orderDate {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.cinemaLogo {
+  height: 43px;
+  width: auto;
+}
+
+.divider {
+  border-top: 1px solid #e5e7eb;
+  margin: 20px 0;
+}
+
+.ticketStatus {
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+.orderSelect {
+  width: 150px;
+}
+
+:global {
+  .ant-tabs-nav {
+    margin-bottom: 0;
+  }
+  
+}
