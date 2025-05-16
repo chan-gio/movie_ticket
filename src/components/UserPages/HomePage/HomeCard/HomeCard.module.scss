@@ -1,0 +1,158 @@
+.Container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 1200px;
+}
+
+.sectionTitle {
+  font-size: 21px;
+  font-weight: bold;
+  position: relative;
+  display: inline-block;
+
+  &::after {
+    content: "";
+    display: block;
+    width: 70px;
+    border-bottom: 3.5px solid #6c63ff;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+  }
+}
+
+.viewAllButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c63ff;
+  font-weight: 600;
+  font-size: 16px;
+  border: 2px solid #6c63ff;
+  border-radius: 10px;
+  padding: 8px 24px;
+  background-color: transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    background-color: #6c63ff;
+    color: #ffffff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 767px) {
+    font-size: 14px;
+    padding: 6px 20px;
+  }
+}
+
+.movieCarousel {
+  margin: 0 auto;
+  padding: 20px 0;
+
+  :global(.slick-track) {
+    margin: 15px 0px !important;
+  }
+
+  .slick-slide {
+    padding: 0 10px;
+  }
+
+  .slick-dots li button:before {
+    color: #6c63ff;
+  }
+
+  .slick-dots li.slick-active button:before {
+    color: #6c63ff;
+  }
+
+  :global {
+    .slick-arrow {
+      background: transparent;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(95, 46, 234, 0.15);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      z-index: 10;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
+
+      &::before {
+        font-size: 24px;
+        color: #6c63ff;
+        opacity: 1;
+      }
+
+      &:hover {
+        background-color: #6c63ff;
+
+        &::before {
+          color: white;
+        }
+      }
+    }
+
+    .slick-prev {
+      left: -85px;
+
+      @media (max-width: 767px) {
+        left: -40px;
+        width: 40px;
+        height: 40px;
+      }
+
+      @media (max-width: 575px) {
+        left: -30px;
+      }
+    }
+
+    .slick-next {
+      right: -85px;
+
+      @media (max-width: 767px) {
+        right: -40px;
+        width: 40px;
+        height: 40px;
+      }
+
+      @media (max-width: 575px) {
+        right: -30px;
+      }
+    }
+  }
+}
+
+.carouselItem {
+  display: flex !important;
+  justify-content: center;
+}
+
+:global {
+  .slick-next::after,
+  .slick-prev::after {
+    content: none !important;
+    display: none !important;
+  }
+}

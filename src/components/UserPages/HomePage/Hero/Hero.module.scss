@@ -1,5 +1,16 @@
+.heroContainer {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 1200px;
+}
+
 .hero {
-  padding-top: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 .heroSubtitle {
@@ -27,27 +38,43 @@
   }
 }
 
+.heroSubtitleContainer {
+  margin-left: 25px;
+}
+
 .imageContainer {
+  padding: 15px 0px;
+  margin-right: 70px;
   display: flex;
-  gap: 4px; /* Minimal gap between images */
-  justify-content: flex-end; /* Align images to the right */
-  flex-wrap: nowrap; /* Keep images in a single row */
-  overflow-x: auto; /* Allow scrolling if images overflow */
+  gap: 4px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 
   @media (max-width: 575px) {
-    gap: 2px; /* Smaller gap for mobile */
-    justify-content: center; /* Center images on mobile */
+    gap: 2px;
+    justify-content: center;
   }
 }
 
 .imgGradient {
   position: relative;
   display: inline-block;
-  transition: all 1s; /* Match searchForm transition duration */
-  z-index: 1; /* Default stacking */
+  transition: all 1s;
+  z-index: 1;
 
   &:hover {
-    z-index: 2; /* Bring hovered image to front */
+    z-index: 2;
+  }
+
+  /* Ảnh lẻ lệch xuống dưới */
+  &:nth-child(odd) {
+    transform: translateY(10px);
+  }
+
+  /* Ảnh chẵn lệch lên trên */
+  &:nth-child(even) {
+    transform: translateY(-10px);
   }
 }
 
@@ -58,10 +85,10 @@
   object-position: center;
   border-radius: 16px;
   box-shadow: 4px 7px 18px -1px rgba(0, 0, 0, 0.45);
-  transition: all 1s; /* Match searchForm transition duration */
+  transition: all 1s;
 
   .imgGradient:hover & {
-    width: 300px; /* Double the width for maximum expansion */
+    width: 300px;
   }
 
   @media (max-width: 575px) {
@@ -69,7 +96,7 @@
     height: 311.98px;
 
     .imgGradient:hover & {
-      width: 189.64px; /* Double the width for mobile */
+      width: 189.64px;
     }
   }
 }

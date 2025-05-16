@@ -16,7 +16,7 @@ const orderInfo = {
 };
 
 const rows = ["A", "B", "C", "D", "E", "F", "G"];
-const cols = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+const cols = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 function SeatSelection() {
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -74,7 +74,6 @@ function SeatSelection() {
                         const isSelected = selectedSeats.includes(seat);
                         return (
                           <Fragment key={seat}>
-                            
                             <td>
                               <Button
                                 className={`${styles.seat} ${
@@ -94,8 +93,6 @@ function SeatSelection() {
                     <td></td>
                     {cols.map((col) => (
                       <Fragment key={col}>
-                        
-
                         <td>{col}</td>
                       </Fragment>
                     ))}

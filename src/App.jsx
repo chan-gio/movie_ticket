@@ -1,10 +1,10 @@
-import { Suspense } from 'react';
-import { BrowserRouter, Routes as ReactRoutes, Route } from 'react-router-dom';
-import { Layout } from 'antd';
-import { Routes as RouteConfig } from './routers/Routes';
-import styles from './App.module.scss';
-import Navbar from './components/NavBar/Navbar';
-import { Footer } from 'antd/es/layout/layout';
+import { Suspense } from "react";
+import { BrowserRouter, Routes as ReactRoutes, Route } from "react-router-dom";
+import { Layout } from "antd";
+import { Routes as RouteConfig } from "./routers/Routes";
+import styles from "./App.module.scss";
+import Navbar from "./components/NavBar/Navbar";
+import Footer from "./components/Footer/Footer";
 
 const { Content } = Layout;
 
@@ -18,7 +18,7 @@ function App() {
               key={index}
               path={route.path}
               element={
-                route.path.startsWith('/admin') ? (
+                route.path.startsWith("/admin") ? (
                   route.component
                 ) : (
                   <Layout className={styles.layout}>

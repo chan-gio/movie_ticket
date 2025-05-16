@@ -1,11 +1,11 @@
 import React from "react";
+import { Divider } from "antd";
 import styles from "./Home.module.scss";
 
 // Import các component con
 import Hero from "../../../components/UserPages/HomePage/Hero/Hero.jsx";
-import NowShowing from "../../../components/UserPages/HomePage/NowShowing/NowShowing.jsx";
-import UpcomingMovies from "../../../components/UserPages/HomePage/UpcomingMovies/UpcomingMovies.jsx";
-import Subscribe from "../../../components/UserPages/HomePage/Subscribe/Subscribe.jsx";
+import NowShowing from "../../../components/UserPages/HomePage/HomeCard/NowShowing.jsx";
+import UpcomingMovies from "../../../components/UserPages/HomePage/HomeCard/UpcomingMovies.jsx";
 
 const Home = () => {
   return (
@@ -14,16 +14,16 @@ const Home = () => {
         <Hero />
       </section>
 
+      <Divider />
+
       <section className={styles.section}>
         <NowShowing />
       </section>
 
-      <section className={styles.section}>
-        <UpcomingMovies />
-      </section>
+      <Divider />
 
       <section className={styles.section}>
-        <Subscribe />
+        <UpcomingMovies />
       </section>
     </div>
   );

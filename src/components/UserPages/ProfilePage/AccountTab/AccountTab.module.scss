@@ -113,3 +113,10 @@
   display: flex;
   align-items: center;
 }
+:global(.ant-input-group-addon){
+  border-top-left-radius: 14px !important;
+  border-bottom-left-radius: 14px !important;
+}
+:global(.ant-card .ant-card-bordered){
+  margin: 10px 0px !important;
+}
