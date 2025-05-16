@@ -109,3 +109,7 @@
     border-radius: 10px;
   }
 }
+:global(.ant-form-item .ant-form-item-label){
+  display: flex;
+  align-items: center;
+}
