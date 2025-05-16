@@ -1,21 +1,22 @@
-import { Link } from 'react-router-dom';
-import { Card, Row, Col, Button, Typography, Tag, Space } from 'antd';
-import styles from './SeatSelection.module.scss';
-import { Fragment, useState } from 'react';
+import { Link } from "react-router-dom";
+import { Card, Row, Col, Button, Typography, Tag, Space } from "antd";
+import styles from "./SeatSelection.module.scss";
+import { Fragment, useState } from "react";
 
 const { Title, Paragraph } = Typography;
 
 const orderInfo = {
-  movieTitle: 'Movie 1',
-  cinema: 'Cinema 1',
-  picture: 'https://via.placeholder.com/100',
-  date: '2025-05-15',
-  time: '2:00 PM',
+  movieTitle: "Movie 1",
+  cinema: "Cinema 1",
+  picture:
+    "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
+  date: "2025-05-15",
+  time: "2:00 PM",
   price: 10,
 };
 
-const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-const cols = [1, 2, 3, 4, 5, 6, 7];
+const rows = ["A", "B", "C", "D", "E", "F", "G"];
+const cols = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
 function SeatSelection() {
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -27,10 +28,10 @@ function SeatSelection() {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
   };
 
@@ -68,15 +69,17 @@ function SeatSelection() {
                   {rows.map((row) => (
                     <tr key={row}>
                       <td>{row}</td>
-                      {cols.map((col, index) => {
+                      {cols.map((col) => {
                         const seat = `${row}${col}`;
                         const isSelected = selectedSeats.includes(seat);
                         return (
                           <Fragment key={seat}>
-                            {index === 7 && <td className={styles.seatGap}></td>}
+                            
                             <td>
                               <Button
-                                className={`${styles.seat} ${isSelected ? styles.seatSelected : ''}`}
+                                className={`${styles.seat} ${
+                                  isSelected ? styles.seatSelected : ""
+                                }`}
                                 onClick={() => toggleSeat(seat)}
                               >
                                 {col}
@@ -89,9 +92,10 @@ function SeatSelection() {
                   ))}
                   <tr>
                     <td></td>
-                    {cols.map((col, index) => (
+                    {cols.map((col) => (
                       <Fragment key={col}>
-                        {index === 7 && <td className={styles.seatGap}></td>}
+                        
+
                         <td>{col}</td>
                       </Fragment>
                     ))}
@@ -152,15 +156,23 @@ function SeatSelection() {
           <Title level={3}>Order Info</Title>
           <Card className={styles.orderCard}>
             <div className={styles.cinemaInfo}>
-              <img src={orderInfo.picture} alt={orderInfo.cinema} className={styles.cinemaLogo} />
+              <img
+                src={orderInfo.picture}
+                alt={orderInfo.cinema}
+                className={styles.cinemaLogo}
+              />
               <Title level={4}>{orderInfo.cinema}</Title>
             </div>
             <Row justify="space-between">
               <Paragraph className={styles.label}>Movie selected</Paragraph>
-              <Paragraph className={styles.value}>{orderInfo.movieTitle}</Paragraph>
+              <Paragraph className={styles.value}>
+                {orderInfo.movieTitle}
+              </Paragraph>
             </Row>
             <Row justify="space-between">
-              <Paragraph className={styles.label}>{formatDate(orderInfo.date)}</Paragraph>
+              <Paragraph className={styles.label}>
+                {formatDate(orderInfo.date)}
+              </Paragraph>
               <Paragraph className={styles.value}>{orderInfo.time}</Paragraph>
             </Row>
             <Row justify="space-between">
@@ -169,7 +181,9 @@ function SeatSelection() {
             </Row>
             <Row justify="space-between">
               <Paragraph className={styles.label}>Seat choosed</Paragraph>
-              <Paragraph className={styles.value}>{selectedSeats.join(', ') || 'None'}</Paragraph>
+              <Paragraph className={styles.value}>
+                {selectedSeats.join(", ") || "None"}
+              </Paragraph>
             </Row>
             <div className={styles.divider} />
             <Row justify="space-between">
