@@ -1,198 +1,241 @@
 .auth {
-    min-height: 100vh;
-    background-color: #fff;
+  min-height: 100vh;
+  background-color: #fff;
+}
+
+.leftContainer {
+  background: linear-gradient(rgba(51, 0, 146, 0.836), rgba(19, 0, 41, 0.808)),
+    url(https://images-na.ssl-images-amazon.com/images/I/81ai6zx6eXL._AC_SL1304_.jpg)
+      center no-repeat;
+  background-size: cover;
+  padding-top: 40px;
+}
+
+.leftContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  color: white;
+}
+
+.logo {
+  width: 150px;
+  height: auto;
+}
+
+.tagline {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 20px 0 0;
+  opacity: 0.7;
+
+  @media (max-width: 991px) {
+    font-size: 28px;
   }
-  
-  .leftContainer {
-    background: linear-gradient(rgba(51, 0, 146, 0.836), rgba(19, 0, 41, 0.808)),
-      url(https://images-na.ssl-images-amazon.com/images/I/81ai6zx6eXL._AC_SL1304_.jpg)
-        center no-repeat;
-    background-size: cover;
-    padding-top: 40px;
-  }
-  
-  .leftContent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    text-align: center;
-    color: white;
-  }
-  
-  .logo {
-    width: 150px;
-    height: auto;
-  }
-  
-  .tagline {
-    font-size: 32px;
-    font-weight: bold;
-    margin: 20px 0 0;
-    opacity: 0.7;
-  
-    @media (max-width: 991px) {
-      font-size: 28px;
-    }
-  }
-  
-  .subTagline {
-    font-size: 18px;
-    margin: 10px 0;
-    opacity: 0.7;
-  
-    @media (max-width: 991px) {
-      font-size: 16px;
-    }
-  }
-  
-  .steps {
-    list-style: none;
-    padding: 0;
-    margin-top: 20px;
-  
-    li {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-  }
-  
-  .stepCircle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    margin-right: 10px;
-    position: relative;
-  
-    &.active {
-      background-color: white;
-      color: #5f2eea;
-    }
-  
-    &::after {
-      content: '';
-      border-left: 1.5px solid white;
-      height: 26px;
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-  
-    &:last-child::after {
-      display: none;
-    }
-  }
-  
-  .stepText {
+}
+
+.subTagline {
+  font-size: 18px;
+  margin: 10px 0;
+  opacity: 0.7;
+
+  @media (max-width: 991px) {
     font-size: 16px;
   }
-  
-  .rightContainer {
-    padding: 40px 20px;
-  }
-  
-  .title {
-    font-size: 48px;
-    font-weight: bold;
-    margin: 0;
-  
-    @media (max-width: 991px) {
-      font-size: 36px;
-    }
-  
-    @media (max-width: 767px) {
-      font-size: 24px;
-    }
-  }
-  
-  .subtitle {
-    font-size: 16px;
-    color: #6b7280;
-    margin: 10px 0 20px;
-    opacity: 0.7;
-  }
-  
-  .alert {
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+
+  li {
+    display: flex;
+    align-items: center;
     margin-bottom: 20px;
   }
-  
-  :global {
-    .ant-form-item-label > label {
-      font-weight: 600;
-    }
-  
-    .ant-input,
-    .ant-input-password {
-      min-height: 56px;
-      border-radius: 14px;
-    }
-  
-    .ant-tabs-nav {
-      margin-bottom: 20px;
-    }
-  }
-  
-  .submitButton {
-    min-height: 56px;
-    border-radius: 14px;
-  }
-  
-  .linkText {
-    text-align: center;
-    margin: 20px 0;
-    font-size: 14px;
-  
-    a {
-      color: #5f2eea;
-      font-weight: 600;
-    }
-  }
-  
-  .divider {
-    display: flex;
-    align-items: center;
-    margin: 20px 0;
-  
-    span {
-      padding: 0 10px;
-      color: #6b7280;
-      opacity: 0.7;
-    }
-  
-    &::before,
-    &::after {
-      content: '';
-      flex: 1;
-      border-top: 1px solid #d9d9d9;
-    }
-  }
-  
-  .socialButtons {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .socialButton {
-    min-height: 56px;
-    border-radius: 14px;
-    border: 1px solid #d9d9d9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+}
+
+.stepCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  margin-right: 10px;
+  position: relative;
+
+  &.active {
     background-color: white;
-    color: #14142b;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
-    &:hover {
-      background-color: #f0f0f0;
-    }
+    color: #5f2eea;
   }
+
+  &::after {
+    content: '';
+    border-left: 1.5px solid white;
+    height: 26px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+}
+
+.stepText {
+  font-size: 16px;
+}
+
+.rightContainer {
+  padding: 40px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.authContentWrapper {
+  max-width: 600px; // Set a fixed max-width to prevent width shifts
+  margin: 0 auto; // Center the content
+  width: 100%;
+}
+
+.tabContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  :global(.ant-tabs-content) {
+    flex: 1;
+  }
+}
+
+.tabContent {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  width: 100%; // Ensure consistent width
+}
+
+.title {
+  font-size: 48px;
+  font-weight: bold;
+  margin: 0;
+
+  @media (max-width: 991px) {
+    font-size: 36px;
+  }
+
+  @media (max-width: 767px) {
+    font-size: 24px;
+  }
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 10px 0 20px;
+  opacity: 0.7;
+}
+
+.alertContainer {
+  min-height: 60px;
+  margin-bottom: 20px;
+}
+
+.alert {
+  margin-bottom: 20px;
+}
+
+:global {
+  .ant-form-item-label > label {
+    font-weight: 600;
+  }
+
+  .ant-input,
+  .ant-input-password {
+    min-height: 56px;
+    border-radius: 14px;
+  }
+
+  .ant-tabs-nav {
+    margin-bottom: 20px;
+  }
+}
+
+.formFooter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100px;
+}
+
+.submitButton {
+  min-height: 56px;
+  border-radius: 14px;
+}
+
+.linkText {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 14px;
+
+  a {
+    color: #5f2eea;
+    font-weight: 600;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+
+  span {
+    padding: 0 10px;
+    color: #6b7280;
+    opacity: 0.7;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid #d9d9d9;
+  }
+}
+
+.socialButtons {
+  display: flex;
+  gap: 10px;
+  justify-content: center; // Center the buttons
+}
+
+.socialButton {
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: white;
+  color: #14142b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1; // Ensure buttons take equal width
+  max-width: 200px; // Limit the width of each button
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
+}

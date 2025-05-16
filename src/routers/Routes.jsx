@@ -9,14 +9,23 @@ const SeatSelection = lazy(() => import('../pages/UserPages/SeatPage/SeatSelecti
 const Payment = lazy(() => import('../pages/UserPages/PaymentPage/Payment'));
 const Confirmation = lazy(() => import('../pages/UserPages/ConfirmationPage/Confirmation'));
 const Admin = lazy(() => import('../pages/AdminPages/Admin'));
-const AdminDashboard = lazy(() => import('../pages/AdminPages/AdminDashboard'));
-const AdminProfile = lazy(() => import('../pages/AdminPages/AdminProfile'));
-const AdminSettings = lazy(() => import('../pages/AdminPages/AdminSettings'));
-const AdminManageUser = lazy(() => import('../pages/AdminPages/AdminManageUser'));
-const AdminManageMovie = lazy(() => import('../pages/AdminPages/AdminManageMovie'));
-const AdminManageMovieForm = lazy(() => import('../pages/AdminPages/AdminManageMovieForm'));
-const AdminManageGenre = lazy(() => import('../pages/AdminPages/AdminManageGenre'));
-const AdminManageGenreForm = lazy(() => import('../pages/AdminPages/AdminManageGenreForm'));
+const AdminDashboard = lazy(() => import('../pages/AdminPages/Dashboard/AdminDashboard'));
+const AdminProfile = lazy(() => import('../pages/AdminPages/Profile/AdminProfile'));
+const AdminSettings = lazy(() => import('../pages/AdminPages/Setting/AdminSettings'));
+const AdminManageUser = lazy(() => import('../pages/AdminPages/User/AdminManageUser'));
+const AdminManageMovie = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovie'));
+const AdminManageMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovieForm'));
+const AdminManageShowtime = lazy(() => import('../pages/AdminPages/Showtime/AdminManageShowtime'));
+const AdminManageShowtimeForm = lazy(() => import('../pages/AdminPages/Showtime/AdminManageShowtimeForm'));
+const AdminManageCinema = lazy(() => import('../pages/AdminPages/Cinema/AdminManageCinema'));
+const AdminManageCinemaForm = lazy(() => import('../pages/AdminPages/Cinema/AdminManageCinemaForm'));
+const AdminManageRoomForm = lazy(() => import('../pages/AdminPages/Room/AdminManageRoomForm'));
+const AdminManageSeats = lazy(() => import('../pages/AdminPages/Seat/AdminManageSeats'));
+const AdminManageSeatForm = lazy(() => import('../pages/AdminPages/Seat/AdminManageSeatForm'));
+const AdminManageBooking = lazy(() => import('../pages/AdminPages/Booking/AdminManageBooking'));
+const AdminManageBookingDetails = lazy(() => import('../pages/AdminPages/Booking/AdminManageBookingDetails'));
+const AdminManageCoupon = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCoupon'));
+const AdminManageCouponForm = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCouponForm'));
 
 // Define routes using an array of objects
 const Routes = [
@@ -27,7 +36,6 @@ const Routes = [
   { path: '/seats', component: <SeatSelection /> },
   { path: '/payment', component: <Payment /> },
   { path: '/confirmation', component: <Confirmation /> },
-  
   { path: '/admin', component: <Admin><AdminDashboard /></Admin> },
   { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
   { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
@@ -35,9 +43,22 @@ const Routes = [
   { path: '/admin/manage_movie', component: <Admin><AdminManageMovie /></Admin> },
   { path: '/admin/manage_movie/add', component: <Admin><AdminManageMovieForm isEditMode={false} /></Admin> },
   { path: '/admin/manage_movie/edit/:id', component: <Admin><AdminManageMovieForm isEditMode={true} /></Admin> },
-  { path: '/admin/manage_genre', component: <Admin><AdminManageGenre /></Admin> },
-  { path: '/admin/manage_genre/add', component: <Admin><AdminManageGenreForm isEditMode={false} /></Admin> },
-  { path: '/admin/manage_genre/edit/:id', component: <Admin><AdminManageGenreForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_showtime', component: <Admin><AdminManageShowtime /></Admin> },
+  { path: '/admin/manage_showtime/add', component: <Admin><AdminManageShowtimeForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_showtime/edit/:id', component: <Admin><AdminManageShowtimeForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_cinema', component: <Admin><AdminManageCinema /></Admin> },
+  { path: '/admin/manage_cinema/add_cinema', component: <Admin><AdminManageCinemaForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_cinema/edit_cinema/:id', component: <Admin><AdminManageCinemaForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_cinema/add_room', component: <Admin><AdminManageRoomForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_cinema/edit_room/:id', component: <Admin><AdminManageRoomForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_seats', component: <Admin><AdminManageSeats /></Admin> },
+  { path: '/admin/manage_seats/add', component: <Admin><AdminManageSeatForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_seats/edit/:id', component: <Admin><AdminManageSeatForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_booking', component: <Admin><AdminManageBooking /></Admin> },
+  { path: '/admin/manage_booking/details/:id', component: <Admin><AdminManageBookingDetails /></Admin> },
+  { path: '/admin/manage_coupon', component: <Admin><AdminManageCoupon /></Admin> },
+  { path: '/admin/manage_coupon/add', component: <Admin><AdminManageCouponForm isEditMode={false} /></Admin> },
+  { path: '/admin/manage_coupon/edit/:id', component: <Admin><AdminManageCouponForm isEditMode={true} /></Admin> },
 ];
 
 export { Routes };

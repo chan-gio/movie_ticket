@@ -49,7 +49,7 @@ function Auth() {
           <div className={styles.leftContent}>
             <img src={logo} alt="Tickitz Logo" className={styles.logo} />
             <p className={styles.tagline}>wait, watch, wow!</p>
-            <p className={styles.subTagline}>Lets build your account</p>
+            <p className={styles.subTagline}>Let's build your account</p>
             <ul className={styles.steps}>
               <li>
                 <span className={`${styles.stepCircle} ${styles.active}`}>1</span>
@@ -67,151 +67,165 @@ function Auth() {
           </div>
         </Col>
         <Col xs={24} md={17} className={styles.rightContainer}>
-          <Tabs defaultActiveKey="signin">
-            <TabPane tab="Sign In" key="signin">
-              <h1 className={styles.title}>Sign In</h1>
-              <p className={styles.subtitle}>
-                Sign in with your data that you entered during your registration
-              </p>
-              {alert.show && (
-                <Alert
-                  message={alert.message}
-                  type={alert.type}
-                  showIcon
-                  closable
-                  onClose={() => setAlert({ ...alert, show: false })}
-                  className={styles.alert}
-                />
-              )}
-              <Form form={form} onFinish={handleSubmit} layout="vertical">
-                <Form.Item
-                  label="Email"
-                  name="email"
-                  rules={[
-                    { required: true, message: 'Required' },
-                    { type: 'email', message: 'Invalid email' },
-                  ]}
-                >
-                  <Input placeholder="Write your email" />
-                </Form.Item>
-                <Form.Item
-                  label="Password"
-                  name="password"
-                  rules={[
-                    { required: true, message: 'Password is required' },
-                    { min: 6, message: 'Password must be at least 6 characters' },
-                  ]}
-                >
-                  <Input.Password placeholder="Write your password" />
-                </Form.Item>
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    block
-                    loading={isLoading}
-                    className={styles.submitButton}
-                  >
-                    Sign In
-                  </Button>
-                </Form.Item>
-                <p className={styles.linkText}>
-                  Forgot your password?{' '}
-                  <a onClick={() => setForgotPasswordVisible(true)}>Reset now</a>
-                </p>
-              </Form>
-              <div className={styles.divider}>
-                <span>or</span>
-              </div>
-              <Space className={styles.socialButtons}>
-                <Button icon={<GoogleOutlined />} className={styles.socialButton}>
-                  Google
-                </Button>
-                <Button icon={<FacebookOutlined />} className={styles.socialButton}>
-                  Facebook
-                </Button>
-              </Space>
-            </TabPane>
-            <TabPane tab="Sign Up" key="signup">
-              <h1 className={styles.title}>Sign Up</h1>
-              <p className={styles.subtitle}>
-                Fill your additional details
-              </p>
-              {alert.show && (
-                <Alert
-                  message={alert.message}
-                  type={alert.type}
-                  showIcon
-                  closable
-                  onClose={() => setAlert({ ...alert, show: false })}
-                  className={styles.alert}
-                />
-              )}
-              <Form form={form} onFinish={handleSubmit} layout="vertical">
-                <Form.Item
-                  label="Email"
-                  name="email"
-                  rules={[
-                    { required: true, message: 'Required' },
-                    { type: 'email', message: 'Invalid email' },
-                  ]}
-                >
-                  <Input placeholder="Write your email" />
-                </Form.Item>
-                <Form.Item
-                  label="Password"
-                  name="password"
-                  rules={[
-                    { required: true, message: 'Password is required' },
-                    { min: 6, message: 'Password must be at least 6 characters' },
-                  ]}
-                >
-                  <Input.Password placeholder="Write your password" />
-                </Form.Item>
-                <Form.Item
-                  name="terms"
-                  valuePropName="checked"
-                  rules={[
-                    { required: true, message: 'You must agree to the terms' },
-                  ]}
-                >
-                  <Checkbox>I agree to terms & conditions</Checkbox>
-                </Form.Item>
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    block
-                    loading={isLoading}
-                    className={styles.submitButton}
-                  >
-                    Join for free now
-                  </Button>
-                </Form.Item>
-                <p className={styles.linkText}>
-                  Do you already have an account? <Link to="/auth">Log in</Link>
-                </p>
-              </Form>
-              <div className={styles.divider}>
-                <span>or</span>
-              </div>
-              <Space className={styles.socialButtons}>
-                <Button icon={<GoogleOutlined />} className={styles.socialButton}>
-                  Google
-                </Button>
-                <Button icon={<FacebookOutlined />} className={styles.socialButton}>
-                  Facebook
-                </Button>
-              </Space>
-            </TabPane>
-          </Tabs>
+          <div className={styles.authContentWrapper}>
+            <Tabs defaultActiveKey="signin" className={styles.tabContainer}>
+              <TabPane tab="Sign In" key="signin">
+                <div className={styles.tabContent}>
+                  <h1 className={styles.title}>Sign In</h1>
+                  <p className={styles.subtitle}>
+                    Sign in with your data that you entered during your registration
+                  </p>
+                  <div className={styles.alertContainer}>
+                    {alert.show && (
+                      <Alert
+                        message={alert.message}
+                        type={alert.type}
+                        showIcon
+                        closable
+                        onClose={() => setAlert({ ...alert, show: false })}
+                        className={styles.alert}
+                      />
+                    )}
+                  </div>
+                  <Form form={form} onFinish={handleSubmit} layout="vertical">
+                    <Form.Item
+                      label="Email"
+                      name="email"
+                      rules={[
+                        { required: true, message: 'Required' },
+                        { type: 'email', message: 'Invalid email' },
+                      ]}
+                    >
+                      <Input placeholder="Write your email" />
+                    </Form.Item>
+                    <Form.Item
+                      label="Password"
+                      name="password"
+                      rules={[
+                        { required: true, message: 'Password is required' },
+                        { min: 6, message: 'Password must be at least 6 characters' },
+                      ]}
+                    >
+                      <Input.Password placeholder="Write your password" />
+                    </Form.Item>
+                    <div className={styles.formFooter}>
+                      <Form.Item>
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          block
+                          loading={isLoading}
+                          className={styles.submitButton}
+                        >
+                          Sign In
+                        </Button>
+                      </Form.Item>
+                      <p className={styles.linkText}>
+                        Forgot your password?{' '}
+                        <a onClick={() => setForgotPasswordVisible(true)}>Reset now</a>
+                      </p>
+                    </div>
+                  </Form>
+                  <div className={styles.divider}>
+                    <span>or</span>
+                  </div>
+                  <Space className={styles.socialButtons}>
+                    <Button icon={<GoogleOutlined />} className={styles.socialButton}>
+                      Google
+                    </Button>
+                    <Button icon={<FacebookOutlined />} className={styles.socialButton}>
+                      Facebook
+                    </Button>
+                  </Space>
+                </div>
+              </TabPane>
+              <TabPane tab="Sign Up" key="signup">
+                <div className={styles.tabContent}>
+                  <h1 className={styles.title}>Sign Up</h1>
+                  <p className={styles.subtitle}>
+                    Fill your additional details
+                  </p>
+                  <div className={styles.alertContainer}>
+                    {alert.show && (
+                      <Alert
+                        message={alert.message}
+                        type={alert.type}
+                        showIcon
+                        closable
+                        onClose={() => setAlert({ ...alert, show: false })}
+                        className={styles.alert}
+                      />
+                    )}
+                  </div>
+                  <Form form={form} onFinish={handleSubmit} layout="vertical">
+                    <Form.Item
+                      label="Email"
+                      name="email"
+                      rules={[
+                        { required: true, message: 'Required' },
+                        { type: 'email', message: 'Invalid email' },
+                      ]}
+                    >
+                      <Input placeholder="Write your email" />
+                    </Form.Item>
+                    <Form.Item
+                      label="Password"
+                      name="password"
+                      rules={[
+                        { required: true, message: 'Password is required' },
+                        { min: 6, message: 'Password must be at least 6 characters' },
+                      ]}
+                    >
+                      <Input.Password placeholder="Write your password" />
+                    </Form.Item>
+                    <Form.Item
+                      name="terms"
+                      valuePropName="checked"
+                      rules={[
+                        { required: true, message: 'You must agree to the terms' },
+                      ]}
+                    >
+                      <Checkbox>I agree to terms & conditions</Checkbox>
+                    </Form.Item>
+                    <div className={styles.formFooter}>
+                      <Form.Item>
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          block
+                          loading={isLoading}
+                          className={styles.submitButton}
+                        >
+                          Join for free now
+                        </Button>
+                      </Form.Item>
+                      <p className={styles.linkText}>
+                        Do you already have an account? <Link to="/auth">Log in</Link>
+                      </p>
+                    </div>
+                  </Form>
+                  <div className={styles.divider}>
+                    <span>or</span>
+                  </div>
+                  <Space className={styles.socialButtons}>
+                    <Button icon={<GoogleOutlined />} className={styles.socialButton}>
+                      Google
+                    </Button>
+                    <Button icon={<FacebookOutlined />} className={styles.socialButton}>
+                      Facebook
+                    </Button>
+                  </Space>
+                </div>
+              </TabPane>
+            </Tabs>
+          </div>
         </Col>
       </Row>
 
       {/* Forgot Password Modal */}
       <Modal
         title="Fill your complete email"
-        visible={forgotPasswordVisible}
+        open={forgotPasswordVisible}
         onCancel={() => setForgotPasswordVisible(false)}
         footer={null}
       >

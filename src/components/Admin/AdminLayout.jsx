@@ -36,7 +36,7 @@ function AdminLayout({ children, handleLogout, navigate }) {
               <Link to="/admin">Dashboard</Link>
             </Menu.Item>
             <Menu.Item key="profile">
-              <Link to="/admin/profile">Profile</Link> 
+              <Link to="/admin/profile">Profile</Link>
             </Menu.Item>
             <Menu.Item key="settings">
               <Link to="/admin/settings">Settings</Link>
@@ -47,8 +47,20 @@ function AdminLayout({ children, handleLogout, navigate }) {
             <Menu.Item key="manage_movie">
               <Link to="/admin/manage_movie">Manage Movie</Link>
             </Menu.Item>
-            <Menu.Item key="manage_genre">
-              <Link to="/admin/manage_genre">Manage Genre</Link>
+            <Menu.Item key="manage_showtime">
+              <Link to="/admin/manage_showtime">Manage Showtime</Link>
+            </Menu.Item>
+            <Menu.Item key="manage_cinema">
+              <Link to="/admin/manage_cinema">Manage Cinema</Link>
+            </Menu.Item>
+            <Menu.Item key="manage_seats">
+              <Link to="/admin/manage_seats">Manage Seats</Link>
+            </Menu.Item>
+            <Menu.Item key="manage_booking">
+              <Link to="/admin/manage_booking">Manage Booking</Link>
+            </Menu.Item>
+            <Menu.Item key="manage_coupon">
+              <Link to="/admin/manage_coupon">Manage Coupon</Link>
             </Menu.Item>
           </Menu>
         </Sider>

@@ -1,6 +1,9 @@
-import { Link } from 'react-router-dom';
-import { Row, Col, Card, Typography, List, Form, Input, Alert, Radio, Button, Space } from 'antd';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Row, Col, Card, Typography, List, Form, Input, Alert, Button, Space } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import QRCode from 'react-qr-code';
 import styles from './Payment.module.scss';
 
 const { Title, Text } = Typography;
@@ -14,23 +17,73 @@ const orderData = {
   price: 10,
 };
 
-const paymentMethods = [
-  { value: 'google-pay', label: 'Google Pay', icon: 'https://via.placeholder.com/74x30?text=GooglePay' },
-  { value: 'visa', label: 'Visa', icon: 'https://via.placeholder.com/80x26?text=Visa' },
-  { value: 'gopay', label: 'GoPay', icon: 'https://via.placeholder.com/106x35?text=GoPay' },
-  { value: 'paypal', label: 'PayPal', icon: 'https://via.placeholder.com/31x37?text=PayPal' },
-  { value: 'dana', label: 'DANA', icon: 'https://via.placeholder.com/50x20?text=DANA' },
-  { value: 'bca', label: 'BCA', icon: 'https://via.placeholder.com/85x28?text=BCA' },
-  { value: 'bri', label: 'BRI', icon: 'https://via.placeholder.com/45x38?text=BRI' },
-  { value: 'ovo', label: 'OVO', icon: 'https://via.placeholder.com/92x30?text=OVO' },
-];
+// Access PayOS credentials from environment variables
+const PAYOS_CLIENT_ID = import.meta.env.VITE_PAYOS_CLIENT_ID;
+const PAYOS_API_KEY = import.meta.env.VITE_PAYOS_API_KEY;
+const PAYOS_CHECKSUM_KEY = import.meta.env.VITE_PAYOS_CHECKSUM_KEY;
+const PAYOS_API_URL = import.meta.env.VITE_PAYOS_API_URL;
 
 function Payment() {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [qrCodeValue, setQrCodeValue] = useState(null);
 
-  const handleSubmit = (values) => {
-    console.log('Payment submitted:', values);
-    // Navigate to /confirmation or handle payment logic
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    setError(null);
+
+    // Prepare order data for PayOS
+    const totalAmount = orderData.price * orderData.tickets * 100; // Amount in smallest currency unit (e.g., cents)
+    const orderCode = Date.now(); // Unique order code (use a better method in production)
+    const description = `Payment for ${orderData.tickets} tickets to ${orderData.movieTitle} on ${orderData.date}`;
+    const returnUrl = `${window.location.origin}/confirmation?orderCode=${orderCode}`; // Redirect URL after payment
+    const cancelUrl = `${window.location.origin}/payment`; // Redirect URL if payment is canceled
+
+    const paymentData = {
+      orderCode,
+      amount: totalAmount,
+      description,
+      returnUrl,
+      cancelUrl,
+      buyerName: values.fullName,
+      buyerEmail: values.email,
+      buyerPhone: values.phoneNumber,
+      items: [
+        {
+          name: orderData.movieTitle,
+          quantity: orderData.tickets,
+          price: orderData.price * 100,
+        },
+      ],
+    };
+
+    try {
+      // Call PayOS API to create a payment link
+      const response = await axios.post(
+        PAYOS_API_URL,
+        paymentData,
+        {
+          headers: {
+            'x-client-id': PAYOS_CLIENT_ID,
+            'x-api-key': PAYOS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.data && response.data.data && response.data.data.checkoutUrl) {
+        // Set the QR code value to the PayOS payment link
+        setQrCodeValue(response.data.data.checkoutUrl);
+      } else {
+        throw new Error('Failed to create payment link');
+      }
+    } catch (err) {
+      setError('Payment initiation failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -107,40 +160,43 @@ function Payment() {
         </Col>
       </Row>
 
-      {/* Payment Method */}
+      {/* Payment Method with QR Code */}
       <Row gutter={[16, 16]} className={styles.section}>
         <Col xs={24} lg={16}>
-          <Title level={3}>Choose a Payment Method</Title>
+          <Title level={3}>Pay with PayOS</Title>
           <Card className={styles.methodCard}>
-            <Form.Item name="paymentMethod" rules={[{ required: true, message: 'Please select a payment method' }]}>
-              <Radio.Group className={styles.paymentMethods}>
-                <Row gutter={[16, 16]}>
-                  {paymentMethods.map((method) => (
-                    <Col xs={12} md={6} key={method.value}>
-                      <Radio value={method.value} className={styles.paymentOption}>
-                        <img src={method.icon} alt={method.label} className={styles.paymentIcon} />
-                      </Radio>
-                    </Col>
-                  ))}
-                </Row>
-              </Radio.Group>
-            </Form.Item>
-            <div className={styles.divider}>
-              <span>or</span>
-            </div>
-            <Text className={styles.cashOption}>
-              Pay via cash. <Link to="#">See how it works</Link>
-            </Text>
+            {error && (
+              <Alert
+                message={error}
+                type="error"
+                showIcon
+                className={styles.alert}
+                style={{ marginBottom: 16 }}
+              />
+            )}
+            {qrCodeValue ? (
+              <div style={{ textAlign: 'center' }}>
+                <QRCode value={qrCodeValue} size={256} />
+                <Text className={styles.qrText}>
+                  Scan the QR code with your payment app to pay ${orderData.price * orderData.tickets}.
+                </Text>
+              </div>
+            ) : (
+              <Text>Click "Generate QR Code" to proceed with payment.</Text>
+            )}
           </Card>
           <Space className={styles.navButtons}>
             <Link to="/seats">
               <Button className={styles.prevButton}>Previous step</Button>
             </Link>
-            <Link to="/confirmation">
-              <Button type="primary" onClick={() => form.submit()} className={styles.payButton}>
-                Pay your order
-              </Button>
-            </Link>
+            <Button
+              type="primary"
+              onClick={() => form.submit()}
+              className={styles.payButton}
+              loading={loading}
+            >
+              Generate QR Code
+            </Button>
           </Space>
         </Col>
       </Row>
