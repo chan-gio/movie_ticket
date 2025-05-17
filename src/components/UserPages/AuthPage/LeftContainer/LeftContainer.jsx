@@ -1,13 +1,13 @@
 import React from "react";
 import styles from "./LeftContainer.module.scss";
 
-const logo = "https://via.placeholder.com/150x50?text=Tickitz"; // Replace with actual logo
+const logo = "https://via.placeholder.com/150x50?text=Movie"; // Replace with actual logo
 
 const LeftContainer = () => {
   return (
     <div className={styles.leftContainer}>
       <div className={styles.leftContent}>
-        <img src={logo} alt="Tickitz Logo" className={styles.logo} />
+        <img src={logo} alt="Logo" className={styles.logo} />
         <p className={styles.tagline}>wait, watch, wow!</p>
         <p className={styles.subTagline}>Lets build your account</p>
         <ul className={styles.steps}>

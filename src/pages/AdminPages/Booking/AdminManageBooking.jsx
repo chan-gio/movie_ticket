@@ -104,7 +104,7 @@ function AdminManageBooking() {
     <div>
       <Title level={3}>Manage Bookings</Title>
       <Row gutter={[16, 16]}>
-        <Col xs={24} lg={8}>
+        <Col xs={24} lg={6}>
           <Card className={styles.card}>
             <Statistic
               title="Total Bookings"
@@ -112,7 +112,7 @@ function AdminManageBooking() {
             />
           </Card>
         </Col>
-        <Col xs={24} lg={16}>
+        <Col xs={24} lg={24}>
           <Card className={styles.card}>
             <Table
               columns={bookingColumns}

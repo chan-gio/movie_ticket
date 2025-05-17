@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import ShowMoviesPage from '../pages/UserPages/ShowMoviesPage/ShowMoviesPage';
 
 // Lazy load all page components
 const Home = lazy(() => import('../pages/UserPages/HomePage/Home'));
@@ -32,6 +33,7 @@ const Routes = [
   { path: '/', component: <Home /> },
   { path: '/auth', component: <Auth /> },
   { path: '/profile', component: <Profile /> },
+  { path: '/movies', component: <ShowMoviesPage /> },
   { path: '/movie/:id', component: <MovieDetails /> },
   { path: '/seats', component: <SeatSelection /> },
   { path: '/payment', component: <Payment /> },

@@ -5,7 +5,7 @@ import styles from "./Navbar.module.scss";
 
 const { Option } = Select;
 
-const logo = "https://via.placeholder.com/150x50?text=Tickitz"; // Replace with actual tickitz_purple.svg
+const logo = "https://via.placeholder.com/150x50?text=Movie"; 
 const user = {
   picture: null, // Set to null to use default avatar
   fullName: "John Doe",
@@ -39,10 +39,10 @@ function Navbar() {
       <div className={styles.navbarContainer}>
         <div className={styles.leftSection}>
           <Link to="/" className={styles.navbarLogo}>
-            <img src={logo} alt="Tickitz Logo" />
+            <img src={logo} alt="Movie" />
           </Link>
           <div className={styles.navLinks}>
-            <Link to="/" className={styles.navLink}>
+            <Link to="/movies" className={styles.navLink}>
               Movies
             </Link>
             <Link to="/cinemas" className={styles.navLink}>

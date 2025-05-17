@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { Row, Col, Typography, Button, Carousel } from "antd";
 import { Link } from "react-router-dom";
@@ -5,7 +6,7 @@ import styles from "./HomeCard.module.scss";
 import MovieCard from "../MovieCard/MovieCard";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import comingSoon from "../../../../assets/comingSoon.png";
+import comingSoon from "../../../../../public/assets/comingSoon.png";
 
 const { Title } = Typography;
 
