@@ -1,0 +1,161 @@
+.container {
+  min-height: 100vh;
+  width: 80vw;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 20px auto;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.cinemaInfo {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f3f5 100%);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cinemaHeader {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.cinemaLogo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #e9ecef;
+  padding: 5px;
+  background-color: #fff;
+  transition: transform 0.3s ease;
+}
+
+.cinemaLogo:hover {
+  transform: scale(1.1);
+}
+
+.cinemaName {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
+}
+
+.cinemaAddress {
+  font-size: 16px;
+  color: #6c757d;
+  margin: 5px 0 0;
+  font-style: italic;
+}
+
+.tabs {
+  .ant-tabs-nav {
+    margin-bottom: 25px;
+    background: #fff;
+    padding: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .ant-tabs-tab {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 12px 20px;
+    color: #495057;
+    transition: color 0.3s ease;
+  }
+
+  .ant-tabs-tab:hover {
+    color: #007bff;
+  }
+
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #007bff !important;
+    font-weight: 600;
+  }
+
+  .ant-tabs-ink-bar {
+    background-color: #007bff;
+    height: 3px;
+  }
+}
+
+.movieList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.movieItem {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.movieInfo {
+  margin-bottom: 10px;
+}
+
+.movieTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #212529;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #007bff;
+  }
+}
+
+.movieType {
+  font-size: 14px;
+  color: #868e96;
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+.showtimes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.showtime {
+  padding: 8px 14px;
+  background-color: #e9ecef;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #343a40;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: #007bff;
+    color: #fff;
+    transform: scale(1.05);
+  }
+}
+
+.noMovies {
+  font-size: 16px;
+  color: #adb5bd;
+  text-align: center;
+  margin: 30px 0;
+  font-style: italic;
+}

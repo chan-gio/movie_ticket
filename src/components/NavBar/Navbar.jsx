@@ -2,16 +2,18 @@ import { Link } from "react-router-dom";
 import { Menu, Dropdown, Select, Input, Space, Avatar } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import styles from "./Navbar.module.scss";
+import { useState } from "react";
+import SelectCinemaModal from "../Modal/SelectCinemaModal";
 
 const { Option } = Select;
 
 const logo = "https://via.placeholder.com/150x50?text=Movie"; 
 const user = {
-  picture: null, // Set to null to use default avatar
+  picture: null,
   fullName: "John Doe",
   email: "john.doe@example.com",
 };
-const isLoggedIn = true; // Toggle for testing logged-in/logged-out state
+const isLoggedIn = true;
 
 const userMenu = (
   <Menu className={styles.userMenu}>
@@ -34,6 +36,21 @@ const userMenu = (
 );
 
 function Navbar() {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const handleCinemaClick = (e) => {
+    e.preventDefault();
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.navbarContainer}>
@@ -45,7 +62,7 @@ function Navbar() {
             <Link to="/movies" className={styles.navLink}>
               Movies
             </Link>
-            <Link to="/cinemas" className={styles.navLink}>
+            <Link to="/cinemas" className={styles.navLink} onClick={handleCinemaClick}>
               Cinemas
             </Link>
             <Link to="/buy-ticket" className={styles.navLink}>
@@ -92,6 +109,11 @@ function Navbar() {
           )}
         </div>
       </div>
+      <SelectCinemaModal
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      />
     </nav>
   );
 }

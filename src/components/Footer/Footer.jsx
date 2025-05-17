@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import styles from "./Footer.module.scss";
-import logo from "../../../public/assets/react.svg"; 
-import waveImg from "../../../public/assets/wave.png"; 
+import logo from "/assets/react.svg"; 
+import waveImg from "/assets/wave.png"; 
 import {
   FaInstagram,
   FaFacebook,

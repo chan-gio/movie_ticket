@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import ShowMoviesPage from '../pages/UserPages/ShowMoviesPage/ShowMoviesPage';
+import CinemaPage from '../pages/UserPages/CinemaPage/CinemaPage';
 
 // Lazy load all page components
 const Home = lazy(() => import('../pages/UserPages/HomePage/Home'));
@@ -35,6 +36,7 @@ const Routes = [
   { path: '/profile', component: <Profile /> },
   { path: '/movies', component: <ShowMoviesPage /> },
   { path: '/movie/:id', component: <MovieDetails /> },
+  { path: '/cinema/:cinemaName', component: <CinemaPage /> },
   { path: '/seats', component: <SeatSelection /> },
   { path: '/payment', component: <Payment /> },
   { path: '/confirmation', component: <Confirmation /> },
