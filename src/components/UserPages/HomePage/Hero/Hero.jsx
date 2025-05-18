@@ -27,7 +27,8 @@ const movies = [
   {
     id: 4,
     title: "Movie 4",
-    poster: "https://wallpapercave.com/wp/wp1816326.jpg",
+    poster:
+      "https://upload.wikimedia.org/wikipedia/en/thumb/9/98/John_Wick_TeaserPoster.jpg/250px-John_Wick_TeaserPoster.jpg",
     genre: "Fantasy",
   },
 ];

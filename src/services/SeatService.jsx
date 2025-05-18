@@ -1,4 +1,4 @@
-import api from '../api'; // Import the configured Axios instance
+import api from './api'; // Import the configured Axios instance
 
 // Service methods for SeatController endpoints
 const SeatService = {

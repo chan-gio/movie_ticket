@@ -156,3 +156,21 @@
     display: none !important;
   }
 }
+.noDataContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  text-align: center;
+  color: #888;
+}
+.noDataIcon {
+  font-size: 48px;
+  color: #888;
+  margin-bottom: 16px;
+}
+.noDataText {
+  font-size: 18px;
+  color: #888;
+}

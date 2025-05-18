@@ -1,20 +1,75 @@
-import { Card, Row, Col, Typography, Select, Button, Space } from "antd";
-import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import React, { useState, useEffect } from "react";
+import { Card, Row, Col, Typography, Spin } from "antd";
 import styles from "./ContentBox.module.scss";
+import MovieService from "../../../services/MovieService";
 
 const { Title, Paragraph } = Typography;
 
-const ContentBox = ({ movie }) => {
+const ContentBox = ({ movieId }) => {
+  const [movie, setMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return date
+      ? new Date(date).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "Unknown";
   };
 
+  useEffect(() => {
+    const fetchMovie = async () => {
+      try {
+        const data = await MovieService.getMovieById(movieId);
+        setMovie({
+          movie_id: data.movie_id,
+          title: data.title || "Untitled",
+          picture:
+            data.poster_url || "https://wallpapercave.com/wp/wp1816326.jpg",
+          genre: data.genre || "Unknown",
+          releaseDate: data.release_date,
+          directed: data.director || "Unknown",
+          duration: data.duration ? `${data.duration} min` : "Unknown",
+          cast: data.cast || "Unknown",
+          synopsis: data.description || "No synopsis available",
+        });
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchMovie();
+  }, [movieId]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>Error: {error}</div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>
+        No movie data available
+      </div>
+    );
+  }
+
   return (
-    <div style={{margin: "40px 0px"}}>
+    <div style={{ margin: "40px 0px" }}>
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
           <Card className={styles.posterCard}>

@@ -1,66 +1,56 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col, Typography, Button, Carousel } from "antd";
 import { Link } from "react-router-dom";
+import { FrownOutlined } from "@ant-design/icons";
 import styles from "./HomeCard.module.scss";
 import MovieCard from "../MovieCard/MovieCard";
+import MovieService from "../../../../services/MovieService";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 const { Title } = Typography;
 
-// Hàm tạo danh sách ngày từ hôm nay đến 14 ngày sau
-const getDateRange = () => {
-  const dates = [];
-  const today = new Date(2025, 4, 16); // Ngày hôm nay: 16/05/2025
-  for (let i = 0; i < 15; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    dates.push(date);
-  }
-  return dates;
-};
-
-// Dữ liệu mẫu phim với ngày phát hành cụ thể (từ 16/05/2025 đến 30/05/2025)
-const upcomingMovies = [
-  {
-    id: 11,
-    title: "Dune",
-    genre: "Sci-Fi, Adventure",
-    poster: "https://wallpapercave.com/wp/wp1816326.jpg",
-    releaseDate: "2025-05-16",
-  },
-  {
-    id: 12,
-    title: "No Time to Die",
-    genre: "Action, Thriller",
-    poster: "https://wallpapercave.com/wp/wp3703396.jpg",
-    releaseDate: "2025-05-20",
-  },
-  {
-    id: 13,
-    title: "Black Widow",
-    genre: "Action, Adventure",
-    poster: "https://wallpapercave.com/wp/wp3703396.jpg",
-    releaseDate: "2025-05-22",
-  },
-  {
-    id: 14,
-    title: "Eternals",
-    genre: "Action, Fantasy",
-    poster: "https://wallpapercave.com/wp/wp3703396.jpg",
-    releaseDate: "2025-05-25",
-  },
-  {
-    id: 15,
-    title: "The Batman",
-    genre: "Action, Crime",
-    poster: "https://wallpapercave.com/wp/wp3703396.jpg",
-    releaseDate: "2025-05-30",
-  },
-];
-
 const UpcomingMovies = () => {
+  const [upcomingMovies, setUpcomingMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUpcomingMovies = async () => {
+      try {
+        const movies = await MovieService.getUpcomingMovie();
+        // Map API response to match MovieCard expected props
+        const formattedMovies = movies.map((movie) => ({
+          id: movie.movie_id, // Map movie_id to id
+          title: movie.title,
+          poster:
+            movie.poster_url || "https://wallpapercave.com/wp/wp1816326.jpg", // Fallback poster
+          genre: movie.genre || "Unknown", // Fallback genre
+        }));
+        setUpcomingMovies(formattedMovies);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchUpcomingMovies();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>Loading...</div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>Error: {error}</div>
+    );
+  }
+
   return (
     <div>
       <Row justify="space-between" align="middle">
@@ -78,36 +68,57 @@ const UpcomingMovies = () => {
         </Col>
       </Row>
       <div className={styles.Container}>
-        <Carousel
-          arrows={true}
-          slidesToShow={Math.min(upcomingMovies.length, 5)}
-          slidesToScroll={1}
-          draggable={true}
-          dots
-          className={styles.movieCarousel}
-          responsive={[
-            {
-              breakpoint: 767,
-              settings: {
-                slidesToShow: Math.min(upcomingMovies.length, 2),
-                arrows: true,
+        {upcomingMovies.length === 0 ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "200px",
+              textAlign: "center",
+              color: "#888",
+            }}
+          >
+            <FrownOutlined
+              style={{ fontSize: "48px", color: "#888", marginBottom: "16px" }}
+            />
+            <Typography.Text style={{ fontSize: "18px", color: "#888" }}>
+              No upcoming movies available
+            </Typography.Text>
+          </div>
+        ) : (
+          <Carousel
+            arrows={true}
+            slidesToShow={Math.min(upcomingMovies.length, 5)}
+            slidesToScroll={1}
+            draggable={true}
+            dots
+            className={styles.movieCarousel}
+            responsive={[
+              {
+                breakpoint: 767,
+                settings: {
+                  slidesToShow: Math.min(upcomingMovies.length, 2),
+                  arrows: true,
+                },
               },
-            },
-            {
-              breakpoint: 575,
-              settings: {
-                slidesToShow: 1,
-                arrows: true,
+              {
+                breakpoint: 575,
+                settings: {
+                  slidesToShow: 1,
+                  arrows: true,
+                },
               },
-            },
-          ]}
-        >
-          {upcomingMovies.map((movie) => (
-            <div key={movie.id} className={styles.carouselItem}>
-              <MovieCard movie={movie} />
-            </div>
-          ))}
-        </Carousel>
+            ]}
+          >
+            {upcomingMovies.map((movie) => (
+              <div key={movie.id} className={styles.carouselItem}>
+                <MovieCard movie={movie} />
+              </div>
+            ))}
+          </Carousel>
+        )}
       </div>
     </div>
   );
