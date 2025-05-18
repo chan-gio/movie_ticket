@@ -1,5 +1,307 @@
-.card {
-    border-radius: 24px;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.container {
+  padding: 40px 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #14142b;
+}
+
+.backButton {
+  border-radius: 12px;
+  background-color: #d9d9d9;
+  border-color: #d9d9d9;
+  color: #14142b;
+  height: 48px;
+  font-size: 16px;
+  padding: 0 24px;
+
+  &:hover {
+    background-color: #c0c0c0;
+    border-color: #c0c0c0;
   }
+}
+
+.mainContent {
+  margin-bottom: 40px;
+}
+
+.seatCard, .infoCard {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.controls {
+  margin-bottom: 24px;
+}
+
+.label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.inputNumber {
+  border-radius: 8px;
+  width: 100px;
+}
+
+.select {
+  width: 150px;
+
+  .ant-select-selector {
+    border-radius: 8px !important;
+    border-color: #e5e7eb !important;
+    background-color: #f9f5ff !important;
+    color: #14142b !important;
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  &:hover .ant-select-selector {
+    border-color: #5f2eea !important;
+  }
+}
+
+.applyButton, .clearButton {
+  border-radius: 12px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.applyButton {
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
+}
+
+.clearButton {
+  background-color: #d9d9d9;
+  border-color: #d9d9d9;
+  color: #14142b;
+
+  &:hover {
+    background-color: #c0c0c0;
+    border-color: #c0c0c0;
+  }
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.screenText {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.screenLine {
+  width: 80%;
+  height: 4px;
+  background-color: #d9d9d9;
+  margin-top: 8px;
+  border-radius: 2px;
+}
+
+.seatGrid {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+
+  table {
+    border-collapse: separate;
+    border-spacing: 8px;
+  }
+}
+
+.rowLabel, .colLabel {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.seat {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 8px;
+  background-color: #e5e7eb;
+  color: #14142b;
+  border: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #d1d5db;
+  }
+}
+
+.seatSelected {
+  background-color: #a0f0a0; // Light green for selected seats
+  &:hover {
+    background-color: #90e090;
+  }
+}
+
+.seatVip {
+  background-color: #ffd700; // Gold for VIP
+  &:hover {
+    background-color: #e6c200;
+  }
+}
+
+.seatCouple {
+  background-color: #ff69b4; // Pink for Couple
+  &:hover {
+    background-color: #ff4f99;
+  }
+}
+
+.seatNotAvailable {
+  background-color: #d9d9d9; // Grey for Not Available
+  &:hover {
+    background-color: #c0c0c0;
+  }
+}
+
+.seatingKeyTitle {
+  margin: 24px 0 16px;
+  color: #14142b;
+}
+
+.seatingKey {
+  margin-bottom: 24px;
+}
+
+.availableBox {
+  width: 30px;
+  height: 30px;
+  background-color: #e5e7eb;
+  border: none;
+  border-radius: 4px;
+}
+
+.selectBox {
+  width: 30px;
+  height: 30px;
+  background-color: #a0f0a0;
+  border: none;
+  border-radius: 4px;
+}
+
+.vipBox {
+  width: 30px;
+  height: 30px;
+  background-color: #ffd700;
+  border: none;
+  border-radius: 4px;
+}
+
+.loveBox {
+  width: 30px;
+  height: 30px;
+  background-color: #ff69b4;
+  border: none;
+  border-radius: 4px;
+}
+
+.notAvailableBox {
+  width: 30px;
+  height: 30px;
+  background-color: #d9d9d9;
+  border: none;
+  border-radius: 4px;
+}
+
+.keyLabel {
+  font-size: 14px;
+  color: #14142b;
+}
+
+.actionButtons {
+  margin-top: 24px;
+}
+
+.backButton, .saveButton {
+  border-radius: 12px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.backButton {
+  background-color: #d9d9d9;
+  border-color: #d9d9d9;
+  color: #14142b;
+
+  &:hover {
+    background-color: #c0c0c0;
+    border-color: #c0c0c0;
+  }
+}
+
+.saveButton {
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
+}
+
+.sectionTitle {
+  color: #5f2eea;
+  margin-bottom: 16px;
+}
+
+.infoRow {
+  margin-bottom: 12px;
+}
+
+.infoCard {
+  .label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .value {
+    color: #14142b;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 18px;
+  color: #6b7280;
+}

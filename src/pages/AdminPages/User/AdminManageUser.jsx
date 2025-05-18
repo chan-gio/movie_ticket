@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Form, Input, Select, Button, Table, Space, Popconfirm, message, Typography } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { Row, Col, Card, Button, Table, Space, Popconfirm, message, Typography, Spin } from 'antd';
+import { EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import styles from './AdminManageUser.module.scss';
 import '../GlobalStyles.module.scss';
 
-const { Title } = Typography;
-const { Option } = Select;
+const { Title, Text: TypographyText } = Typography;
 
 // Mock API call to fetch users
 const fetchUsers = async () => {
@@ -17,33 +17,24 @@ const fetchUsers = async () => {
 };
 
 function AdminManageUser() {
-  const [userForm] = Form.useForm();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
-  const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const data = await fetchUsers();
-      setUsers(data);
-      setLoading(false);
-    };
     loadData();
   }, []);
 
-  const handleAddUser = (values) => {
-    const newUser = { user_id: `u${users.length + 1}`, ...values };
-    setUsers([...users, newUser]);
-    userForm.resetFields();
-    message.success('User added successfully');
-  };
-
-  const handleEditUser = (values) => {
-    setUsers(users.map(user => (user.user_id === editingUser.user_id ? { ...user, ...values } : user)));
-    setEditingUser(null);
-    userForm.resetFields();
-    message.success('User updated successfully');
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchUsers();
+      setUsers(data);
+    } catch (error) {
+      message.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteUser = (id) => {
@@ -52,90 +43,126 @@ function AdminManageUser() {
   };
 
   const userColumns = [
-    { title: 'ID', dataIndex: 'user_id', key: 'user_id' },
-    { title: 'Username', dataIndex: 'username', key: 'username' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Full Name', dataIndex: 'full_name', key: 'full_name' },
-    { title: 'Phone', dataIndex: 'phone', key: 'phone' },
+    {
+      title: 'ID',
+      dataIndex: 'user_id',
+      key: 'user_id',
+      sorter: (a, b) => a.user_id.localeCompare(b.user_id),
+      render: text => <TypographyText strong>{text}</TypographyText>,
+    },
+    {
+      title: 'Username',
+      dataIndex: 'username',
+      key: 'username',
+      sorter: (a, b) => a.username.localeCompare(b.username),
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      sorter: (a, b) => a.email.localeCompare(b.email),
+      render: email => <TypographyText type="secondary">{email}</TypographyText>,
+    },
+    {
+      title: 'Full Name',
+      dataIndex: 'full_name',
+      key: 'full_name',
+      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
+    },
+    {
+      title: 'Phone',
+      dataIndex: 'phone',
+      key: 'phone',
+      sorter: (a, b) => a.phone.localeCompare(b.phone),
+    },
     {
       title: 'Profile Picture',
       dataIndex: 'profile_picture_url',
       key: 'profile_picture_url',
-      render: (url) => <img src={url} alt="Profile" style={{ width: 50, height: 50, borderRadius: '50%' }} />,
+      render: (url) => (
+        <img
+          src={url}
+          alt="Profile"
+          className={styles.profilePicture}
+          onError={(e) => (e.target.src = 'https://via.placeholder.com/50?text=User')}
+        />
+      ),
     },
     {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button icon={<EditOutlined />} onClick={() => {
-            setEditingUser(record);
-            userForm.setFieldsValue(record);
-          }} />
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => message.info('Edit user functionality is disabled per request')}
+            className={styles.editButton}
+          >
+            Edit
+          </Button>
           <Popconfirm
             title="Are you sure to delete this user?"
             onConfirm={() => handleDeleteUser(record.user_id)}
           >
-            <Button icon={<DeleteOutlined />} danger />
+            <Button
+              type="danger"
+              icon={<DeleteOutlined />}
+              className={styles.deleteButton}
+            >
+              Delete
+            </Button>
           </Popconfirm>
         </Space>
       ),
     },
   ];
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div>
-      <Title level={3}>Manage User</Title>
-      <Row gutter={[16, 16]}>
+    <div className={styles.container}>
+      <Row justify="space-between" align="middle" className={styles.header}>
+        <Col>
+          <Title level={2} className={styles.pageTitle}>
+            Manage Users
+          </Title>
+        </Col>
+        <Col>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={loadData}
+            loading={loading}
+            className={styles.refreshButton}
+          >
+            Refresh
+          </Button>
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]} className={styles.mainContent}>
         <Col xs={24}>
-          <Card className={styles.card}>
-            <Form
-              form={userForm}
-              layout="vertical"
-              onFinish={editingUser ? handleEditUser : handleAddUser}
-              style={{ marginBottom: 24 }}
-            >
-              <Row gutter={[16, 16]}>
-                <Col xs={24} md={6}>
-                  <Form.Item label="Username" name="username" rules={[{ required: true, message: 'Required' }]}>
-                    <Input placeholder="Enter username" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={6}>
-                  <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Required' }, { type: 'email', message: 'Invalid email' }]}>
-                    <Input placeholder="Enter email" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={6}>
-                  <Form.Item label="Full Name" name="full_name" rules={[{ required: true, message: 'Required' }]}>
-                    <Input placeholder="Enter full name" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={6}>
-                  <Form.Item label="Phone" name="phone" rules={[{ required: true, message: 'Required' }, { pattern: /^\d+$/, message: 'Must be a number' }]}>
-                    <Input placeholder="Enter phone number" />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Button type="primary" htmlType="submit">
-                {editingUser ? 'Update User' : 'Add User'}
-              </Button>
-              {editingUser && (
-                <Button onClick={() => { setEditingUser(null); userForm.resetFields(); }} style={{ marginLeft: 8 }}>
-                  Cancel
-                </Button>
-              )}
-            </Form>
-            <Table
-              columns={userColumns}
-              dataSource={users}
-              rowKey="user_id"
-              pagination={false}
-            />
+          <Card className={styles.tableCard}>
+            {loading ? (
+              <div className={styles.loading}>
+                <Spin size="large" />
+              </div>
+            ) : users.length === 0 ? (
+              <div className={styles.empty}>
+                <TypographyText>No users found</TypographyText>
+              </div>
+            ) : (
+              <Table
+                columns={userColumns}
+                dataSource={users}
+                rowKey="user_id"
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  pageSizeOptions: ['10', '20', '50'],
+                }}
+                rowClassName={styles.tableRow}
+                className={styles.table}
+              />
+            )}
           </Card>
         </Col>
       </Row>

@@ -55,7 +55,7 @@ const Routes = [
   { path: '/admin/manage_cinema/edit_cinema/:id', component: <Admin><AdminManageCinemaForm isEditMode={true} /></Admin> },
   { path: '/admin/manage_cinema/add_room', component: <Admin><AdminManageRoomForm isEditMode={false} /></Admin> },
   { path: '/admin/manage_cinema/edit_room/:id', component: <Admin><AdminManageRoomForm isEditMode={true} /></Admin> },
-  { path: '/admin/manage_seats', component: <Admin><AdminManageSeats /></Admin> },
+  { path: '/admin/manage_seats/edit_room/:roomId', component: <Admin><AdminManageSeats /></Admin> },
   { path: '/admin/manage_seats/add', component: <Admin><AdminManageSeatForm isEditMode={false} /></Admin> },
   { path: '/admin/manage_seats/edit/:id', component: <Admin><AdminManageSeatForm isEditMode={true} /></Admin> },
   { path: '/admin/manage_booking', component: <Admin><AdminManageBooking /></Admin> },

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, List, Button, Select, message } from 'antd';
+import { Card, Typography, Divider, Button, Select, message, Row, Col, Space } from 'antd';
+import { UserOutlined, VideoCameraOutlined, DollarOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import styles from './AdminManageBookingDetails.module.scss';
 import '../GlobalStyles.module.scss';
 
@@ -78,43 +79,184 @@ function AdminManageBookingDetails() {
     message.success(`Booking status updated to ${newStatus}`);
   };
 
+  const formatDateTime = (dateTime) => {
+    return new Date(dateTime).toLocaleString('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  };
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className={styles.loading}>Loading...</div>;
   }
 
   if (!booking) {
-    return <div>Booking not found</div>;
+    return <div className={styles.error}>Booking not found</div>;
   }
 
   return (
-    <div>
-      <Title level={3}>Booking Details - {booking.booking_id}</Title>
+    <div className={styles.container}>
+      <Title level={2} className={styles.pageTitle}>
+        Booking Details - {booking.booking_id}
+      </Title>
       <Card className={styles.card}>
-        <TypographyText><strong>User Name:</strong> {booking.user_name}</TypographyText><br />
-        <TypographyText><strong>User Email:</strong> {booking.user_email}</TypographyText><br />
-        <TypographyText><strong>User Phone:</strong> {booking.user_phone}</TypographyText><br />
-        <TypographyText><strong>Movie:</strong> {booking.movie_title}</TypographyText><br />
-        <TypographyText><strong>Cinema:</strong> {booking.cinema_name}</TypographyText><br />
-        <TypographyText><strong>Room:</strong> {booking.room_name}</TypographyText><br />
-        <TypographyText><strong>Showtime:</strong> {booking.start_time}</TypographyText><br />
-        <TypographyText><strong>Seats:</strong> {booking.seats.join(', ')}</TypographyText><br />
-        <TypographyText><strong>Total Price:</strong> ${booking.total_price}</TypographyText><br />
-        <TypographyText><strong>Coupon:</strong> {booking.coupon_code || 'N/A'} {booking.coupon_discount ? `(${booking.coupon_discount}% off)` : ''}</TypographyText><br />
-        <TypographyText><strong>Status:</strong> </TypographyText>
-        <Select
-          value={status}
-          onChange={handleStatusChange}
-          style={{ width: 150, marginLeft: 8 }}
-        >
-          <Option value="PENDING">Pending</Option>
-          <Option value="CONFIRMED">Confirmed</Option>
-          <Option value="CANCELLED">Cancelled</Option>
-        </Select><br />
-        <TypographyText><strong>Created At:</strong> {booking.created_at}</TypographyText><br />
-        <TypographyText><strong>Updated At:</strong> {booking.updated_at}</TypographyText><br />
-        <Button onClick={() => navigate('/admin/manage_booking')} style={{ marginTop: 16 }}>
-          Back to Bookings
-        </Button>
+        {/* User Information */}
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Title level={4} className={styles.sectionTitle}>
+            <UserOutlined className={styles.sectionIcon} /> User Information
+          </Title>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Name:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.user_name}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Email:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.user_email}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Phone:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.user_phone}</TypographyText>
+            </Col>
+          </Row>
+        </Space>
+
+        <Divider className={styles.divider} />
+
+        {/* Showtime Information */}
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Title level={4} className={styles.sectionTitle}>
+            <VideoCameraOutlined className={styles.sectionIcon} /> Showtime Information
+          </Title>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Movie:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.movie_title}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Cinema:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.cinema_name}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Room:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.room_name}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Showtime:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{formatDateTime(booking.start_time)}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Seats:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>{booking.seats.join(', ')}</TypographyText>
+            </Col>
+          </Row>
+        </Space>
+
+        <Divider className={styles.divider} />
+
+        {/* Payment Information */}
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Title level={4} className={styles.sectionTitle}>
+            <DollarOutlined className={styles.sectionIcon} /> Payment Information
+          </Title>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Total Price:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>${booking.total_price}</TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Coupon:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>
+                {booking.coupon_code || 'N/A'} {booking.coupon_discount ? `(${booking.coupon_discount}% off)` : ''}
+              </TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Status:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <Select
+                value={status}
+                onChange={handleStatusChange}
+                className={styles.statusSelect}
+              >
+                <Option value="PENDING">Pending</Option>
+                <Option value="CONFIRMED">Confirmed</Option>
+                <Option value="CANCELLED">Cancelled</Option>
+              </Select>
+            </Col>
+          </Row>
+        </Space>
+
+        <Divider className={styles.divider} />
+
+        {/* Timestamps */}
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Title level={4} className={styles.sectionTitle}>
+            <CalendarOutlined className={styles.sectionIcon} /> Timestamps
+          </Title>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Created At:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>
+                <ClockCircleOutlined className={styles.timeIcon} /> {formatDateTime(booking.created_at)}
+              </TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Updated At:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>
+                <ClockCircleOutlined className={styles.timeIcon} /> {formatDateTime(booking.updated_at)}
+              </TypographyText>
+            </Col>
+          </Row>
+        </Space>
+
+        <Row justify="end" style={{ marginTop: 24 }}>
+          <Button type="primary" className={styles.backButton} onClick={() => navigate('/admin/manage_booking')}>
+            Back to Bookings
+          </Button>
+        </Row>
       </Card>
     </div>
   );

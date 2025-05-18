@@ -1,5 +1,98 @@
-.card {
-    border-radius: 24px;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.container {
+  padding: 40px 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #14142b;
+}
+
+.refreshButton {
+  border-radius: 12px;
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+  height: 48px;
+  font-size: 16px;
+  padding: 0 24px;
+
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
   }
+}
+
+.mainContent {
+  margin-bottom: 40px;
+}
+
+.tableCard {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 16px;
+}
+
+.table {
+  .ant-table-thead > tr > th {
+    background-color: #f9f5ff;
+    color: #14142b;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .ant-table-tbody > tr > td {
+    border-bottom: 1px solid #e5e7eb;
+    color: #14142b;
+    font-size: 14px;
+  }
+}
+
+.tableRow {
+  &:hover > td {
+    background-color: #f9f5ff !important;
+  }
+}
+
+.profilePicture {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.editButton {
+  border-radius: 8px;
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
+}
+
+.deleteButton {
+  border-radius: 8px;
+  background-color: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #ffffff;
+
+  &:hover {
+    background-color: #d9363e;
+    border-color: #d9363e;
+  }
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 18px;
+  color: #6b7280;
+}

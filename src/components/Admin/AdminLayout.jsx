@@ -38,9 +38,6 @@ function AdminLayout({ children, handleLogout, navigate }) {
             <Menu.Item key="profile">
               <Link to="/admin/profile">Profile</Link>
             </Menu.Item>
-            <Menu.Item key="settings">
-              <Link to="/admin/settings">Settings</Link>
-            </Menu.Item>
             <Menu.Item key="manage_user">
               <Link to="/admin/manage_user">Manage User</Link>
             </Menu.Item>
@@ -53,14 +50,14 @@ function AdminLayout({ children, handleLogout, navigate }) {
             <Menu.Item key="manage_cinema">
               <Link to="/admin/manage_cinema">Manage Cinema</Link>
             </Menu.Item>
-            <Menu.Item key="manage_seats">
-              <Link to="/admin/manage_seats">Manage Seats</Link>
-            </Menu.Item>
             <Menu.Item key="manage_booking">
               <Link to="/admin/manage_booking">Manage Booking</Link>
             </Menu.Item>
             <Menu.Item key="manage_coupon">
               <Link to="/admin/manage_coupon">Manage Coupon</Link>
+            </Menu.Item>
+            <Menu.Item key="settings">
+              <Link to="/admin/settings">Settings</Link>
             </Menu.Item>
           </Menu>
         </Sider>
