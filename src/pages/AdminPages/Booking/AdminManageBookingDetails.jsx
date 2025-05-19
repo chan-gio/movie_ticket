@@ -93,7 +93,7 @@ function AdminManageBookingDetails() {
   return (
     <div className={styles.container}>
       <Title level={2} className={styles.pageTitle}>
-        Booking Details - {booking.booking_id}
+        Booking Details
       </Title>
       <Card className={styles.card}>
         {/* User Information */}

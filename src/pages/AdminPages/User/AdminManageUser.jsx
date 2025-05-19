@@ -1,20 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Button, Table, Space, Popconfirm, message, Typography, Spin } from 'antd';
-import { EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
-import styles from './AdminManageUser.module.scss';
-import '../GlobalStyles.module.scss';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Row,
+  Col,
+  Card,
+  Button,
+  Table,
+  Space,
+  Popconfirm,
+  message,
+  Typography,
+  Spin,
+} from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import UserService from "../../../services/UserService";
+import styles from "./AdminManageUser.module.scss";
+import "../GlobalStyles.module.scss";
 
 const { Title, Text: TypographyText } = Typography;
-
-// Mock API call to fetch users
-const fetchUsers = async () => {
-  // Simulate fetching data from the user_account table
-  return [
-    { user_id: 'u1', username: 'john_doe', email: 'john.doe@tickitz.com', full_name: 'John Doe', phone: '1234567890', profile_picture_url: 'https://i.pinimg.com/236x/08/35/0c/08350cafa4fabb8a6a1be2d9f18f2d88.jpg' },
-    { user_id: 'u2', username: 'jane_smith', email: 'jane.smith@tickitz.com', full_name: 'Jane Smith', phone: '0987654321', profile_picture_url: 'https://i.pinimg.com/236x/08/35/0c/08350cafa4fabb8a6a1be2d9f18f2d88.jpg' },
-  ];
-};
 
 function AdminManageUser() {
   const navigate = useNavigate();
@@ -28,78 +35,83 @@ function AdminManageUser() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await fetchUsers();
-      setUsers(data);
+      const data = await UserService.getAllUsers();
+      const activeUsers = data.filter((user) => !user.is_deleted);
+      setUsers(activeUsers);
     } catch (error) {
-      message.error('Failed to load users');
+      message.error(error.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteUser = (id) => {
-    setUsers(users.filter(user => user.user_id !== id));
-    message.success('User deleted successfully');
+  const handleDeleteUser = async (id) => {
+    try {
+      await UserService.deleteUser(id);
+      setUsers(users.filter((user) => user.user_id !== id));
+      message.success("User deleted successfully");
+    } catch (error) {
+      message.error(error.message || "Failed to delete user");
+    }
   };
 
   const userColumns = [
     {
-      title: 'ID',
-      dataIndex: 'user_id',
-      key: 'user_id',
-      sorter: (a, b) => a.user_id.localeCompare(b.user_id),
-      render: text => <TypographyText strong>{text}</TypographyText>,
-    },
-    {
-      title: 'Username',
-      dataIndex: 'username',
-      key: 'username',
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
       sorter: (a, b) => a.email.localeCompare(b.email),
-      render: email => <TypographyText type="secondary">{email}</TypographyText>,
+      render: (email) => (
+        <TypographyText type="secondary">{email}</TypographyText>
+      ),
     },
     {
-      title: 'Full Name',
-      dataIndex: 'full_name',
-      key: 'full_name',
+      title: "Full Name",
+      dataIndex: "full_name",
+      key: "full_name",
       sorter: (a, b) => a.full_name.localeCompare(b.full_name),
     },
     {
-      title: 'Phone',
-      dataIndex: 'phone',
-      key: 'phone',
+      title: "Phone",
+      dataIndex: "phone",
+      key: "phone",
       sorter: (a, b) => a.phone.localeCompare(b.phone),
     },
     {
-      title: 'Profile Picture',
-      dataIndex: 'profile_picture_url',
-      key: 'profile_picture_url',
+      title: "Profile Picture",
+      dataIndex: "profile_picture_url",
+      key: "profile_picture_url",
       render: (url) => (
         <img
           src={url}
           alt="Profile"
           className={styles.profilePicture}
-          onError={(e) => (e.target.src = 'https://via.placeholder.com/50?text=User')}
+          onError={(e) =>
+            (e.target.src = "https://via.placeholder.com/50?text=User")
+          }
         />
       ),
     },
     {
-      title: 'Actions',
-      key: 'actions',
+      title: "Actions",
+      key: "actions",
       render: (_, record) => (
         <Space>
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={() => message.info('Edit user functionality is disabled per request')}
+            onClick={() =>
+              navigate(`/admin/manage_user/details/${record.user_id}`)
+            }
             className={styles.editButton}
           >
-            Edit
+            View
           </Button>
           <Popconfirm
             title="Are you sure to delete this user?"
@@ -157,7 +169,7 @@ function AdminManageUser() {
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
-                  pageSizeOptions: ['10', '20', '50'],
+                  pageSizeOptions: ["10", "20", "50"],
                 }}
                 rowClassName={styles.tableRow}
                 className={styles.table}

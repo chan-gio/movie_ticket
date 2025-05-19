@@ -15,6 +15,7 @@ const AdminDashboard = lazy(() => import('../pages/AdminPages/Dashboard/AdminDas
 const AdminProfile = lazy(() => import('../pages/AdminPages/Profile/AdminProfile'));
 const AdminSettings = lazy(() => import('../pages/AdminPages/Setting/AdminSettings'));
 const AdminManageUser = lazy(() => import('../pages/AdminPages/User/AdminManageUser'));
+const AdminManageUserDetails = lazy(() => import('../pages/AdminPages/User/AdminManageUserDetails')); // Added
 const AdminManageMovie = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovie'));
 const AdminManageMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovieForm'));
 const AdminManageShowtime = lazy(() => import('../pages/AdminPages/Showtime/AdminManageShowtime'));
@@ -44,6 +45,7 @@ const Routes = [
   { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
   { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
   { path: '/admin/manage_user', component: <Admin><AdminManageUser /></Admin> },
+  { path: '/admin/manage_user/details/:id', component: <Admin><AdminManageUserDetails /></Admin> }, // Updated
   { path: '/admin/manage_movie', component: <Admin><AdminManageMovie /></Admin> },
   { path: '/admin/manage_movie/add', component: <Admin><AdminManageMovieForm isEditMode={false} /></Admin> },
   { path: '/admin/manage_movie/edit/:id', component: <Admin><AdminManageMovieForm isEditMode={true} /></Admin> },

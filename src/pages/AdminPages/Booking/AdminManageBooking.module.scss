@@ -119,7 +119,7 @@
   }
 
   /* Center Actions column content */
-  .ant-table-tbody > tr > td:last-child {
+  :global(.ant-table-tbody > tr > td:last-child) {
     display: flex;
     justify-content: center;
     align-items: center;

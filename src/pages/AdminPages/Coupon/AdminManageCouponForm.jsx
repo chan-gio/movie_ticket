@@ -26,6 +26,12 @@ function AdminManageCouponForm({ isEditMode }) {
   const [couponForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
+  // Watch form field values for real-time preview updates
+  const code = Form.useWatch("code", couponForm);
+  const discount = Form.useWatch("discount", couponForm);
+  const expiryDate = Form.useWatch("expiry_date", couponForm);
+  const isActive = Form.useWatch("is_active", couponForm);
+
   useEffect(() => {
     if (isEditMode) {
       loadCouponData();
@@ -114,7 +120,7 @@ function AdminManageCouponForm({ isEditMode }) {
                       message: "Must be between 0 and 100",
                     },
                   ]}
-                  normalize={(value) => (value ? Number(value) : value)} // Fix: Convert string to number
+                  normalize={(value) => (value ? Number(value) : value)}
                 >
                   <Input
                     type="number"
@@ -126,7 +132,11 @@ function AdminManageCouponForm({ isEditMode }) {
                   name="expiry_date"
                   rules={[{ required: true, message: "Required" }]}
                 >
-                  <DatePicker showTime style={{ width: "100%" }} />
+                  <DatePicker
+                    showTime
+                    style={{ width: "100%" }}
+                    format="YYYY-MM-DD HH:mm:ss"
+                  />
                 </Form.Item>
                 <Form.Item
                   label="Active"
@@ -135,15 +145,17 @@ function AdminManageCouponForm({ isEditMode }) {
                 >
                   <Switch />
                 </Form.Item>
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  {isEditMode ? "Update Coupon" : "Add Coupon"}
-                </Button>
-                <Button
-                  onClick={() => navigate("/admin/manage_coupon")}
-                  style={{ marginLeft: 8 }}
-                >
-                  Cancel
-                </Button>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" loading={loading}>
+                    {isEditMode ? "Update Coupon" : "Add Coupon"}
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/admin/manage_coupon")}
+                    style={{ marginLeft: 8 }}
+                  >
+                    Cancel
+                  </Button>
+                </Form.Item>
               </Form>
             </Card>
           </Col>
@@ -151,25 +163,21 @@ function AdminManageCouponForm({ isEditMode }) {
             <Card className={styles.card}>
               <Title level={4}>Coupon Preview</Title>
               <Text>
-                <strong>Code:</strong>{" "}
-                {couponForm.getFieldValue("code") || "Not Set"}
+                <strong>Code:</strong> {code || "Not Set"}
               </Text>
               <br />
               <Text>
                 <strong>Discount:</strong>{" "}
-                {couponForm.getFieldValue("discount") || "Not Set"}%
+                {discount ? `${discount}%` : "Not Set"}
               </Text>
               <br />
               <Text>
                 <strong>Expiry Date:</strong>{" "}
-                {couponForm
-                  .getFieldValue("expiry_date")
-                  ?.format("YYYY-MM-DD HH:mm:ss") || "Not Set"}
+                {expiryDate?.format("YYYY-MM-DD HH:mm:ss") || "Not Set"}
               </Text>
               <br />
               <Text>
-                <strong>Active:</strong>{" "}
-                {couponForm.getFieldValue("is_active") ? "Yes" : "No"}
+                <strong>Active:</strong> {isActive ? "Yes" : "No"}
               </Text>
             </Card>
           </Col>
