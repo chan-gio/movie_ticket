@@ -1,20 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Button, Table, Space, Popconfirm, message, Typography, Statistic, Spin, Tag } from 'antd';
-import { EditOutlined, DeleteOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
-import styles from './AdminManageCoupon.module.scss';
-import '../GlobalStyles.module.scss';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Row,
+  Col,
+  Card,
+  Button,
+  Table,
+  Space,
+  Popconfirm,
+  message,
+  Typography,
+  Statistic,
+  Spin,
+  Tag,
+} from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import CouponService from "../../../services/CouponService";
+import styles from "./AdminManageCoupon.module.scss";
+import "../GlobalStyles.module.scss";
 
 const { Title, Text: TypographyText } = Typography;
-
-// Mock API call to fetch coupons
-const fetchCoupons = async () => {
-  // Simulate fetching data from the coupon table
-  return [
-    { coupon_id: 'cp1', code: 'DISCOUNT10', discount: 10, expiry_date: '2025-12-31T23:59:59', is_active: true },
-    { coupon_id: 'cp2', code: 'SUMMER20', discount: 20, expiry_date: '2025-06-30T23:59:59', is_active: false },
-  ];
-};
 
 function AdminManageCoupon() {
   const navigate = useNavigate();
@@ -28,57 +38,57 @@ function AdminManageCoupon() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await fetchCoupons();
+      const data = await CouponService.getAllCoupons();
       setCoupons(data);
     } catch (error) {
-      message.error('Failed to load coupons');
+      message.error(error.message || "Failed to load coupons");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteCoupon = (id) => {
-    setCoupons(coupons.filter(coupon => coupon.coupon_id !== id));
-    message.success('Coupon deleted successfully');
+  const handleDeleteCoupon = async (id) => {
+    try {
+      await CouponService.forceDeleteCoupon(id);
+      setCoupons(coupons.filter((coupon) => coupon.coupon_id !== id));
+      message.success("Coupon deleted successfully");
+    } catch (error) {
+      message.error(error.message || "Failed to delete coupon");
+    }
   };
 
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString('en-GB', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
+    return new Date(dateTime).toLocaleString("en-GB", {
+      dateStyle: "medium",
+      timeStyle: "short",
     });
   };
 
   const couponColumns = [
     {
-      title: 'ID',
-      dataIndex: 'coupon_id',
-      key: 'coupon_id',
-      sorter: (a, b) => a.coupon_id.localeCompare(b.coupon_id),
-      render: text => <TypographyText strong>{text}</TypographyText>,
-    },
-    {
-      title: 'Code',
-      dataIndex: 'code',
-      key: 'code',
+      title: "Code",
+      dataIndex: "code",
+      key: "code",
       sorter: (a, b) => a.code.localeCompare(b.code),
     },
     {
-      title: 'Discount (%)',
-      dataIndex: 'discount',
-      key: 'discount',
+      title: "Discount (%)",
+      dataIndex: "discount",
+      key: "discount",
       sorter: (a, b) => a.discount - b.discount,
-      render: discount => <TypographyText type="success">{discount}%</TypographyText>,
+      render: (discount) => (
+        <TypographyText type="success">{discount}%</TypographyText>
+      ),
     },
     {
-      title: 'Expiry Date',
-      dataIndex: 'expiry_date',
-      key: 'expiry_date',
-      render: date => {
+      title: "Expiry Date",
+      dataIndex: "expiry_date",
+      key: "expiry_date",
+      render: (date) => {
         const expiryDate = new Date(date);
         const isExpired = expiryDate < new Date();
         return (
-          <TypographyText type={isExpired ? 'danger' : 'secondary'}>
+          <TypographyText type={isExpired ? "danger" : "secondary"}>
             {formatDateTime(date)}
           </TypographyText>
         );
@@ -86,25 +96,25 @@ function AdminManageCoupon() {
       sorter: (a, b) => new Date(a.expiry_date) - new Date(b.expiry_date),
     },
     {
-      title: 'Active',
-      dataIndex: 'is_active',
-      key: 'is_active',
+      title: "Active",
+      dataIndex: "is_active",
+      key: "is_active",
       sorter: (a, b) => Number(a.is_active) - Number(b.is_active),
-      render: active => (
-        <Tag color={active ? 'green' : 'red'}>
-          {active ? 'Yes' : 'No'}
-        </Tag>
+      render: (active) => (
+        <Tag color={active ? "green" : "red"}>{active ? "Yes" : "No"}</Tag>
       ),
     },
     {
-      title: 'Actions',
-      key: 'actions',
+      title: "Actions",
+      key: "actions",
       render: (_, record) => (
         <Space>
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={() => navigate(`/admin/manage_coupon/edit/${record.coupon_id}`)}
+            onClick={() =>
+              navigate(`/admin/manage_coupon/edit/${record.coupon_id}`)
+            }
             className={styles.editButton}
           >
             Edit
@@ -139,7 +149,7 @@ function AdminManageCoupon() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => navigate('/admin/manage_coupon/add')}
+              onClick={() => navigate("/admin/manage_coupon/add")}
               className={styles.addButton}
             >
               Add Coupon
@@ -160,9 +170,11 @@ function AdminManageCoupon() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Total Coupons</span>}
+              title={
+                <span className={styles.statisticTitle}>Total Coupons</span>
+              }
               value={coupons.length}
-              valueStyle={{ color: '#5f2eea' }}
+              valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
         </Col>
@@ -184,7 +196,7 @@ function AdminManageCoupon() {
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
-                  pageSizeOptions: ['10', '20', '50'],
+                  pageSizeOptions: ["10", "20", "50"],
                 }}
                 rowClassName={styles.tableRow}
                 className={styles.table}
