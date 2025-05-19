@@ -7,7 +7,7 @@ const ShowtimeService = {
     try {
       const response = await api.get("/showtimes");
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || "Failed to fetch showtimes");
       }
@@ -23,7 +23,7 @@ const ShowtimeService = {
     try {
       const response = await api.post("/showtimes", showtimeData);
       if (response.data.code === 201) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || "Failed to create showtime");
       }
@@ -39,7 +39,7 @@ const ShowtimeService = {
     try {
       const response = await api.get(`/showtimes/${showtimeId}`);
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || "Failed to fetch showtime");
       }
@@ -54,7 +54,7 @@ const ShowtimeService = {
     try {
       const response = await api.get(`/showtimes/movieId/${movieId}`);
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || "Failed to fetch showtime");
       }
@@ -70,7 +70,7 @@ const ShowtimeService = {
     try {
       const response = await api.put(`/showtimes/${showtimeId}`, showtimeData);
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || "Failed to update showtime");
       }
