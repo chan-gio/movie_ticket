@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useParams, Link } from "react-router-dom";
 import { Typography } from "antd";
 import styles from "./MovieDetails.module.scss";

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Row, Col, Typography, Spin } from "antd";
 import { FrownOutlined } from "@ant-design/icons";
@@ -51,7 +50,7 @@ export default function Showtime({ movieId }) {
   useEffect(() => {
     const fetchShowtimes = async () => {
       try {
-        const response = await ShowtimeService.getShowtimeByMovieId(movieId);
+        const response = await ShowtimeService.getShowTimesByMovieId(movieId);
         const data = response.data; // Access the 'data' array from response
         const formattedShowtimes = formatShowtimes(data);
         setShowtimes(formattedShowtimes);

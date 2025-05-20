@@ -64,7 +64,7 @@ const ShowTimeService = {
    */
   getShowTimesByMovieId: async (movieId) => {
     try {
-      const response = await api.get(`/showtimes/movie/${movieId}`);
+      const response = await api.get(`/showtimes/movieId/${movieId}`);
       if (response.data.code === 200) {
         return response.data.data || [];
       }
