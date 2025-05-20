@@ -111,11 +111,7 @@
   align-items: center;
 }
 
-.barcode {
-  width: 50px;
-  height: 200px;
-  margin: 5px 0;
-}
+
 
 .buttons {
   display: flex;
@@ -153,8 +149,12 @@
     justify-content: center; /* Ensure centering on mobile */
   }
 
-  .barcode {
-    width: 40px; /* Smaller barcode size on mobile */
-    height: 160px;
+  :global(.barcode) {
+    width: auto !important;
   }
+}
+
+:global(.ant-col-md-16){
+  max-width: none !important;
+  flex: none;
 }

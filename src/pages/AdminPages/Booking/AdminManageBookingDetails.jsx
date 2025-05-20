@@ -63,7 +63,7 @@ function AdminManageBookingDetails() {
       setBooking({
         ...booking,
         status: newStatus,
-        updated_at: new Date().toISOString(),
+        updated_at: updatedBooking.updated_at || new Date().toISOString(),
       });
       message.success(`Booking status updated to ${newStatus}`);
     } catch (error) {
@@ -72,10 +72,12 @@ function AdminManageBookingDetails() {
   };
 
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return dateTime
+      ? new Date(dateTime).toLocaleString("en-GB", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : "N/A";
   };
 
   if (loading) {
@@ -107,7 +109,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.user.full_name}
+                {booking.user?.full_name || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -117,7 +119,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.user.email}
+                {booking.user?.email || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -127,7 +129,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.user.phone || "N/A"}
+                {booking.user?.phone || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -147,17 +149,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.showtime.movie.title}
-              </TypographyText>
-            </Col>
-          </Row>
-          <Row>
-            <Col span={8}>
-              <TypographyText className={styles.label}>Cinema:</TypographyText>
-            </Col>
-            <Col span={16}>
-              <TypographyText className={styles.value}>
-                {booking.showtime.room?.cinema_name || "N/A"}
+                {booking.showtime?.movie?.title || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -167,7 +159,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.showtime.room?.room_name || "N/A"}
+                {booking.showtime?.room_id || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -179,7 +171,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {formatDateTime(booking.showtime.start_time)}
+                {formatDateTime(booking.showtime?.start_time)}
               </TypographyText>
             </Col>
           </Row>
@@ -189,9 +181,9 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.bookingSeats
-                  ? booking.bookingSeats.map((seat) => seat.seat_id).join(", ")
-                  : "N/A"}
+                {booking.booking_seats
+                  ?.map((seat) => seat.seat_id)
+                  .join(", ") || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -213,7 +205,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.total_price.toLocaleString("vi-VN")} VND
+                {(booking.total_price || 0).toLocaleString("vi-VN")} VND
               </TypographyText>
             </Col>
           </Row>

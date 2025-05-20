@@ -1,17 +1,30 @@
 import api from "./api"; // Import the configured Axios instance
 
 const UserService = {
-  // Fetch all users
-  getAllUsers: async () => {
+  // Fetch all users with pagination
+  getAllUsers: async (page = 1, perPage = 10) => {
     try {
-      const response = await api.get("/users");
-      if (response.data.code === 200) {
-        return response.data.data;
+      const response = await api.get("/users", {
+        params: { page, per_page: perPage },
+      });
+      if (response.data) {
+        return {
+          data: response.data.data.data, // Extract the user array from paginated response
+          pagination: {
+            current: response.data.data.current_page,
+            pageSize: response.data.data.per_page,
+            total: response.data.data.total,
+          },
+        };
       } else {
         throw new Error(response.data.message || "Failed to fetch users");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to fetch users");
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to fetch users. Please try again later."
+          : error.response?.data?.message || "Failed to fetch users";
+      throw new Error(message);
     }
   },
 
@@ -19,13 +32,17 @@ const UserService = {
   getUserById: async (userId) => {
     try {
       const response = await api.get(`/users/${userId}`);
-      if (response.data.code === 200) {
+      if (response.data) {
         return response.data.data;
       } else {
         throw new Error(response.data.message || "Failed to fetch user");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to fetch user");
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to fetch user. Please try again later."
+          : error.response?.data?.message || "Failed to fetch user";
+      throw new Error(message);
     }
   },
 
@@ -33,13 +50,17 @@ const UserService = {
   createUser: async (userData) => {
     try {
       const response = await api.post("/users", userData);
-      if (response.data.code === 201) {
+      if (response.data) {
         return response.data.data;
       } else {
         throw new Error(response.data.message || "Failed to create user");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to create user");
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to create user. Please try again later."
+          : error.response?.data?.message || "Failed to create user";
+      throw new Error(message);
     }
   },
 
@@ -47,13 +68,17 @@ const UserService = {
   updateUser: async (userId, userData) => {
     try {
       const response = await api.put(`/users/${userId}`, userData);
-      if (response.data.code === 200) {
+      if (response.data) {
         return response.data.data;
       } else {
         throw new Error(response.data.message || "Failed to update user");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to update user");
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to update user. Please try again later."
+          : error.response?.data?.message || "Failed to update user";
+      throw new Error(message);
     }
   },
 
@@ -61,13 +86,17 @@ const UserService = {
   deleteUser: async (userId) => {
     try {
       const response = await api.delete(`/users/${userId}`);
-      if (response.data.code === 200) {
+      if (response.data) {
         return true;
       } else {
         throw new Error(response.data.message || "Failed to delete user");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to delete user");
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to delete user. Please try again later."
+          : error.response?.data?.message || "Failed to delete user";
+      throw new Error(message);
     }
   },
 };

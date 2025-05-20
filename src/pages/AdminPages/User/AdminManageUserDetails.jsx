@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, Typography, Divider, Button, Row, Col, Space, Spin } from "antd";
+import {
+  Card,
+  Typography,
+  Divider,
+  Button,
+  Row,
+  Col,
+  Space,
+  Spin,
+  message,
+} from "antd";
 import {
   UserOutlined,
   CalendarOutlined,
@@ -43,6 +53,12 @@ function AdminManageUserDetails() {
           dateStyle: "medium",
           timeStyle: "short",
         })
+      : "N/A";
+  };
+
+  const formatDate = (date) => {
+    return date
+      ? new Date(date).toLocaleDateString("en-GB", { dateStyle: "medium" })
       : "N/A";
   };
 
@@ -110,6 +126,28 @@ function AdminManageUserDetails() {
             <Col span={16}>
               <TypographyText className={styles.value}>
                 {user.phone || "N/A"}
+              </TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>Role:</TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>
+                {user.role || "USER"}
+              </TypographyText>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={8}>
+              <TypographyText className={styles.label}>
+                Date of Birth:
+              </TypographyText>
+            </Col>
+            <Col span={16}>
+              <TypographyText className={styles.value}>
+                {formatDate(user.dob)}
               </TypographyText>
             </Col>
           </Row>

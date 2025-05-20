@@ -19,7 +19,9 @@ const NowShowing = () => {
   useEffect(() => {
     const fetchNowShowingMovies = async () => {
       try {
-        const movies = await MovieService.getNowShowing();
+        const response = await MovieService.getNowShowing();
+        // Access the nested data array
+        const movies = response.data; // response.data is the array of movies
         // Map API response to match MovieCard expected props
         const formattedMovies = movies.map((movie) => ({
           id: movie.movie_id, // Map movie_id to id

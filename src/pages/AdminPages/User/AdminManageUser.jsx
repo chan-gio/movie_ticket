@@ -26,18 +26,28 @@ const { Title, Text: TypographyText } = Typography;
 function AdminManageUser() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadData(pagination.current, pagination.pageSize);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const data = await UserService.getAllUsers();
-      const activeUsers = data.filter((user) => !user.is_deleted);
-      setUsers(activeUsers);
+      const response = await UserService.getAllUsers(page, pageSize);
+
+      setUsers(response.data);
+      setPagination({
+        current: response.pagination.current,
+        pageSize: response.pagination.pageSize,
+        total: response.pagination.total,
+      });
     } catch (error) {
       message.error(error.message || "Failed to load users");
     } finally {
@@ -50,9 +60,15 @@ function AdminManageUser() {
       await UserService.deleteUser(id);
       setUsers(users.filter((user) => user.user_id !== id));
       message.success("User deleted successfully");
+      // Reload data to reflect accurate pagination
+      loadData(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error(error.message || "Failed to delete user");
     }
+  };
+
+  const handleTableChange = (pagination) => {
+    loadData(pagination.current, pagination.pageSize);
   };
 
   const userColumns = [
@@ -82,6 +98,13 @@ function AdminManageUser() {
       dataIndex: "phone",
       key: "phone",
       sorter: (a, b) => a.phone.localeCompare(b.phone),
+    },
+    {
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
+      sorter: (a, b) => a.role.localeCompare(b.role),
+      render: (role) => role || "USER", // Default to "USER" if null
     },
     {
       title: "Profile Picture",
@@ -142,7 +165,7 @@ function AdminManageUser() {
           <Button
             type="primary"
             icon={<ReloadOutlined />}
-            onClick={loadData}
+            onClick={() => loadData(pagination.current, pagination.pageSize)}
             loading={loading}
             className={styles.refreshButton}
           >
@@ -166,11 +189,8 @@ function AdminManageUser() {
                 columns={userColumns}
                 dataSource={users}
                 rowKey="user_id"
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
-                }}
+                pagination={pagination}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
               />

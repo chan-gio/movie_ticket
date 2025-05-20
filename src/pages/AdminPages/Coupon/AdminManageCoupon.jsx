@@ -29,17 +29,27 @@ const { Title, Text: TypographyText } = Typography;
 function AdminManageCoupon() {
   const navigate = useNavigate();
   const [coupons, setCoupons] = useState([]);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadData(pagination.current, pagination.pageSize);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const data = await CouponService.getAllCoupons();
-      setCoupons(data);
+      const response = await CouponService.getAllCoupons(page, pageSize);
+      setCoupons(response.data);
+      setPagination({
+        current: response.pagination.current,
+        pageSize: response.pagination.pageSize,
+        total: response.pagination.total,
+      });
     } catch (error) {
       message.error(error.message || "Failed to load coupons");
     } finally {
@@ -47,21 +57,36 @@ function AdminManageCoupon() {
     }
   };
 
-  const handleDeleteCoupon = async (id) => {
+  const handleSoftDeleteCoupon = async (id) => {
+    try {
+      await CouponService.softDeleteCoupon(id);
+      message.success("Coupon deactivated successfully");
+      loadData(pagination.current, pagination.pageSize);
+    } catch (error) {
+      message.error(error.message || "Failed to deactivate coupon");
+    }
+  };
+
+  const handleHardDeleteCoupon = async (id) => {
     try {
       await CouponService.forceDeleteCoupon(id);
-      setCoupons(coupons.filter((coupon) => coupon.coupon_id !== id));
       message.success("Coupon deleted successfully");
+      loadData(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error(error.message || "Failed to delete coupon");
     }
   };
 
+  const handleTableChange = (pagination) => {
+    loadData(pagination.current, pagination.pageSize);
+  };
+
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return dateTime
+      ? new Date(dateTime).toLocaleString("en-GB", {
+          dateStyle: "medium",
+        })
+      : "N/A";
   };
 
   const couponColumns = [
@@ -119,9 +144,23 @@ function AdminManageCoupon() {
           >
             Edit
           </Button>
+          {record.is_active && (
+            <Popconfirm
+              title="Are you sure to deactivate this coupon?"
+              onConfirm={() => handleSoftDeleteCoupon(record.coupon_id)}
+            >
+              <Button
+                type="default"
+                icon={<DeleteOutlined />}
+                className={styles.deactivateButton}
+              >
+                Deactivate
+              </Button>
+            </Popconfirm>
+          )}
           <Popconfirm
-            title="Are you sure to delete this coupon?"
-            onConfirm={() => handleDeleteCoupon(record.coupon_id)}
+            title="Are you sure to permanently delete this coupon?"
+            onConfirm={() => handleHardDeleteCoupon(record.coupon_id)}
           >
             <Button
               type="danger"
@@ -157,7 +196,7 @@ function AdminManageCoupon() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={loadData}
+              onClick={() => loadData(pagination.current, pagination.pageSize)}
               loading={loading}
               className={styles.refreshButton}
             >
@@ -173,7 +212,7 @@ function AdminManageCoupon() {
               title={
                 <span className={styles.statisticTitle}>Total Coupons</span>
               }
-              value={coupons.length}
+              value={pagination.total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
@@ -193,11 +232,8 @@ function AdminManageCoupon() {
                 columns={couponColumns}
                 dataSource={coupons}
                 rowKey="coupon_id"
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
-                }}
+                pagination={pagination}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
               />

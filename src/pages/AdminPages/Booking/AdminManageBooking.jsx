@@ -24,19 +24,27 @@ const { Title, Text: TypographyText } = Typography;
 function AdminManageBooking() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadData(pagination.current, pagination.pageSize);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const data = await BookingService.getAllBookings();
-      // Filter out soft-deleted bookings
-      const activeBookings = data.filter((booking) => !booking.is_deleted);
-      setBookings(activeBookings);
+      const response = await BookingService.getAllBookings(page, pageSize);
+      setBookings(response.data);
+      setPagination({
+        current: response.pagination.current,
+        pageSize: response.pagination.pageSize,
+        total: response.pagination.total,
+      });
     } catch (error) {
       message.error(error.message || "Failed to load bookings");
     } finally {
@@ -44,36 +52,27 @@ function AdminManageBooking() {
     }
   };
 
-  const handleCancelBooking = async (id) => {
+  const handleDeleteBooking = async (id) => {
     try {
-      // Update booking status to CANCELLED
-      const updatedBooking = await BookingService.updateBookingStatus(
-        id,
-        "CANCELLED"
-      );
-      // Update local state to reflect the new status
-      setBookings(
-        bookings.map((booking) =>
-          booking.booking_id === id
-            ? {
-                ...booking,
-                status: "CANCELLED",
-                updated_at: new Date().toISOString(),
-              }
-            : booking
-        )
-      );
-      message.success("Booking cancelled successfully");
+      await BookingService.deleteBooking(id);
+      message.success("Booking deleted successfully");
+      loadData(pagination.current, pagination.pageSize); // Reload to update pagination
     } catch (error) {
-      message.error(error.message || "Failed to cancel booking");
+      message.error(error.message || "Failed to delete booking");
     }
   };
 
+  const handleTableChange = (pagination) => {
+    loadData(pagination.current, pagination.pageSize);
+  };
+
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return dateTime
+      ? new Date(dateTime).toLocaleString("en-GB", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : "N/A";
   };
 
   const bookingColumns = [
@@ -81,34 +80,27 @@ function AdminManageBooking() {
       title: "User",
       dataIndex: ["user", "full_name"],
       key: "user_name",
-      sorter: (a, b) => a.user.full_name.localeCompare(b.user.full_name),
+      sorter: (a, b) =>
+        (a.user?.full_name || "").localeCompare(b.user?.full_name || ""),
+      render: (_, record) => record.user?.full_name || "N/A",
     },
     {
       title: "Movie",
       dataIndex: ["showtime", "movie", "title"],
       key: "movie_title",
       sorter: (a, b) =>
-        a.showtime.movie.title.localeCompare(b.showtime.movie.title),
-    },
-    {
-      title: "Cinema",
-      dataIndex: ["showtime", "room", "cinema_name"],
-      key: "cinema_name",
-      sorter: (a, b) =>
-        (a.showtime.room?.cinema_name || "").localeCompare(
-          b.showtime.room?.cinema_name || ""
+        (a.showtime?.movie?.title || "").localeCompare(
+          b.showtime?.movie?.title || ""
         ),
-      render: (_, record) => record.showtime.room?.cinema_name || "N/A",
+      render: (_, record) => record.showtime?.movie?.title || "N/A",
     },
     {
       title: "Room",
-      dataIndex: ["showtime", "room", "room_name"],
-      key: "room_name",
+      dataIndex: ["showtime", "room_id"],
+      key: "room_id",
       sorter: (a, b) =>
-        (a.showtime.room?.room_name || "").localeCompare(
-          b.showtime.room?.room_name || ""
-        ),
-      render: (_, record) => record.showtime.room?.room_name || "N/A",
+        (a.showtime?.room_id || "").localeCompare(b.showtime?.room_id || ""),
+      render: (_, record) => record.showtime?.room_id || "N/A",
     },
     {
       title: "Showtime",
@@ -116,23 +108,24 @@ function AdminManageBooking() {
       key: "start_time",
       render: (text) => formatDateTime(text),
       sorter: (a, b) =>
-        new Date(a.showtime.start_time) - new Date(b.showtime.start_time),
+        new Date(a.showtime?.start_time || 0) -
+        new Date(b.showtime?.start_time || 0),
     },
     {
       title: "Seats",
-      dataIndex: ["bookingSeats"],
+      dataIndex: "booking_seats",
       key: "seats",
       render: (bookingSeats) =>
         bookingSeats?.map((seat) => seat.seat_id).join(", ") || "N/A",
     },
     {
       title: "Total Price (VND)",
-      dataIndex: "total_price",
+      dataIndex: " tapas",
       key: "total_price",
-      sorter: (a, b) => a.total_price - b.total_price,
+      sorter: (a, b) => (a.total_price || 0) - (b.total_price || 0),
       render: (price) => (
         <TypographyText type="success">
-          {price.toLocaleString("vi-VN")} VND
+          {(price || 0).toLocaleString("vi-VN")} VND
         </TypographyText>
       ),
     },
@@ -140,7 +133,7 @@ function AdminManageBooking() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      sorter: (a, b) => (a.status || "").souhaite(b.status || ""),
       render: (status) => {
         let color;
         switch (status) {
@@ -156,7 +149,7 @@ function AdminManageBooking() {
           default:
             color = "default";
         }
-        return <Tag color={color}>{status}</Tag>;
+        return <Tag color={color}>{status || "N/A"}</Tag>;
       },
     },
     {
@@ -174,20 +167,18 @@ function AdminManageBooking() {
           >
             View
           </Button>
-          {record.status !== "CANCELLED" && (
-            <Popconfirm
-              title="Are you sure to cancel this booking?"
-              onConfirm={() => handleCancelBooking(record.booking_id)}
+          <Popconfirm
+            title="Are you sure to delete this booking?"
+            onConfirm={() => handleDeleteBooking(record.booking_id)}
+          >
+            <Button
+              type="danger"
+              icon={<DeleteOutlined />}
+              className={styles.cancelButton}
             >
-              <Button
-                type="danger"
-                icon={<DeleteOutlined />}
-                className={styles.cancelButton}
-              >
-                Cancel
-              </Button>
-            </Popconfirm>
-          )}
+              Delete
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -205,7 +196,7 @@ function AdminManageBooking() {
           <Button
             type="primary"
             icon={<ReloadOutlined />}
-            onClick={loadData}
+            onClick={() => loadData(pagination.current, pagination.pageSize)}
             loading={loading}
             className={styles.refreshButton}
           >
@@ -218,7 +209,7 @@ function AdminManageBooking() {
           <Card className={styles.statisticCard}>
             <Statistic
               title="Total Bookings"
-              value={bookings.length}
+              value={pagination.total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
@@ -238,11 +229,8 @@ function AdminManageBooking() {
                 columns={bookingColumns}
                 dataSource={bookings}
                 rowKey="booking_id"
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
-                }}
+                pagination={pagination}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
                 scroll={{ x: "max-content" }}

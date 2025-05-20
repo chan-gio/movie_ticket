@@ -35,8 +35,10 @@ function AdminManageCouponForm({ isEditMode }) {
   useEffect(() => {
     if (isEditMode) {
       loadCouponData();
+    } else {
+      couponForm.setFieldsValue({ is_active: true }); // Default for new coupons
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, couponForm]);
 
   const loadCouponData = async () => {
     setLoading(true);
@@ -59,7 +61,7 @@ function AdminManageCouponForm({ isEditMode }) {
     try {
       const couponData = {
         ...values,
-        expiry_date: values.expiry_date.format("YYYY-MM-DDTHH:mm:ss"),
+        expiry_date: values.expiry_date.format("YYYY-MM-DD"),
       };
       await CouponService.createCoupon(couponData);
       couponForm.resetFields();
@@ -74,7 +76,7 @@ function AdminManageCouponForm({ isEditMode }) {
     try {
       const couponData = {
         ...values,
-        expiry_date: values.expiry_date.format("YYYY-MM-DDTHH:mm:ss"),
+        expiry_date: values.expiry_date.format("YYYY-MM-DD"),
       };
       await CouponService.updateCoupon(id, couponData);
       couponForm.resetFields();
@@ -132,11 +134,7 @@ function AdminManageCouponForm({ isEditMode }) {
                   name="expiry_date"
                   rules={[{ required: true, message: "Required" }]}
                 >
-                  <DatePicker
-                    showTime
-                    style={{ width: "100%" }}
-                    format="YYYY-MM-DD HH:mm:ss"
-                  />
+                  <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
                 </Form.Item>
                 <Form.Item
                   label="Active"
@@ -173,7 +171,7 @@ function AdminManageCouponForm({ isEditMode }) {
               <br />
               <Text>
                 <strong>Expiry Date:</strong>{" "}
-                {expiryDate?.format("YYYY-MM-DD HH:mm:ss") || "Not Set"}
+                {expiryDate?.format("YYYY-MM-DD") || "Not Set"}
               </Text>
               <br />
               <Text>
