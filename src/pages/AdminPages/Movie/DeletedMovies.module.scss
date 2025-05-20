@@ -13,7 +13,7 @@
   color: #14142b;
 }
 
-.addButton, .refreshButton, .viewDeletedButton {
+.refreshButton, .backButton {
   border-radius: 12px;
   background-color: #5f2eea;
   border-color: #5f2eea;
@@ -93,26 +93,15 @@
   }
 }
 
-.editButton {
+.restoreButton {
   border-radius: 8px;
-  background-color: #5f2eea;
-  border-color: #5f2eea;
-
-  &:hover {
-    background-color: #3f1dc7;
-    border-color: #3f1dc7;
-  }
-}
-
-.deleteButton {
-  border-radius: 8px;
-  background-color: #ff4d4f;
-  border-color: #ff4d4f;
+  background-color: #52c41a;
+  border-color: #52c41a;
   color: #ffffff;
 
   &:hover {
-    background-color: #d9363e;
-    border-color: #d9363e;
+    background-color: #389e0d;
+    border-color: #389e0d;
   }
 }
 

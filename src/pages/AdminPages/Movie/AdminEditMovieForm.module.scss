@@ -1,0 +1,77 @@
+.container {
+  padding: 40px 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #14142b;
+}
+
+.mainContent {
+  margin-top: 16px;
+}
+
+.form {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton {
+  border-radius: 12px;
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+  height: 48px;
+  font-size: 16px;
+  padding: 0 24px;
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
+}
+
+.uploadButton {
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.previewContainer {
+  position: relative;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.previewImage {
+  max-width: 200px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer; // Indicate clickable for preview
+}
+
+.removeIcon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 20px;
+  color: #ff4d4f;
+  cursor: pointer;
+  &:hover {
+    color: #d9363e;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}

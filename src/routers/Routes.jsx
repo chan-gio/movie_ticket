@@ -15,9 +15,11 @@ const AdminDashboard = lazy(() => import('../pages/AdminPages/Dashboard/AdminDas
 const AdminProfile = lazy(() => import('../pages/AdminPages/Profile/AdminProfile'));
 const AdminSettings = lazy(() => import('../pages/AdminPages/Setting/AdminSettings'));
 const AdminManageUser = lazy(() => import('../pages/AdminPages/User/AdminManageUser'));
-const AdminManageUserDetails = lazy(() => import('../pages/AdminPages/User/AdminManageUserDetails')); // Added
+const AdminManageUserDetails = lazy(() => import('../pages/AdminPages/User/AdminManageUserDetails'));
 const AdminManageMovie = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovie'));
-const AdminManageMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovieForm'));
+const AdminAddMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminAddMovieForm'));
+const AdminEditMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminEditMovieForm'));
+const DeletedMovies = lazy(() => import('../pages/AdminPages/Movie/DeletedMovies')); // New
 const AdminManageShowtime = lazy(() => import('../pages/AdminPages/Showtime/AdminManageShowtime'));
 const AdminManageShowtimeForm = lazy(() => import('../pages/AdminPages/Showtime/AdminManageShowtimeForm'));
 const AdminManageCinema = lazy(() => import('../pages/AdminPages/Cinema/AdminManageCinema'));
@@ -45,10 +47,11 @@ const Routes = [
   { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
   { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
   { path: '/admin/manage_user', component: <Admin><AdminManageUser /></Admin> },
-  { path: '/admin/manage_user/details/:id', component: <Admin><AdminManageUserDetails /></Admin> }, // Updated
+  { path: '/admin/manage_user/details/:id', component: <Admin><AdminManageUserDetails /></Admin> },
   { path: '/admin/manage_movie', component: <Admin><AdminManageMovie /></Admin> },
-  { path: '/admin/manage_movie/add', component: <Admin><AdminManageMovieForm isEditMode={false} /></Admin> },
-  { path: '/admin/manage_movie/edit/:id', component: <Admin><AdminManageMovieForm isEditMode={true} /></Admin> },
+  { path: '/admin/manage_movie/add', component: <Admin><AdminAddMovieForm /></Admin> },
+  { path: '/admin/manage_movie/edit/:id', component: <Admin><AdminEditMovieForm /></Admin> },
+  { path: '/admin/deleted_movies', component: <Admin><DeletedMovies /></Admin> }, // New
   { path: '/admin/manage_showtime', component: <Admin><AdminManageShowtime /></Admin> },
   { path: '/admin/manage_showtime/add', component: <Admin><AdminManageShowtimeForm isEditMode={false} /></Admin> },
   { path: '/admin/manage_showtime/edit/:id', component: <Admin><AdminManageShowtimeForm isEditMode={true} /></Admin> },

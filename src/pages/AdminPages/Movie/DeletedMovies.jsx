@@ -2,19 +2,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Button, Table, Space, Popconfirm, Typography, Statistic, Spin, Image } from 'antd';
-import { EditOutlined, DeleteOutlined, ReloadOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
+import { ReloadOutlined, UndoOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
-import styles from './AdminManageMovie.module.scss';
+import styles from './DeletedMovies.module.scss';
 import '../GlobalStyles.module.scss';
 import MovieService from '../../../services/MovieService';
 
 const { Title, Text: TypographyText } = Typography;
 
-function AdminManageMovie() {
+function DeletedMovies() {
   const navigate = useNavigate();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -23,10 +23,10 @@ function AdminManageMovie() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const response = await MovieService.getAllMovies();
-      setMovies(response.data);
+      const response = await MovieService.getDeletedMovies();
+      setMovies(response?.data || []);
     } catch (error) {
-      toast.error('Failed to load movies', {
+      toast.error(error.message || 'Failed to load deleted movies', {
         position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
@@ -40,12 +40,12 @@ function AdminManageMovie() {
     }
   };
 
-  const handleDeleteMovie = async (id) => {
-    setDeleting(true);
+  const handleRestoreMovie = async (id) => {
+    setRestoring(true);
     try {
-      await MovieService.softDeleteMovie(id);
+      await MovieService.restoreMovie(id);
       setMovies(movies.filter(movie => movie.movie_id !== id));
-      toast.success('Movie deleted successfully', {
+      toast.success('Movie restored successfully', {
         position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
@@ -55,7 +55,7 @@ function AdminManageMovie() {
         progressStyle: { background: '#5f2eea' },
       });
     } catch (error) {
-      toast.error('Failed to delete movie', {
+      toast.error(error.message || 'Failed to restore movie', {
         position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
@@ -65,7 +65,7 @@ function AdminManageMovie() {
         progressStyle: { background: '#5f2eea' },
       });
     } finally {
-      setDeleting(false);
+      setRestoring(false);
     }
   };
 
@@ -144,27 +144,18 @@ function AdminManageMovie() {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/admin/manage_movie/edit/${record.movie_id}`)}
-            className={styles.editButton}
-            disabled={deleting}
-          >
-            Edit
-          </Button>
           <Popconfirm
-            title="Are you sure to delete this movie?"
-            onConfirm={() => handleDeleteMovie(record.movie_id)}
-            disabled={deleting}
+            title="Are you sure to restore this movie?"
+            onConfirm={() => handleRestoreMovie(record.movie_id)}
+            disabled={restoring}
           >
             <Button
-              type="danger"
-              icon={<DeleteOutlined />}
-              className={styles.deleteButton}
-              disabled={deleting}
+              type="primary"
+              icon={<UndoOutlined />}
+              className={styles.restoreButton}
+              disabled={restoring}
             >
-              Delete
+              Restore
             </Button>
           </Popconfirm>
         </Space>
@@ -177,28 +168,19 @@ function AdminManageMovie() {
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Manage Movies
+            Manage Deleted Movies
           </Title>
         </Col>
         <Col>
           <Space>
             <Button
               type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/admin/manage_movie/add')}
-              className={styles.addButton}
-              disabled={deleting}
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/admin/manage_movie')}
+              className={styles.backButton}
+              disabled={restoring}
             >
-              Add Movie
-            </Button>
-            <Button
-              type="primary"
-              icon={<EyeOutlined />}
-              onClick={() => navigate('/admin/deleted_movies')}
-              className={styles.viewDeletedButton}
-              disabled={deleting}
-            >
-              View Deleted Movies
+              Back to Manage Movies
             </Button>
             <Button
               type="primary"
@@ -206,7 +188,7 @@ function AdminManageMovie() {
               onClick={loadData}
               loading={loading}
               className={styles.refreshButton}
-              disabled={deleting}
+              disabled={restoring}
             >
               Refresh
             </Button>
@@ -217,7 +199,7 @@ function AdminManageMovie() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Total Movies</span>}
+              title={<span className={styles.statisticTitle}>Total Deleted Movies</span>}
               value={movies.length}
               valueStyle={{ color: '#5f2eea' }}
             />
@@ -231,7 +213,7 @@ function AdminManageMovie() {
               </div>
             ) : movies.length === 0 ? (
               <div className={styles.empty}>
-                <TypographyText>No movies found</TypographyText>
+                <TypographyText>No deleted movies found</TypographyText>
               </div>
             ) : (
               <Table
@@ -254,4 +236,4 @@ function AdminManageMovie() {
   );
 }
 
-export default AdminManageMovie;
+export default DeletedMovies;

@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { BrowserRouter, Routes as ReactRoutes, Route } from "react-router-dom";
 import { Layout } from "antd";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Routes as RouteConfig } from "./routers/Routes";
 import styles from "./App.module.scss";
 import Navbar from "./components/NavBar/Navbar";
@@ -33,6 +35,19 @@ function App() {
             />
           ))}
         </ReactRoutes>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          progressStyle={{ background: '#5f2eea' }}
+        />
       </Suspense>
     </BrowserRouter>
   );

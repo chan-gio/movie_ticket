@@ -1,5 +1,5 @@
 import api from "./api"; // Import the configured Axios instance
-
+import { uploadMoviePosterToCloudinary } from "../utils/cloudinaryConfig";
 // Service methods for MovieController endpoints
 const MovieService = {
   // Fetch all movies that are not deleted
@@ -18,10 +18,31 @@ const MovieService = {
     }
   },
 
-  // Create a new movie
-  createMovie: async (movieData) => {
+  // Create a new movie with poster upload
+  createMovie: async (movieData, posterFile) => {
     try {
-      const response = await api.post("/movies", movieData);
+      let posterUrl = movieData.poster_url || null;
+
+      // Upload poster image to Cloudinary if provided
+      if (posterFile) {
+        posterUrl = await uploadMoviePosterToCloudinary(
+          posterFile,
+          (progress) => {
+            console.log(`Upload progress: ${progress}%`);
+          }
+        );
+        if (!posterUrl) {
+          throw new Error("Failed to upload poster image");
+        }
+      }
+
+      // Prepare movie data with the uploaded poster URL
+      const moviePayload = {
+        ...movieData,
+        poster_url: posterUrl,
+      };
+
+      const response = await api.post("/movies", moviePayload);
       if (response.data.code === 201) {
         return response.data.data;
       } else {
@@ -29,7 +50,9 @@ const MovieService = {
       }
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to create movie"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create movie"
       );
     }
   },
@@ -48,10 +71,31 @@ const MovieService = {
     }
   },
 
-  // Update a movie
-  updateMovie: async (movieId, movieData) => {
+  // Update a movie with optional poster upload
+  updateMovie: async (movieId, movieData, posterFile) => {
     try {
-      const response = await api.put(`/movies/${movieId}`, movieData);
+      let posterUrl = movieData.poster_url || null;
+
+      // Upload new poster image to Cloudinary if provided
+      if (posterFile) {
+        posterUrl = await uploadMoviePosterToCloudinary(
+          posterFile,
+          (progress) => {
+            console.log(`Upload progress: ${progress}%`);
+          }
+        );
+        if (!posterUrl) {
+          throw new Error("Failed to upload poster image");
+        }
+      }
+
+      // Prepare movie data with the uploaded poster URL
+      const moviePayload = {
+        ...movieData,
+        poster_url: posterUrl,
+      };
+
+      const response = await api.put(`/movies/${movieId}`, moviePayload);
       if (response.data.code === 200) {
         return response.data.data;
       } else {
@@ -59,7 +103,9 @@ const MovieService = {
       }
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to update movie"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update movie"
       );
     }
   },
@@ -67,7 +113,7 @@ const MovieService = {
   // Soft delete a movie (set is_deleted to true)
   softDeleteMovie: async (movieId) => {
     try {
-      const response = await api.delete(`/movies/movies//${movieId}`);
+      const response = await api.delete(`/movies/soft/${movieId}`);
       if (response.data.code === 200) {
         return true;
       } else {
@@ -83,7 +129,7 @@ const MovieService = {
   // Restore a soft-deleted movie
   restoreMovie: async (movieId) => {
     try {
-      const response = await api.put(`/movies/${movieId}/restore`);
+      const response = await api.patch(`/movies/restore/${movieId}`);
       if (response.data.code === 200) {
         return response.data.data;
       } else {
@@ -99,7 +145,7 @@ const MovieService = {
   // Fetch all soft-deleted movies
   getDeletedMovies: async () => {
     try {
-      const response = await api.get("/movies/deleted");
+      const response = await api.get("/movies/movies/deleted");
       if (response.data.code === 200) {
         return response.data.data;
       } else {
@@ -147,6 +193,8 @@ const MovieService = {
       );
     }
   },
+
+  // Fetch upcoming movies
   getUpcomingMovie: async () => {
     try {
       const response = await api.get("/movies/movies/upcoming-movie");
@@ -154,12 +202,12 @@ const MovieService = {
         return response.data.data;
       } else {
         throw new Error(
-          response.data.message || "Failed to fetch now showing movies"
+          response.data.message || "Failed to fetch upcoming movies"
         );
       }
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch now showing movies"
+        error.response?.data?.message || "Failed to fetch upcoming movies"
       );
     }
   },

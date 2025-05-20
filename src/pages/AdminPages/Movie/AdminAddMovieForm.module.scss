@@ -1,0 +1,64 @@
+.container {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #5f2eea;
+}
+
+.mainContent {
+  margin-top: 16px;
+}
+
+.form {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton {
+  background: #5f2eea;
+  border-color: #5f2eea;
+  &:hover {
+    background: #4a1ed4;
+    border-color: #4a1ed4;
+  }
+}
+
+.uploadButton {
+  margin-bottom: 16px;
+}
+
+.previewContainer {
+  position: relative;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.previewImage {
+  max-width: 200px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.removeIcon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 20px;
+  color: #ff4d4f;
+  cursor: pointer;
+  &:hover {
+    color: #d9363e;
+  }
+}
