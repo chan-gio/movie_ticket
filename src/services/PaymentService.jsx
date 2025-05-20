@@ -85,6 +85,34 @@ const PaymentService = {
       throw new Error(error.response?.data?.message || 'Failed to mark payment as completed');
     }
   },
+
+  // Fetch payment link information by orderCode
+  getPaymentLinkInfo: async (orderCode) => {
+    try {
+      const response = await api.get(`/payment/proxy-payos/${orderCode}`);
+      if (response.data.code === 200) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch payment link information');
+      }
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch payment link information');
+    }
+  },
+
+   // Create a PayOS payment link
+   proxyPayOS: async (paymentData) => {
+    try {
+      const response = await api.post('/payment/proxy-payos', paymentData);
+      if (response.data.code === '00') { // PayOS typically uses '00' for success
+        return response.data.data;
+      } else {
+        throw new Error(response.data.desc || 'Failed to create PayOS payment link');
+      }
+    } catch (error) {
+      throw new Error(error.response?.data?.desc || 'Failed to create PayOS payment link');
+    }
+  },
 };
 
 export default PaymentService;

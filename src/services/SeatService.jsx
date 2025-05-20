@@ -7,7 +7,7 @@ const SeatService = {
     try {
       const response = await api.get('/seats');
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to fetch seats');
       }
@@ -21,7 +21,7 @@ const SeatService = {
     try {
       const response = await api.post('/seats', seatData);
       if (response.data.code === 201) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to create seat');
       }
@@ -35,7 +35,7 @@ const SeatService = {
     try {
       const response = await api.post('/seats/store-multiple', seatData);
       if (response.data.code === 201) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to create multiple seats');
       }
@@ -49,7 +49,7 @@ const SeatService = {
     try {
       const response = await api.get(`/seats/${seatId}`);
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to fetch seat');
       }
@@ -58,12 +58,26 @@ const SeatService = {
     }
   },
 
+  getSeatByRoomId: async (roomId) => {
+    try {
+      const response = await api.get(`/seats/roomId/${roomId}`);
+      if (response.data.code === 200) {
+        return response.data;
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch seat');
+      }
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch seat');
+    }
+  },
+
+
   // Update a seat
   updateSeat: async (seatId, seatData) => {
     try {
       const response = await api.put(`/seats/${seatId}`, seatData);
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to update seat');
       }
@@ -91,7 +105,7 @@ const SeatService = {
     try {
       const response = await api.put(`/seats/${seatId}/restore`);
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to restore seat');
       }

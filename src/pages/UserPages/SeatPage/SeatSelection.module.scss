@@ -95,14 +95,6 @@
   margin: 20px 0 10px;
 }
 
-.availableBox {
-  width: 32px; /* Match the increased seat width */
-  height: 32px; /* Match the increased seat height */
-  border-radius: 8px;
-  background-color: #d6d8e7;
-  border: none;
-}
-
 .selectBox {
   width: 32px; /* Match the increased seat width */
   height: 32px; /* Match the increased seat height */
@@ -201,4 +193,39 @@
       margin-bottom: 10px;
     }
   }
+}
+
+.seatStandard {
+  width: 32px; /* Match the increased seat width */
+  height: 32px; /* Match the increased seat height */
+  border-radius: 8px;
+  background-color: #d3d3d3; /* Light gray for STANDARD seats */
+  color: #000;
+  border: none;
+  &:hover {
+    background-color: #b0b0b0; /* Darker gray on hover */
+  }
+}
+
+.seatVIP {
+  width: 32px; /* Match the increased seat width */
+  height: 32px; /* Match the increased seat height */
+  border-radius: 8px;
+  background-color: #ffd700; /* Gold for VIP seats */
+  color: #000;
+  border: none;
+  &:hover {
+    background-color: #e6c200; /* Darker gold on hover */
+  }
+}
+
+.seatSelected {
+  background-color: #5f2eea !important; 
+  color: #fff !important;
+}
+
+.emptySeat {
+  display: inline-block;
+  width: 32px; /* Match the size of the seat buttons */
+  height: 32px;
 }

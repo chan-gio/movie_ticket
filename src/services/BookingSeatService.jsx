@@ -89,9 +89,10 @@ const BookingSeatService = {
   // Fetch seats by showtime ID
   getSeatsByShowtime: async (showtimeId) => {
     try {
-      const response = await api.get(`/booking-seats/showtime/${showtimeId}/seats`);
+      const response = await api.get(`/booking-seats/showtimes/${showtimeId}/seats`);
       if (response.data.code === 200) {
-        return response.data.data;
+        const seatData = response.data.data?.data || [];
+        return Array.isArray(seatData) ? seatData : [];
       } else {
         throw new Error(response.data.message || 'Failed to fetch seats by showtime');
       }

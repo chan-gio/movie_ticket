@@ -1,45 +1,117 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Typography, List, Form, Input, Alert, Button, Space } from 'antd';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Row, Col, Card, Typography, List, Form, Input, Alert, Button, Space, Spin } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
-import axios from 'axios';
-import QRCode from 'react-qr-code';
 import styles from './Payment.module.scss';
+import BookingService from '../../../services/BookingService';
+import UserService from '../../../services/UserService';
+import PaymentService from '../../../services/PaymentService'; // Import PaymentService
 
 const { Title, Text } = Typography;
 
-const orderData = {
-  date: '2025-05-15',
-  time: '2:00 PM',
-  movieTitle: 'Movie 1',
-  cinema: 'Cinema 1',
-  tickets: 2,
-  price: 10,
-};
-
-// Access PayOS credentials from environment variables
-const PAYOS_CLIENT_ID = import.meta.env.VITE_PAYOS_CLIENT_ID;
-const PAYOS_API_KEY = import.meta.env.VITE_PAYOS_API_KEY;
-const PAYOS_CHECKSUM_KEY = import.meta.env.VITE_PAYOS_CHECKSUM_KEY;
-const PAYOS_API_URL = import.meta.env.VITE_PAYOS_API_URL;
-
 function Payment() {
-  const [form] = Form.useForm();
+  const { bookingId } = useParams();
   const navigate = useNavigate();
+  const [form] = Form.useForm();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [qrCodeValue, setQrCodeValue] = useState(null);
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [booking, setBooking] = useState(null);
+  const [user, setUser] = useState(null);
+  const hasFetched = useRef(false);
+
+  useEffect(() => {
+    if (hasFetched.current) {
+      return;
+    }
+
+    const fetchData = async () => {
+      if (!bookingId) {
+        setFetchError("Booking ID not provided");
+        setFetchLoading(false);
+        return;
+      }
+
+      try {
+        setFetchLoading(true);
+
+        const bookingResponse = await BookingService.getBookingById(bookingId);
+        setBooking(bookingResponse);
+
+        const userId = bookingResponse.user_id;
+        if (userId) {
+          const userResponse = await UserService.getUserById(userId);
+          setUser(userResponse);
+
+          form.setFieldsValue({
+            fullName: userResponse.full_name,
+            email: userResponse.email,
+            phoneNumber: userResponse.phone,
+          });
+        } else {
+          console.warn('User ID not found in booking response');
+        }
+
+        setFetchLoading(false);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setFetchError(err.message || "Failed to fetch data");
+        setFetchLoading(false);
+      }
+    };
+
+    fetchData();
+    hasFetched.current = true;
+  }, [bookingId, form]);
+
+  const orderData = booking
+    ? {
+        date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split("T")[0] : 'Unknown Date',
+        time: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : 'Unknown Time',
+        movieTitle: booking.showtime?.movie?.title || 'Unknown Movie',
+        cinema: 'Cinema 1',
+        tickets: booking.booking_seats?.length || 0,
+        price: booking.showtime?.price || 0,
+      }
+    : {
+        date: '2025-05-15',
+        time: '2:00 PM',
+        movieTitle: 'Movie 1',
+        cinema: 'Cinema 1',
+        tickets: 2,
+        price: 5000,
+      };
+
+  // Sort booking_seats by seat_number (row letter then column number)
+  const sortedSeats = booking?.booking_seats?.slice().sort((a, b) => {
+    const seatA = a.seat?.seat_number || '';
+    const seatB = b.seat?.seat_number || '';
+
+    // Extract row (letter) and column (number) from seat_number
+    const rowA = seatA.charAt(0); // e.g., "A"
+    const colA = parseInt(seatA.slice(1), 10); // e.g., "1"
+    const rowB = seatB.charAt(0); // e.g., "B"
+    const colB = parseInt(seatB.slice(1), 10); // e.g., "2"
+
+    // Compare rows (alphabetically)
+    if (rowA < rowB) return -1;
+    if (rowA > rowB) return 1;
+
+    // If rows are the same, compare columns (numerically)
+    return colA - colB;
+  }) || [];
 
   const handleSubmit = async (values) => {
     setLoading(true);
     setError(null);
 
-    // Prepare order data for PayOS
-    const totalAmount = orderData.price * orderData.tickets * 100; // Amount in smallest currency unit (e.g., cents)
-    const orderCode = Date.now(); // Unique order code (use a better method in production)
-    const description = `Payment for ${orderData.tickets} tickets to ${orderData.movieTitle} on ${orderData.date}`;
-    const returnUrl = `${window.location.origin}/confirmation?orderCode=${orderCode}`; // Redirect URL after payment
-    const cancelUrl = `${window.location.origin}/payment`; // Redirect URL if payment is canceled
+    const totalAmount = orderData.price * orderData.tickets;
+    const orderCode = Math.floor(100000 + Math.random() * 900000);
+    const description = orderData.movieTitle.length <= 9 ? orderData.movieTitle : orderData.movieTitle.substring(0, 9);
+    const baseUrl = 'http://localhost:5173'; // Use base URL instead of ngrok
+    const returnUrl = `${baseUrl}/confirmation/${bookingId}?orderCode=${orderCode}`;
+    const cancelUrl = `${baseUrl}/payment/${bookingId}`;
 
     const paymentData = {
       orderCode,
@@ -54,41 +126,49 @@ function Payment() {
         {
           name: orderData.movieTitle,
           quantity: orderData.tickets,
-          price: orderData.price * 100,
+          price: orderData.price,
         },
       ],
     };
 
     try {
-      // Call PayOS API to create a payment link
-      const response = await axios.post(
-        PAYOS_API_URL,
-        paymentData,
-        {
-          headers: {
-            'x-client-id': PAYOS_CLIENT_ID,
-            'x-api-key': PAYOS_API_KEY,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await PaymentService.proxyPayOS(paymentData); 
 
-      if (response.data && response.data.data && response.data.data.checkoutUrl) {
-        // Set the QR code value to the PayOS payment link
-        setQrCodeValue(response.data.data.checkoutUrl);
+      if (response && response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
       } else {
-        throw new Error('Failed to create payment link');
+        throw new Error('Failed to create payment link: Invalid response structure');
       }
     } catch (err) {
+      console.error('PayOS Service Error:', err.message);
       setError('Payment initiation failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetchLoading) {
+    return (
+      <div className={styles.payment}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className={styles.payment}>
+        <Title level={3}>Error</Title>
+        <Paragraph>{fetchError}</Paragraph>
+        <Link to="/">
+          <Button type="primary">Go Back</Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.payment}>
-      {/* Payment Info and Personal Info */}
       <Row gutter={[16, 16]} className={styles.section}>
         <Col xs={24} lg={16}>
           <Title level={3}>Payment Info</Title>
@@ -109,6 +189,12 @@ function Payment() {
               <List.Item>
                 <Text className={styles.label}>Number of tickets</Text>
                 <Text className={styles.value}>{orderData.tickets} pieces</Text>
+              </List.Item>
+              <List.Item>
+                <Text className={styles.label}>Seats</Text>
+                <Text className={styles.value}>
+                  {sortedSeats.map(bookingSeat => bookingSeat.seat?.seat_number || bookingSeat.seat_id).join(', ') || 'None'}
+                </Text>
               </List.Item>
               <List.Item>
                 <Text className={styles.label}>Total payment</Text>
@@ -160,7 +246,6 @@ function Payment() {
         </Col>
       </Row>
 
-      {/* Payment Method with QR Code */}
       <Row gutter={[16, 16]} className={styles.section}>
         <Col xs={24} lg={16}>
           <Title level={3}>Pay with PayOS</Title>
@@ -174,28 +259,22 @@ function Payment() {
                 style={{ marginBottom: 16 }}
               />
             )}
-            {qrCodeValue ? (
-              <div style={{ textAlign: 'center' }}>
-                <QRCode value={qrCodeValue} size={256} />
-                <Text className={styles.qrText}>
-                  Scan the QR code with your payment app to pay ${orderData.price * orderData.tickets}.
-                </Text>
-              </div>
-            ) : (
-              <Text>Click "Generate QR Code" to proceed with payment.</Text>
-            )}
+            <Text>Click "Proceed to Payment" to pay with PayOS.</Text>
           </Card>
           <Space className={styles.navButtons}>
-            <Link to="/seats">
-              <Button className={styles.prevButton}>Previous step</Button>
-            </Link>
+            <Button
+              className={styles.prevButton}
+              onClick={() => navigate(`/seats/${booking.showtime.room_id}/${bookingId}`)}
+            >
+              Previous step
+            </Button>
             <Button
               type="primary"
               onClick={() => form.submit()}
               className={styles.payButton}
               loading={loading}
             >
-              Generate QR Code
+              Proceed to Payment
             </Button>
           </Space>
         </Col>

@@ -70,9 +70,7 @@ const BookingService = {
   // Update booking total price
   updateTotalPrice: async (bookingId, totalPrice) => {
     try {
-      const response = await api.put(`/bookings/${bookingId}/total-price`, {
-        total_price: totalPrice,
-      });
+      const response = await api.put(`/bookings/bookings/${bookingId}/total-price`, { total_price: totalPrice });
       if (response.data.code === 200) {
         return response.data.data;
       } else {

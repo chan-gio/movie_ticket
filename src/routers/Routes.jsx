@@ -1,6 +1,4 @@
 import { lazy } from 'react';
-import ShowMoviesPage from '../pages/UserPages/ShowMoviesPage/ShowMoviesPage';
-import CinemaPage from '../pages/UserPages/CinemaPage/CinemaPage';
 
 // Lazy load all page components
 const Home = lazy(() => import('../pages/UserPages/HomePage/Home'));
@@ -10,6 +8,8 @@ const MovieDetails = lazy(() => import('../pages/UserPages/DetailPage/MovieDetai
 const SeatSelection = lazy(() => import('../pages/UserPages/SeatPage/SeatSelection'));
 const Payment = lazy(() => import('../pages/UserPages/PaymentPage/Payment'));
 const Confirmation = lazy(() => import('../pages/UserPages/ConfirmationPage/Confirmation'));
+const ShowMoviesPage = lazy(() => import('../pages/UserPages/ShowMoviesPage/ShowMoviesPage'));
+const CinemaPage = lazy(() => import('../pages/UserPages/CinemaPage/CinemaPage'));
 const Admin = lazy(() => import('../pages/AdminPages/Admin'));
 const AdminDashboard = lazy(() => import('../pages/AdminPages/Dashboard/AdminDashboard'));
 const AdminProfile = lazy(() => import('../pages/AdminPages/Profile/AdminProfile'));
@@ -40,9 +40,10 @@ const Routes = [
   { path: '/movies', component: <ShowMoviesPage /> },
   { path: '/movie/:id', component: <MovieDetails /> },
   { path: '/cinema/:cinemaName', component: <CinemaPage /> },
-  { path: '/seats', component: <SeatSelection /> },
-  { path: '/payment', component: <Payment /> },
-  { path: '/confirmation', component: <Confirmation /> },
+  { path: '/seats/:roomId/:bookingId', component: <SeatSelection /> },
+  { path: '/payment/:bookingId', component: <Payment /> },
+  { path: '/confirmation/:bookingId', component: <Confirmation /> },
+
   { path: '/admin', component: <Admin><AdminDashboard /></Admin> },
   { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
   { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
