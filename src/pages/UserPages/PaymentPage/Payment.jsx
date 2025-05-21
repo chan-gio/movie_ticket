@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Row, Col, Card, Typography, List, Form, Input, Alert, Button, Space, Spin } from 'antd';
+import { Row, Col, Card, Typography, List, Form, Input, Alert, Button, Space, Skeleton, message } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
 import styles from './Payment.module.scss';
 import BookingService from '../../../services/BookingService';
 import UserService from '../../../services/UserService';
-import PaymentService from '../../../services/PaymentService'; // Import PaymentService
+import PaymentService from '../../../services/PaymentService';
+import SettingService from '../../../services/SettingService';
+import Paragraph from 'antd/es/skeleton/Paragraph';
 
 const { Title, Text } = Typography;
 
@@ -19,6 +21,8 @@ function Payment() {
   const [fetchError, setFetchError] = useState(null);
   const [booking, setBooking] = useState(null);
   const [user, setUser] = useState(null);
+  const [setting, setSetting] = useState(null);
+  const [isShowtimePast, setIsShowtimePast] = useState(false);
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -36,9 +40,11 @@ function Payment() {
       try {
         setFetchLoading(true);
 
+        // Fetch booking data
         const bookingResponse = await BookingService.getBookingById(bookingId);
         setBooking(bookingResponse);
 
+        // Fetch user data
         const userId = bookingResponse.user_id;
         if (userId) {
           const userResponse = await UserService.getUserById(userId);
@@ -51,6 +57,19 @@ function Payment() {
           });
         } else {
           console.warn('User ID not found in booking response');
+        }
+
+        // Fetch setting data for price calculation
+        const settingResponse = await SettingService.getSetting();
+        setSetting(settingResponse);
+
+        // Validate showtime against current date and time
+        const showtimeDate = bookingResponse.showtime?.start_time ? new Date(bookingResponse.showtime.start_time) : null;
+        const currentDate = new Date("2025-05-21T19:37:00+07:00"); // Current date and time: May 21, 2025, 07:37 PM +07
+
+        if (showtimeDate && currentDate > showtimeDate) {
+          setIsShowtimePast(true);
+          message.error("This showtime has already passed. Please select a different showtime.");
         }
 
         setFetchLoading(false);
@@ -72,7 +91,7 @@ function Payment() {
         movieTitle: booking.showtime?.movie?.title || 'Unknown Movie',
         cinema: 'Cinema 1',
         tickets: booking.booking_seats?.length || 0,
-        price: booking.showtime?.price || 0,
+        basePrice: booking.showtime?.price || 0, // Base price per ticket
       }
     : {
         date: '2025-05-15',
@@ -80,42 +99,87 @@ function Payment() {
         movieTitle: 'Movie 1',
         cinema: 'Cinema 1',
         tickets: 2,
-        price: 5000,
+        basePrice: 5000,
       };
 
-  // Sort booking_seats by seat_number (row letter then column number)
   const sortedSeats = booking?.booking_seats?.slice().sort((a, b) => {
     const seatA = a.seat?.seat_number || '';
     const seatB = b.seat?.seat_number || '';
 
-    // Extract row (letter) and column (number) from seat_number
-    const rowA = seatA.charAt(0); // e.g., "A"
-    const colA = parseInt(seatA.slice(1), 10); // e.g., "1"
-    const rowB = seatB.charAt(0); // e.g., "B"
-    const colB = parseInt(seatB.slice(1), 10); // e.g., "2"
+    const rowA = seatA.charAt(0);
+    const colA = parseInt(seatA.slice(1), 10);
+    const rowB = seatB.charAt(0);
+    const colB = parseInt(seatB.slice(1), 10);
 
-    // Compare rows (alphabetically)
     if (rowA < rowB) return -1;
     if (rowA > rowB) return 1;
 
-    // If rows are the same, compare columns (numerically)
     return colA - colB;
   }) || [];
 
+  // Calculate seat price based on seat type using setting data
+  const calculateSeatPrice = (seatNumber) => {
+    const seat = sortedSeats.find((bs) => bs.seat?.seat_number === seatNumber)?.seat;
+    if (!seat || !setting) return orderData.basePrice; // Default to base price if seat or setting not found
+
+    const basePrice = orderData.basePrice;
+    const seatType = seat.seat_type;
+
+    switch (seatType) {
+      case "VIP":
+        return basePrice + (basePrice * setting.vip / 100);
+      case "Couple":
+        return basePrice + (basePrice * setting.couple / 100);
+      case "Standard":
+      default:
+        return basePrice;
+    }
+  };
+
+  // Calculate total price for all seats
+  const calculateTotalPrice = () => {
+    return sortedSeats.reduce((total, bookingSeat) => {
+      const seatPrice = calculateSeatPrice(bookingSeat.seat?.seat_number);
+      return total + seatPrice;
+    }, 0);
+  };
+
   const handleSubmit = async (values) => {
+    if (isShowtimePast) {
+      message.error("Cannot proceed with payment for a past showtime. Please select a different showtime.");
+      return;
+    }
+
+    if (sortedSeats.length === 0) {
+      message.error("No seats selected for this booking. Please go back and select seats.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    const totalAmount = orderData.price * orderData.tickets;
+    // Calculate total price directly
+    const totalPrice = calculateTotalPrice();
+
+    // Update total price in the backend
+    try {
+      await BookingService.updateTotalPrice(bookingId, totalPrice);
+      message.success("Total price updated successfully!");
+    } catch (updateErr) {
+      console.error('Update total price error:', updateErr);
+      setError('Failed to update total price. Please try again.');
+      setLoading(false);
+    }
+
     const orderCode = Math.floor(100000 + Math.random() * 900000);
     const description = orderData.movieTitle.length <= 9 ? orderData.movieTitle : orderData.movieTitle.substring(0, 9);
-    const baseUrl = 'http://localhost:5173'; // Use base URL instead of ngrok
+    const baseUrl = 'http://localhost:5173';
     const returnUrl = `${baseUrl}/confirmation/${bookingId}?orderCode=${orderCode}`;
     const cancelUrl = `${baseUrl}/payment/${bookingId}`;
 
     const paymentData = {
       orderCode,
-      amount: totalAmount,
+      amount: totalPrice,
       description,
       returnUrl,
       cancelUrl,
@@ -126,13 +190,13 @@ function Payment() {
         {
           name: orderData.movieTitle,
           quantity: orderData.tickets,
-          price: orderData.price,
+          price: orderData.basePrice, // Use base price here as the item price
         },
       ],
     };
 
     try {
-      const response = await PaymentService.proxyPayOS(paymentData); 
+      const response = await PaymentService.proxyPayOS(paymentData);
 
       if (response && response.checkoutUrl) {
         window.location.href = response.checkoutUrl;
@@ -150,7 +214,41 @@ function Payment() {
   if (fetchLoading) {
     return (
       <div className={styles.payment}>
-        <Spin size="large" />
+        <Row gutter={[16, 16]} className={styles.section}>
+          <Col xs={24} lg={16}>
+            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Card className={styles.infoCard}>
+              {[...Array(6)].map((_, index) => (
+                <Row key={index} justify="space-between" style={{ marginBottom: 16 }}>
+                  <Skeleton.Input active size="small" style={{ width: 150 }} />
+                  <Skeleton.Input active size="small" style={{ width: 100 }} />
+                </Row>
+              ))}
+            </Card>
+          </Col>
+          <Col xs={24} lg={8}>
+            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Card className={styles.personalCard}>
+              {[...Array(3)].map((_, index) => (
+                <Skeleton.Input key={index} active size="large" block style={{ marginBottom: 16 }} />
+              ))}
+              <Skeleton active paragraph={{ rows: 1 }} title={{ width: "80%" }} />
+            </Card>
+          </Col>
+        </Row>
+
+        <Row gutter={[16, 16]} className={styles.section}>
+          <Col xs={24} lg={16}>
+            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Card className={styles.methodCard}>
+              <Skeleton active paragraph={{ rows: 1 }} />
+            </Card>
+            <Space className={styles.navButtons}>
+              <Skeleton.Button active size="large" style={{ width: 150 }} />
+              <Skeleton.Button active size="large" style={{ width: 200 }} />
+            </Space>
+          </Col>
+        </Row>
       </div>
     );
   }
@@ -162,6 +260,18 @@ function Payment() {
         <Paragraph>{fetchError}</Paragraph>
         <Link to="/">
           <Button type="primary">Go Back</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (isShowtimePast) {
+    return (
+      <div className={styles.payment}>
+        <Title level={3}>Showtime Expired</Title>
+        <Paragraph>This showtime has already passed. Please select a different showtime.</Paragraph>
+        <Link to="/movies">
+          <Button type="primary">Select a Different Movie</Button>
         </Link>
       </div>
     );
@@ -198,7 +308,7 @@ function Payment() {
               </List.Item>
               <List.Item>
                 <Text className={styles.label}>Total payment</Text>
-                <Text className={styles.value}>${orderData.price * orderData.tickets}</Text>
+                <Text className={styles.value}>{calculateTotalPrice()}đ</Text>
               </List.Item>
             </List>
           </Card>
@@ -273,6 +383,7 @@ function Payment() {
               onClick={() => form.submit()}
               className={styles.payButton}
               loading={loading}
+              disabled={isShowtimePast}
             >
               Proceed to Payment
             </Button>

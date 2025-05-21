@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, Row, Col, Button, Typography, Tag, Space, Spin, message } from "antd";
+import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton, message } from "antd";
 import styles from "./SeatSelection.module.scss";
 import SeatService from "../../../services/SeatService";
 import BookingService from "../../../services/BookingService";
 import BookingSeatService from "../../../services/BookingSeatService";
+import SettingService from "../../../services/SettingService";
 
 const { Title, Paragraph } = Typography;
 
@@ -17,6 +18,7 @@ function SeatSelection() {
   const [seats, setSeats] = useState([]);
   const [seatBookingStatus, setSeatBookingStatus] = useState([]);
   const [booking, setBooking] = useState(null);
+  const [setting, setSetting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,6 +42,9 @@ function SeatSelection() {
 
         const bookingResponse = await BookingService.getBookingById(bookingId);
         setBooking(bookingResponse);
+
+        const settingResponse = await SettingService.getSetting();
+        setSetting(settingResponse);
 
         const showtimeId = bookingResponse.showtime?.showtime_id;
         if (showtimeId) {
@@ -88,7 +93,7 @@ function SeatSelection() {
         picture: booking.showtime?.movie?.poster_url || "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
         date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split("T")[0] : "Unknown Date",
         time: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Unknown Time",
-        price: booking.showtime?.price ? booking.showtime.price / 1000 : 0,
+        basePrice: booking.showtime?.price || 0, // Base price per ticket
       }
     : {
         movieTitle: "Movie 1",
@@ -96,8 +101,33 @@ function SeatSelection() {
         picture: "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
         date: "2025-05-15",
         time: "2:00 PM",
-        price: 10,
+        basePrice: 10,
       };
+
+  const calculateSeatPrice = (seatNumber) => {
+    const seat = seats.find((s) => s.seat_number === seatNumber);
+    if (!seat || !setting) return orderInfo.basePrice; // Default to base price if seat or setting not found
+
+    const basePrice = orderInfo.basePrice;
+    const seatType = seat.seat_type;
+
+    switch (seatType) {
+      case "VIP":
+        return basePrice + (basePrice * setting.vip / 100);
+      case "Couple":
+        return basePrice + (basePrice * setting.couple / 100);
+      case "Standard":
+      default:
+        return basePrice;
+    }
+  };
+
+  const calculateTotalPrice = () => {
+    return selectedSeats.reduce((total, seatNumber) => {
+      const seatPrice = calculateSeatPrice(seatNumber);
+      return total + seatPrice;
+    }, 0);
+  };
 
   const toggleSeat = (seat) => {
     const seatStatus = Array.isArray(seatBookingStatus) ? seatBookingStatus.find(
@@ -147,14 +177,14 @@ function SeatSelection() {
 
       await Promise.all(bookingSeatPromises);
       message.success("Seats booked successfully!");
-      const totalPrice = orderInfo.price * selectedSeats.length * 1000;
+
+      const totalPrice = calculateTotalPrice()
       const totalPriceNumber = Number(totalPrice);
       if (isNaN(totalPriceNumber)) {
         throw new Error("Total price calculation resulted in a non-numeric value.");
       }
 
-      await BookingService.updateTotalPrice(bookingId, totalPriceNumber);
-      message.success("Total price updated successfully!");
+
 
       sessionStorage.setItem('paymentData', JSON.stringify({
         selectedSeats,
@@ -178,7 +208,89 @@ function SeatSelection() {
   if (loading) {
     return (
       <div className={styles.seatSelection}>
-        <Spin size="large" />
+        <div className={styles.secondaryNavbar}>
+          <Row justify="space-between" align="middle">
+            <Col>
+              <Skeleton.Input active size="large" style={{ width: 200 }} />
+            </Col>
+            <Col>
+              <Skeleton.Button active size="default" />
+            </Col>
+          </Row>
+        </div>
+
+        <Row gutter={[16, 16]} className={styles.mainContent}>
+          <Col xs={24} lg={16}>
+            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Card className={styles.seatCard}>
+              <div className={styles.screen}>
+                <Skeleton.Input active size="small" style={{ width: 100 }} />
+                <div className={styles.screenLine}></div>
+              </div>
+              <div className={styles.seatGrid}>
+                <table>
+                  <tbody>
+                    {[...Array(5)].map((_, rowIndex) => (
+                      <tr key={rowIndex}>
+                        <td>
+                          <Skeleton.Input active size="small" style={{ width: 20 }} />
+                        </td>
+                        {[...Array(10)].map((_, colIndex) => (
+                          <td key={colIndex}>
+                            <Skeleton.Button active size="small" style={{ width: 40, height: 40 }} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    <tr>
+                      <td></td>
+                      {[...Array(10)].map((_, colIndex) => (
+                        <td key={colIndex}>
+                          <Skeleton.Input active size="small" style={{ width: 20 }} />
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <Skeleton active title={{ width: "20%" }} paragraph={{ rows: 0 }} />
+              <Row gutter={[16, 16]}>
+                {[...Array(5)].map((_, index) => (
+                  <Col key={index} xs={5}>
+                    <Space>
+                      <Skeleton.Button active size="small" style={{ width: 24, height: 24 }} />
+                      <Skeleton.Input active size="small" style={{ width: 80 }} />
+                    </Space>
+                  </Col>
+                ))}
+              </Row>
+            </Card>
+            <Row gutter={[16, 16]} className={styles.checkoutButtons}>
+              <Col xs={24} md={12}>
+                <Skeleton.Button active size="large" block />
+              </Col>
+              <Col xs={24} md={12}>
+                <Skeleton.Button active size="large" block />
+              </Col>
+            </Row>
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Card className={styles.orderCard}>
+              <div className={styles.cinemaInfo}>
+                <Skeleton.Image active style={{ width: 50, height: 50 }} />
+                <Skeleton.Input active size="large" style={{ width: 150, marginLeft: 16 }} />
+              </div>
+              {[...Array(5)].map((_, index) => (
+                <Row key={index} justify="space-between" style={{ marginBottom: 16 }}>
+                  <Skeleton.Input active size="small" style={{ width: 150 }} />
+                  <Skeleton.Input active size="small" style={{ width: 100 }} />
+                </Row>
+              ))}
+            </Card>
+          </Col>
+        </Row>
       </div>
     );
   }
@@ -241,6 +353,8 @@ function SeatSelection() {
                           ? styles.soldBox
                           : seatType === "VIP"
                           ? styles.seatVIP
+                          : seatType === "Couple"
+                          ? styles.loveBox
                           : styles.seatStandard;
 
                         return (
@@ -291,7 +405,7 @@ function SeatSelection() {
               <Col xs={5}>
                 <Space>
                   <Tag className={styles.loveBox}></Tag>
-                  <Paragraph>Love nest</Paragraph>
+                  <Paragraph>Couple</Paragraph>
                 </Space>
               </Col>
               <Col xs={5}>
@@ -357,8 +471,16 @@ function SeatSelection() {
               <Paragraph className={styles.value}>{orderInfo.time}</Paragraph>
             </Row>
             <Row justify="space-between">
-              <Paragraph className={styles.label}>One ticket price</Paragraph>
-              <Paragraph className={styles.value}>${orderInfo.price}</Paragraph>
+              <Paragraph className={styles.label}>Standard price</Paragraph>
+              <Paragraph className={styles.value}>{orderInfo.basePrice}đ</Paragraph>
+            </Row>
+            <Row justify="space-between">
+              <Paragraph className={styles.label}>VIP price</Paragraph>
+              <Paragraph className={styles.value}>{setting ? (orderInfo.basePrice + (orderInfo.basePrice * setting.vip / 100)) : orderInfo.basePrice}đ</Paragraph>
+            </Row>
+            <Row justify="space-between">
+              <Paragraph className={styles.label}>Couple price</Paragraph>
+              <Paragraph className={styles.value}>{setting ? (orderInfo.basePrice + (orderInfo.basePrice * setting.couple / 100)) : orderInfo.basePrice}đ</Paragraph>
             </Row>
             <Row justify="space-between">
               <Paragraph className={styles.label}>Seat choosed</Paragraph>
@@ -370,7 +492,7 @@ function SeatSelection() {
             <Row justify="space-between">
               <Paragraph className={styles.totalLabel}>Total Payment</Paragraph>
               <Paragraph className={styles.totalValue}>
-                ${orderInfo.price * selectedSeats.length}
+                ${calculateTotalPrice()}
               </Paragraph>
             </Row>
           </Card>

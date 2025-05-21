@@ -104,10 +104,10 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
   const rooms = getRoomsForDateAndTime(selectedDate, selectedTime);
 
   const handleBookNow = async () => {
-    // if (!isAuthenticated) {
-    //   message.error("You need to log in to book a movie.");
-    //   return;
-    // }
+    if (!isAuthenticated) {
+      message.error("You need to log in to book a movie.");
+      return;
+    }
 
     if (!selectedRoomId) {
       message.error("Please select a room to proceed.");
@@ -121,7 +121,7 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     }
 
     const bookingData = {
-      user_id: "u2",
+      user_id: userId,
       showtime_id: showtimeId,
       status: "PENDING",
     };

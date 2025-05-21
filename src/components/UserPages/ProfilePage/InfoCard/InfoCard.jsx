@@ -1,10 +1,18 @@
-import { Card, Avatar, Typography, Progress, Space } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { Card, Avatar, Typography, Skeleton, Button } from "antd";
+import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import styles from "./InfoCard.module.scss";
 
 const { Title, Paragraph } = Typography;
 
-const InfoCard = ({ userData }) => {
+const InfoCard = ({ userData, loading, onSignOut }) => {
+  if (loading) {
+    return (
+      <Card className={styles.infoCard}>
+        <Skeleton active avatar paragraph={{ rows: 2 }} />
+      </Card>
+    );
+  }
+
   return (
     <Card className={styles.infoCard}>
       <div className={styles.infoHeader}>
@@ -44,30 +52,14 @@ const InfoCard = ({ userData }) => {
           {userData.firstName} {userData.lastName}
         </Title>
         <Paragraph className={styles.userRole}>Moviegoers</Paragraph>
-      </div>
-      <div className={styles.divider} />
-      <div className={styles.loyaltySection}>
-        <Paragraph className={styles.loyaltyLabel}>Loyalty Points</Paragraph>
-        <Card className={styles.loyaltyCard}>
-          <Title level={5} className={styles.loyaltyTitle}>
-            Moviegoers
-          </Title>
-          <Space>
-            <Paragraph className={styles.points}>
-              {userData.loyaltyPoints}
-            </Paragraph>
-            <Paragraph className={styles.pointsLabel}>points</Paragraph>
-          </Space>
-        </Card>
-        <Paragraph className={styles.progressText}>
-          180 points become a master
-        </Paragraph>
-        <Progress
-          percent={(userData.loyaltyPoints / 500) * 100}
-          showInfo={false}
-          strokeColor="#5f2eea"
-          className={styles.progressBar}
-        />
+        <Button
+          type="primary"
+          icon={<LogoutOutlined />}
+          onClick={onSignOut}
+          className={styles.logoutButton}
+        >
+          Logout
+        </Button>
       </div>
     </Card>
   );

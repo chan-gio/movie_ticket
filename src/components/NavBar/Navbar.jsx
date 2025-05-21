@@ -1,42 +1,26 @@
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, Dropdown, Select, Input, Space, Avatar } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import styles from "./Navbar.module.scss";
-import { useState } from "react";
 import SelectCinemaModal from "../Modal/SelectCinemaModal";
 
 const { Option } = Select;
 
-const logo = "https://via.placeholder.com/150x50?text=Movie"; 
+const logo = "https://via.placeholder.com/150x50?text=Movie";
 const user = {
   picture: null,
   fullName: "John Doe",
   email: "john.doe@example.com",
 };
-const isLoggedIn = true;
-
-const userMenu = (
-  <Menu className={styles.userMenu}>
-    <Menu.Item key="info">
-      Signed in as <br />
-      <strong>{user.fullName || user.email}</strong>
-    </Menu.Item>
-    <Menu.Divider />
-    <Menu.Item key="home">
-      <Link to="/">Home</Link>
-    </Menu.Item>
-    <Menu.Item key="profile">
-      <Link to="/profile">Your Profile</Link>
-    </Menu.Item>
-    <Menu.Divider />
-    <Menu.Item key="signout">
-      <Link to="/auth">Sign out</Link>
-    </Menu.Item>
-  </Menu>
-);
 
 function Navbar() {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const navigate = useNavigate(); 
+
+  const handleAvatarClick = () => {
+    navigate('/profile');
+  };
 
   const handleCinemaClick = (e) => {
     e.preventDefault();
@@ -90,8 +74,6 @@ function Navbar() {
               suffix={<SearchOutlined className={styles.searchIcon} />}
             />
           </div>
-          {isLoggedIn ? (
-            <Dropdown overlay={userMenu} trigger={["click"]}>
               <Avatar
                 size={35}
                 src={
@@ -100,13 +82,8 @@ function Navbar() {
                 }
                 icon={<UserOutlined />}
                 className={styles.userAvatar}
+                onClick={handleAvatarClick}
               />
-            </Dropdown>
-          ) : (
-            <Link to="/auth" className={styles.signUpButton}>
-              Sign up
-            </Link>
-          )}
         </div>
       </div>
       <SelectCinemaModal

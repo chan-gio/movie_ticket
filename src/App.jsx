@@ -13,7 +13,6 @@ const { Content } = Layout;
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div>Loading...</div>}>
         <ReactRoutes>
           {RouteConfig.map((route, index) => (
             <Route
@@ -48,7 +47,6 @@ function App() {
           theme="light"
           progressStyle={{ background: '#5f2eea' }}
         />
-      </Suspense>
     </BrowserRouter>
   );
 }

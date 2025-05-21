@@ -1,25 +1,60 @@
 import { useState } from "react";
-import { Card, Row, Col, Typography, Form, Input, Button, Alert } from "antd";
+import { Card, Row, Col, Typography, Form, Input, Button, Alert, message, Skeleton } from "antd";
 import styles from "./AccountTab.module.scss";
+import UserService from "../../../../services/UserService";
 
 const { Title } = Typography;
 
-const AccountTab = ({ userData }) => {
+const AccountTab = ({ userData, loading }) => {
   const [form] = Form.useForm();
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleUpdate = (values) => {
+  const handleUpdate = async (values) => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const updatedData = {
+        full_name: `${values.firstName} ${values.lastName}`,
+        email: values.email,
+        phone: values.phoneNumber,
+      };
+
+      const userId = localStorage.getItem('user_id');
+      await UserService.updateUser(userId, updatedData);
+
+      if (values.newPassword) {
+        message.warning("Password update not implemented yet.");
+      }
+
       setAlert({
         show: true,
         type: "success",
         message: "Profile updated successfully!",
       });
+    } catch (error) {
+      setAlert({
+        show: true,
+        type: "error",
+        message: error.message || "Failed to update profile",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className={styles.tabContent}>
+        <Card className={styles.detailCard}>
+          <Skeleton active paragraph={{ rows: 4 }} />
+        </Card>
+        <Card className={styles.detailCard}>
+          <Skeleton active paragraph={{ rows: 2 }} />
+        </Card>
+        <Skeleton.Button active size="large" block />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.tabContent}>

@@ -64,6 +64,22 @@ const BookingService = {
     }
   },
 
+   // Fetch bookings by user ID
+  getBookingsByUserId: async (userId, params = {}) => {
+    try {
+      const response = await api.get(`/bookings/userId/${userId}`, { params });
+      if (response.data.code === 200) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || "Failed to fetch bookings for user");
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch bookings for user"
+      );
+    }
+  },
+
   // Update booking status
   updateBookingStatus: async (bookingId, status) => {
     try {
@@ -87,7 +103,7 @@ const BookingService = {
   // Update booking total price
   updateTotalPrice: async (bookingId, totalPrice) => {
     try {
-      const response = await api.put(`/bookings/${bookingId}/total-price`, {
+      const response = await api.put(`/bookings/bookings/${bookingId}/total-price`, {
         total_price: totalPrice,
       });
       if (response.data.code === 200) {

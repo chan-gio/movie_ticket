@@ -109,3 +109,13 @@
     border-radius: 10px;
   }
 }
+
+.logoutButton {
+  margin-top: 16px;
+  background-color: #5F2EEA; /* Match the primary color used in the design */
+  border-color: #5F2EEA;
+  &:hover {
+    background-color: #4a1ed4;
+    border-color: #4a1ed4;
+  }
+}

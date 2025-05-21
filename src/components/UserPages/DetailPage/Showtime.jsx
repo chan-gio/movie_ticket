@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Typography, Spin } from "antd";
+import { Row, Col, Typography, Skeleton } from "antd";
 import { FrownOutlined } from "@ant-design/icons";
 import CinemaCard from "./CinemaCard";
 import ShowtimeService from "../../../services/ShowtimeService";
@@ -12,14 +12,12 @@ export default function Showtime({ movieId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Map API showtime data to CinemaCard props, grouping by cinema_id
   const formatShowtimes = (data) => {
     if (!Array.isArray(data)) {
       console.warn("Showtime data is not an array:", data);
       return [];
     }
 
-    // Group showtimes by cinema_id
     const groupedByCinema = data.reduce((acc, showtime) => {
       const cinemaId = showtime.room?.cinema?.cinema_id || "unknown";
       const cinemaName = showtime.room?.cinema?.name || "Unknown Cinema";
@@ -42,16 +40,14 @@ export default function Showtime({ movieId }) {
       return acc;
     }, {});
 
-    // Convert grouped object to array
     return Object.values(groupedByCinema);
   };
 
-  // Fetch showtimes
   useEffect(() => {
     const fetchShowtimes = async () => {
       try {
         const response = await ShowtimeService.getShowTimesByMovieId(movieId);
-        const data = response.data; // Access the 'data' array from response
+        const data = response.data;
         const formattedShowtimes = formatShowtimes(data);
         setShowtimes(formattedShowtimes);
         setLoading(false);
@@ -64,7 +60,6 @@ export default function Showtime({ movieId }) {
     fetchShowtimes();
   }, [movieId]);
 
-  // Define title color for cinemas
   const getTitleColor = (cinema) => {
     switch (cinema) {
       case "CGV Vincom":
@@ -80,8 +75,15 @@ export default function Showtime({ movieId }) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "50px" }}>
-        <Spin size="large" />
+      <div className={styles.showtimes}>
+        <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+        <Row gutter={[16, 16]} className={styles.cinemaGrid}>
+          {[...Array(3)].map((_, index) => (
+            <Col key={index} xs={24} md={12} lg={8}>
+              <Skeleton active avatar paragraph={{ rows: 2 }} />
+            </Col>
+          ))}
+        </Row>
       </div>
     );
   }
@@ -97,7 +99,6 @@ export default function Showtime({ movieId }) {
       <Title level={3} className={styles.showtimesTitle}>
         Showtimes and Tickets
       </Title>
-      
       {showtimes.length > 0 ? (
         <Row gutter={[16, 16]} className={styles.cinemaGrid}>
           {showtimes.map((item) => {

@@ -4,8 +4,6 @@ import styles from "./MovieDetails.module.scss";
 import ContentBox from "../../../components/UserPages/DetailPage/ContentBox";
 import Showtime from "../../../components/UserPages/DetailPage/Showtime";
 
-const { Title, Paragraph } = Typography;
-
 function MovieDetails() {
   const { id } = useParams();
 

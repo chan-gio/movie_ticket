@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Row, Col, Typography, Spin } from "antd";
+import { Card, Row, Col, Typography, Skeleton } from "antd";
 import styles from "./ContentBox.module.scss";
 import MovieService from "../../../services/MovieService";
 
@@ -48,8 +48,36 @@ const ContentBox = ({ movieId }) => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "50px" }}>
-        <Spin size="large" />
+      <div style={{ margin: "40px 0px" }}>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} md={8}>
+            <Card className={styles.posterCard}>
+              <Skeleton.Image active style={{ width: "100%", height: 400 }} />
+            </Card>
+          </Col>
+          <Col xs={24} md={16}>
+            <Skeleton active paragraph={{ rows: 1 }} title={{ width: "60%" }} />
+            <Skeleton active paragraph={{ rows: 0 }} title={{ width: "40%" }} />
+            <Row gutter={[16, 16]}>
+              <Col xs={12} lg={8}>
+                <Skeleton active paragraph={{ rows: 1 }} title={{ width: "50%" }} />
+              </Col>
+              <Col xs={12} lg={16}>
+                <Skeleton active paragraph={{ rows: 1 }} title={{ width: "50%" }} />
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]}>
+              <Col xs={12} lg={8}>
+                <Skeleton active paragraph={{ rows: 1 }} title={{ width: "50%" }} />
+              </Col>
+              <Col xs={12} lg={16}>
+                <Skeleton active paragraph={{ rows: 1 }} title={{ width: "50%" }} />
+              </Col>
+            </Row>
+            <div className={styles.divider} />
+            <Skeleton active paragraph={{ rows: 3 }} title={{ width: "30%" }} />
+          </Col>
+        </Row>
       </div>
     );
   }
