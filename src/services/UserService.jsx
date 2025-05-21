@@ -99,6 +99,33 @@ const UserService = {
       throw new Error(message);
     }
   },
+
+  // Search users by keyword (username or phone) with pagination
+  searchUser: async (keyword, page = 1, perPage = 10) => {
+    try {
+      const response = await api.get("/users/search", {
+        params: { keyword, page, per_page: perPage },
+      });
+      if (response.data) {
+        return {
+          data: response.data.data.data, // Extract the user array from paginated response
+          pagination: {
+            current: response.data.data.current_page,
+            pageSize: response.data.data.per_page,
+            total: response.data.data.total,
+          },
+        };
+      } else {
+        throw new Error(response.data.message || "Failed to search users");
+      }
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to search users. Please try again later."
+          : error.response?.data?.message || "Failed to search users";
+      throw new Error(message);
+    }
+  },
 };
 
 export default UserService;

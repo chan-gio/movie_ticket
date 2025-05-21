@@ -64,14 +64,16 @@ const BookingService = {
     }
   },
 
-   // Fetch bookings by user ID
+  // Fetch bookings by user ID
   getBookingsByUserId: async (userId, params = {}) => {
     try {
       const response = await api.get(`/bookings/userId/${userId}`, { params });
       if (response.data.code === 200) {
         return response.data.data;
       } else {
-        throw new Error(response.data.message || "Failed to fetch bookings for user");
+        throw new Error(
+          response.data.message || "Failed to fetch bookings for user"
+        );
       }
     } catch (error) {
       throw new Error(
@@ -103,9 +105,12 @@ const BookingService = {
   // Update booking total price
   updateTotalPrice: async (bookingId, totalPrice) => {
     try {
-      const response = await api.put(`/bookings/bookings/${bookingId}/total-price`, {
-        total_price: totalPrice,
-      });
+      const response = await api.put(
+        `/bookings/bookings/${bookingId}/total-price`,
+        {
+          total_price: totalPrice,
+        }
+      );
       if (response.data.code === 200) {
         return response.data.data;
       } else {
@@ -136,6 +141,33 @@ const BookingService = {
         error.response?.status === 500
           ? "Server error: Unable to delete booking. Please try again later."
           : error.response?.data?.message || "Failed to delete booking";
+      throw new Error(message);
+    }
+  },
+
+  // Search bookings by keyword (phone number or username) with pagination
+  searchBooking: async (keyword, page = 1, perPage = 10) => {
+    try {
+      const response = await api.get("/bookings/search", {
+        params: { keyword, page, per_page: perPage },
+      });
+      if (response.data.code === 200) {
+        return {
+          data: response.data.data.data, // Extract bookings array
+          pagination: {
+            current: response.data.data.current_page,
+            pageSize: response.data.data.per_page,
+            total: response.data.data.total,
+          },
+        };
+      } else {
+        throw new Error(response.data.message || "Failed to search bookings");
+      }
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to search bookings. Please try again later."
+          : error.response?.data?.message || "Failed to search bookings";
       throw new Error(message);
     }
   },

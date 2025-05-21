@@ -1,11 +1,13 @@
-import api from "./api"; 
+import api from "./api";
 
 const ShowTimeService = {
-  getAllShowTimes: async () => {
+  getAllShowTimes: async (page = 1, perPage = 10) => {
     try {
-      const response = await api.get("/showtimes");
+      const response = await api.get(
+        `/showtimes?page=${page}&per_page=${perPage}`
+      );
       if (response.data.code === 200) {
-        return response.data.data || [];
+        return response.data.data; // Returns paginated data object
       }
       throw new Error(response.data.message || "Failed to fetch showtimes");
     } catch (error) {
@@ -14,7 +16,6 @@ const ShowTimeService = {
       );
     }
   },
-
 
   createShowTime: async (showtimeData) => {
     try {
@@ -44,11 +45,13 @@ const ShowTimeService = {
     }
   },
 
-  getShowTimesByMovieId: async (movieId) => {
+  getShowTimesByMovieId: async (movieId, page = 1, perPage = 10) => {
     try {
-      const response = await api.get(`/showtimes/movieId/${movieId}`);
+      const response = await api.get(
+        `/showtimes/movieId/${movieId}?page=${page}&per_page=${perPage}`
+      );
       if (response.data.code === 200) {
-        return response.data.data || [];
+        return response.data.data; // Returns paginated data object
       }
       throw new Error(response.data.message || "Failed to fetch showtimes");
     } catch (error) {
@@ -74,7 +77,7 @@ const ShowTimeService = {
 
   deleteShowTime: async (showtimeId) => {
     try {
-      const response = await api.delete(`/showtimes/${showtimeId}`);
+      const response = await api.delete(`/showtimes/soft/${showtimeId}`);
       if (response.data.code === 200) {
         return true;
       }
@@ -82,6 +85,37 @@ const ShowTimeService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to delete showtime"
+      );
+    }
+  },
+
+  restoreShowTime: async (showtimeId) => {
+    try {
+      const response = await api.patch(`/showtimes/restore/${showtimeId}`);
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || "Failed to restore showtime");
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to restore showtime"
+      );
+    }
+  },
+
+  // Search showtimes by keyword (movie title, cinema name, or start date) with pagination
+  searchShowtimes: async (keyword, page = 1, perPage = 10) => {
+    try {
+      const response = await api.get("/showtimes/search", {
+        params: { keyword, page, per_page: perPage },
+      });
+      if (response.data.code === 200) {
+        return response.data.data; // Returns paginated data object
+      }
+      throw new Error(response.data.message || "Failed to search showtimes");
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search showtimes"
       );
     }
   },

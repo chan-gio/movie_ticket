@@ -28,15 +28,27 @@
   text-align: center;
 }
 
-.refreshButton {
-  border-radius: 8px;
+/* Base button styles for refresh, search, and clear buttons */
+.refreshButton,
+.searchButton,
+.clearButton {
+  border-radius: 6px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Specific styles for refresh and search buttons */
+.refreshButton,
+.searchButton {
   background-color: #6b46c1;
   border-color: #6b46c1;
-  height: 44px;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 0 20px;
-  transition: all 0.2s ease;
+  color: #ffffff;
 
   &:hover {
     background-color: #553c9a;
@@ -47,6 +59,25 @@
   &:active {
     transform: translateY(0);
   }
+}
+
+/* Specific styles for clear button */
+.clearButton {
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+.searchInput {
+  border-radius: 6px;
+  height: 36px;
+  width: 300px;
 }
 
 .mainContent {
@@ -194,10 +225,17 @@
     font-size: 24px;
   }
 
-  .refreshButton {
-    height: 40px;
-    font-size: 14px;
-    padding: 0 16px;
+  .refreshButton,
+  .searchButton,
+  .clearButton {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 12px;
+  }
+
+  .searchInput {
+    height: 32px;
+    width: 300px;
   }
 
   .statisticCard {
@@ -231,9 +269,16 @@
     align-items: center;
   }
 
-  .refreshButton {
+  .refreshButton,
+  .searchButton,
+  .clearButton {
     width: 100%;
     max-width: 200px;
+    margin-bottom: 8px;
+  }
+
+  .searchInput {
+    width: 100%;
     margin-bottom: 8px;
   }
 

@@ -19,6 +19,7 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   PlusOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import CouponService from "../../../services/CouponService";
 import styles from "./AdminManageCoupon.module.scss";
@@ -64,6 +65,16 @@ function AdminManageCoupon() {
       loadData(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error(error.message || "Failed to deactivate coupon");
+    }
+  };
+
+  const handleActivateCoupon = async (id) => {
+    try {
+      await CouponService.restoreCoupon(id);
+      message.success("Coupon activated successfully");
+      loadData(pagination.current, pagination.pageSize);
+    } catch (error) {
+      message.error(error.message || "Failed to activate coupon");
     }
   };
 
@@ -144,7 +155,7 @@ function AdminManageCoupon() {
           >
             Edit
           </Button>
-          {record.is_active && (
+          {record.is_active ? (
             <Popconfirm
               title="Are you sure to deactivate this coupon?"
               onConfirm={() => handleSoftDeleteCoupon(record.coupon_id)}
@@ -155,6 +166,20 @@ function AdminManageCoupon() {
                 className={styles.deactivateButton}
               >
                 Deactivate
+              </Button>
+            </Popconfirm>
+          ) : (
+            <Popconfirm
+              title="Are you sure to activate this coupon?"
+              onConfirm={() => handleActivateCoupon(record.coupon_id)}
+            >
+              <Button
+                type="default"
+                icon={<CheckCircleOutlined />}
+                style={{ borderColor: "#52c41a", color: "#52c41a" }}
+                className={styles.activateButton}
+              >
+                Activate
               </Button>
             </Popconfirm>
           )}

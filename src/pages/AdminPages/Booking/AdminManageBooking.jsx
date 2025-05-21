@@ -13,8 +13,14 @@ import {
   Statistic,
   Tag,
   Spin,
+  Input,
 } from "antd";
-import { EyeOutlined, DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import BookingService from "../../../services/BookingService";
 import styles from "./AdminManageBooking.module.scss";
 import "../GlobalStyles.module.scss";
@@ -30,15 +36,26 @@ function AdminManageBooking() {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [searchKeyword, setSearchKeyword] = useState(""); // State for keyword search
+  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
 
   useEffect(() => {
     loadData(pagination.current, pagination.pageSize);
   }, []);
 
-  const loadData = async (page = 1, pageSize = 10) => {
+  const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
     setLoading(true);
     try {
-      const response = await BookingService.getAllBookings(page, pageSize);
+      let response;
+      if (keyword) {
+        // Search by keyword (phone number or username)
+        response = await BookingService.searchBooking(keyword, page, pageSize);
+        setIsSearching(true);
+      } else {
+        // Load all bookings
+        response = await BookingService.getAllBookings(page, pageSize);
+        setIsSearching(false);
+      }
       setBookings(response.data);
       setPagination({
         current: response.pagination.current,
@@ -66,6 +83,20 @@ function AdminManageBooking() {
     loadData(pagination.current, pagination.pageSize);
   };
 
+  const handleSearch = () => {
+    if (!searchKeyword.trim()) {
+      message.warning("Please enter a phone number or username to search");
+      return;
+    }
+    loadData(1, pagination.pageSize, searchKeyword); // Reset to page 1 on new search
+  };
+
+  const handleClearSearch = () => {
+    setSearchKeyword("");
+    setIsSearching(false);
+    loadData(1, pagination.pageSize, ""); // Reset to full list
+  };
+
   const formatDateTime = (dateTime) => {
     return dateTime
       ? new Date(dateTime).toLocaleString("en-GB", {
@@ -83,6 +114,22 @@ function AdminManageBooking() {
       sorter: (a, b) =>
         (a.user?.full_name || "").localeCompare(b.user?.full_name || ""),
       render: (_, record) => record.user?.full_name || "N/A",
+    },
+    {
+      title: "Username",
+      dataIndex: ["user", "username"],
+      key: "username",
+      sorter: (a, b) =>
+        (a.user?.username || "").localeCompare(b.user?.username || ""),
+      render: (_, record) => record.user?.username || "N/A",
+    },
+    {
+      title: "Phone Number",
+      dataIndex: ["user", "phone"],
+      key: "phone_number",
+      sorter: (a, b) =>
+        (a.user?.phone || "").localeCompare(b.user?.phone || ""),
+      render: (_, record) => record.user?.phone || "N/A",
     },
     {
       title: "Movie",
@@ -120,7 +167,7 @@ function AdminManageBooking() {
     },
     {
       title: "Total Price (VND)",
-      dataIndex: " tapas",
+      dataIndex: "total_price",
       key: "total_price",
       sorter: (a, b) => (a.total_price || 0) - (b.total_price || 0),
       render: (price) => (
@@ -133,7 +180,7 @@ function AdminManageBooking() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      sorter: (a, b) => (a.status || "").souhaite(b.status || ""),
+      sorter: (a, b) => (a.status || "").localeCompare(b.status || ""),
       render: (status) => {
         let color;
         switch (status) {
@@ -193,15 +240,44 @@ function AdminManageBooking() {
           </Title>
         </Col>
         <Col>
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={() => loadData(pagination.current, pagination.pageSize)}
-            loading={loading}
-            className={styles.refreshButton}
-          >
-            Refresh
-          </Button>
+          <Space>
+            <Input
+              placeholder="Search by phone number or username"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              className={styles.searchInput}
+              allowClear
+            />
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={handleSearch}
+              className={styles.searchButton}
+            >
+              Search
+            </Button>
+            {isSearching && (
+              <Button
+                type="default"
+                onClick={handleClearSearch}
+                className={styles.clearButton}
+              >
+                Clear Search
+              </Button>
+            )}
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              onClick={() =>
+                loadData(pagination.current, pagination.pageSize, searchKeyword)
+              }
+              loading={loading}
+              className={styles.refreshButton}
+            >
+              Refresh
+            </Button>
+          </Space>
         </Col>
       </Row>
       <Row gutter={[16, 16]} className={styles.mainContent}>

@@ -1,117 +1,190 @@
 .container {
-  padding: 40px 20px;
-  background-color: #f5f5f5;
+  padding: 32px 24px;
+  background-color: #f7f9fc;
   min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
 }
 
 .pageTitle {
   margin: 0;
-  color: #14142b;
+  color: #1f2a44;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
 
-.refreshButton {
-  border-radius: 12px;
-  background-color: #5f2eea;
-  border-color: #5f2eea;
-  height: 48px;
-  font-size: 16px;
-  padding: 0 24px;
+/* Base button styles for refresh, search, and clear buttons */
+.refreshButton,
+.searchButton,
+.clearButton {
+  border-radius: 6px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Specific styles for refresh and search buttons */
+.refreshButton,
+.searchButton {
+  background-color: #6b46c1;
+  border-color: #6b46c1;
+  color: #ffffff;
 
   &:hover {
-    background-color: #3f1dc7;
-    border-color: #3f1dc7;
+    background-color: #553c9a;
+    border-color: #553c9a;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
+/* Specific styles for clear button */
+.clearButton {
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+.searchInput {
+  border-radius: 6px;
+  height: 36px;
+  width: 300px;
+}
+
 .mainContent {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
+  width: 100%;
 }
 
 .tableCard {
-  border-radius: 16px;
+  border-radius: 12px;
   border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   background-color: #ffffff;
   padding: 16px;
+  overflow: hidden;
+  width: 100%;
 }
 
 .table {
   .ant-table-thead > tr > th {
-    background-color: #f9f5ff;
-    color: #14142b;
+    background-color: #f0f5ff;
+    color: #1f2a44;
     font-weight: 600;
-    border-bottom: 2px solid #e5e7eb;
+    font-size: 14px;
+    padding: 12px 16px;
+    border-bottom: 2px solid #e2e8f0;
+    text-align: center;
   }
 
   .ant-table-tbody > tr > td {
-    border-bottom: 1px solid #e5e7eb;
-    color: #14142b;
-    font-size: 14px;
+    border-bottom: 1px solid #edf2f7;
+    color: #2d3748;
+    font-size: 13px;
+    padding: 12px 16px;
+    text-align: center;
   }
+
+  .ant-table-tbody > tr:last-child > td {
+    border-bottom: none;
+  }
+
+  /* Center Actions column content */
+ 
 }
 
 .tableRow {
+  transition: background-color 0.2s ease;
+
   &:hover > td {
-    background-color: #f9f5ff !important;
+    background-color: #f0f5ff !important;
   }
 }
 
 .profilePicture {
   width: 50px;
   height: 50px;
-  border-radius: 50%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
 .editButton {
-  border-radius: 8px;
-  background-color: #5f2eea;
-  border-color: #5f2eea;
-
-  &:hover {
-    background-color: #3f1dc7;
-    border-color: #3f1dc7;
-  }
-}
-
-.deactivateButton {
-  border-radius: 8px;
-  background-color: #f6ad55;
-  border-color: #f6ad55;
-  color: #ffffff;
-  font-size: 14px;
-  height: 40px;
-  padding: 0 16px;
+  border-radius: 6px;
+  background-color: #6b46c1;
+  border-color: #6b46c1;
+  font-size: 13px;
+  height: 36px;
+  padding: 0 14px;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: #ed8936;
-    border-color: #ed8936;
+    background-color: #553c9a;
+    border-color: #553c9a;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
 .deleteButton {
-  border-radius: 8px;
-  background-color: #ff4d4f;
-  border-color: #ff4d4f;
+  border-radius: 6px;
+  background-color: #f56565;
+  border-color: #f56565;
   color: #ffffff;
+  font-size: 13px;
+  height: 36px;
+  padding: 0 14px;
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: #d9363e;
-    border-color: #d9363e;
+    background-color: #e53e3e;
+    border-color: #e53e3e;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
 .loading,
 .empty {
   text-align: center;
-  padding: 40px 0;
-  font-size: 18px;
-  color: #6b7280;
+  padding: 48px 0;
+  font-size: 16px;
+  color: #718096;
+  font-weight: 500;
 }
 
 /* Responsive adjustments */
@@ -121,25 +194,31 @@
   }
 
   .pageTitle {
-    font-size: 22px;
+    font-size: 24px;
   }
 
-  .refreshButton {
-    height: 40px;
-    font-size: 14px;
-    padding: 0 16px;
+  .refreshButton,
+  .searchButton,
+  .clearButton {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 12px;
+  }
+
+  .searchInput {
+    height: 32px;
+    width: 300px;
   }
 
   .table {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {
+      padding: 10px 12px;
       font-size: 12px;
-      padding: 8px;
     }
   }
 
   .editButton,
-  .deactivateButton,
   .deleteButton {
     height: 32px;
     font-size: 12px;
@@ -155,11 +234,25 @@
 @media (max-width: 576px) {
   .header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
   }
 
-  .refreshButton {
+  .refreshButton,
+  .searchButton,
+  .clearButton {
     width: 100%;
     max-width: 200px;
+    margin-bottom: 8px;
+  }
+
+  .searchInput {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .table {
+    /* Ensure table is scrollable on small screens */
+    overflow-x: auto;
+    display: block;
   }
 }

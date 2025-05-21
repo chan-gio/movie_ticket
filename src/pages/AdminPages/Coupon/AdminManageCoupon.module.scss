@@ -28,25 +28,81 @@
   text-align: center;
 }
 
+/* Base button styles */
 .addButton,
-.refreshButton {
-  border-radius: 8px;
-  background-color: #6b46c1;
-  border-color: #6b46c1;
-  height: 44px;
-  font-size: 15px;
+.refreshButton,
+.editButton,
+.deactivateButton,
+.activateButton,
+.deleteButton {
+  min-width: 120px !important;
+  border-radius: 6px;
+  height: 36px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 0 20px;
+  padding: 0 14px;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background-color: #553c9a;
-    border-color: #553c9a;
     transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   &:active {
     transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+/* Specific button styles */
+.addButton,
+.refreshButton,
+.editButton {
+  background-color: #6b46c1;
+  border-color: #6b46c1;
+  color: #ffffff;
+
+  &:hover {
+    background-color: #553c9a;
+    border-color: #553c9a;
+  }
+}
+
+.deactivateButton {
+  background-color: #f6ad55;
+  border-color: #f6ad55;
+  color: #ffffff !important;
+
+  &:hover {
+    background-color: #ed8936 !important;
+    border-color: #ed8936 !important;
+  }
+}
+
+.activateButton {
+  min-width: 120px;
+  background-color: #52c41a;
+  border-color: #52c41a;
+  color: #ffffff !important;
+
+  &:hover {
+
+    background-color: #389e0d !important;
+    border-color: #389e0d !important;
+  }
+}
+
+.deleteButton {
+  background-color: #f56565;
+  border-color: #f56565;
+  color: #ffffff;
+
+  &:hover {
+    background-color: #e53e3e;
+    border-color: #e53e3e;
   }
 }
 
@@ -125,7 +181,6 @@
     justify-content: space-between !important;
     align-items: center;
   }
-  
 }
 
 .tableRow {
@@ -133,68 +188,6 @@
 
   &:hover > td {
     background-color: #f0f5ff !important;
-  }
-}
-
-.editButton {
-  border-radius: 6px;
-  background-color: #6b46c1;
-  border-color: #6b46c1;
-  font-size: 13px;
-  height: 36px;
-  padding: 0 14px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: #553c9a;
-    border-color: #553c9a;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.deactivateButton {
-  border-radius: 6px;
-  background-color: #f6ad55;
-  border-color: #f6ad55;
-  color: #ffffff;
-  font-size: 13px;
-  height: 36px;
-  padding: 0 14px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: #ed8936;
-    border-color: #ed8936;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.deleteButton {
-  border-radius: 6px;
-  background-color: #f56565;
-  border-color: #f56565;
-  color: #ffffff;
-  font-size: 13px;
-  height: 36px;
-  padding: 0 14px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: #e53e3e;
-    border-color: #e53e3e;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
   }
 }
 
@@ -218,10 +211,14 @@
   }
 
   .addButton,
-  .refreshButton {
-    height: 40px;
-    font-size: 14px;
-    padding: 0 16px;
+  .refreshButton,
+  .editButton,
+  .deactivateButton,
+  .activateButton,
+  .deleteButton {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 12px;
   }
 
   .statisticCard {
@@ -239,14 +236,6 @@
       padding: 10px 12px;
       font-size: 12px;
     }
-  }
-
-  .editButton,
-  .deactivateButton,
-  .deleteButton {
-    height: 32px;
-    font-size: 12px;
-    padding: 0 12px;
   }
 }
 
@@ -266,4 +255,7 @@
   .statisticCard {
     margin-bottom: 16px;
   }
+}
+.ant-space-item{
+  min-width: 50px;
 }

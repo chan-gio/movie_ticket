@@ -11,11 +11,13 @@ import {
   message,
   Typography,
   Spin,
+  Input,
 } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
   ReloadOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import UserService from "../../../services/UserService";
 import styles from "./AdminManageUser.module.scss";
@@ -32,16 +34,26 @@ function AdminManageUser() {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [searchKeyword, setSearchKeyword] = useState(""); // State for keyword search
+  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
 
   useEffect(() => {
     loadData(pagination.current, pagination.pageSize);
   }, []);
 
-  const loadData = async (page = 1, pageSize = 10) => {
+  const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
     setLoading(true);
     try {
-      const response = await UserService.getAllUsers(page, pageSize);
-
+      let response;
+      if (keyword) {
+        // Search by keyword (username or phone)
+        response = await UserService.searchUser(keyword, page, pageSize);
+        setIsSearching(true);
+      } else {
+        // Load all users
+        response = await UserService.getAllUsers(page, pageSize);
+        setIsSearching(false);
+      }
       setUsers(response.data);
       setPagination({
         current: response.pagination.current,
@@ -58,7 +70,6 @@ function AdminManageUser() {
   const handleDeleteUser = async (id) => {
     try {
       await UserService.deleteUser(id);
-      setUsers(users.filter((user) => user.user_id !== id));
       message.success("User deleted successfully");
       // Reload data to reflect accurate pagination
       loadData(pagination.current, pagination.pageSize);
@@ -69,6 +80,20 @@ function AdminManageUser() {
 
   const handleTableChange = (pagination) => {
     loadData(pagination.current, pagination.pageSize);
+  };
+
+  const handleSearch = () => {
+    if (!searchKeyword.trim()) {
+      message.warning("Please enter a username or phone number to search");
+      return;
+    }
+    loadData(1, pagination.pageSize, searchKeyword); // Reset to page 1 on new search
+  };
+
+  const handleClearSearch = () => {
+    setSearchKeyword("");
+    setIsSearching(false);
+    loadData(1, pagination.pageSize, ""); // Reset to full list
   };
 
   const userColumns = [
@@ -91,7 +116,8 @@ function AdminManageUser() {
       title: "Full Name",
       dataIndex: "full_name",
       key: "full_name",
-      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
+      sorter: (a, b) => (a.full_name || "").localeCompare(b.full_name || ""),
+      render: (fullName) => fullName || "N/A",
     },
     {
       title: "Phone",
@@ -112,7 +138,7 @@ function AdminManageUser() {
       key: "profile_picture_url",
       render: (url) => (
         <img
-          src={url}
+          src={url || "https://via.placeholder.com/50?text=User"}
           alt="Profile"
           className={styles.profilePicture}
           onError={(e) =>
@@ -162,15 +188,44 @@ function AdminManageUser() {
           </Title>
         </Col>
         <Col>
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={() => loadData(pagination.current, pagination.pageSize)}
-            loading={loading}
-            className={styles.refreshButton}
-          >
-            Refresh
-          </Button>
+          <Space>
+            <Input
+              placeholder="Search by username or phone number"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              className={styles.searchInput}
+              allowClear
+            />
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={handleSearch}
+              className={styles.searchButton}
+            >
+              Search
+            </Button>
+            {isSearching && (
+              <Button
+                type="default"
+                onClick={handleClearSearch}
+                className={styles.clearButton}
+              >
+                Clear Search
+              </Button>
+            )}
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              onClick={() =>
+                loadData(pagination.current, pagination.pageSize, searchKeyword)
+              }
+              loading={loading}
+              className={styles.refreshButton}
+            >
+              Refresh
+            </Button>
+          </Space>
         </Col>
       </Row>
       <Row gutter={[16, 16]} className={styles.mainContent}>

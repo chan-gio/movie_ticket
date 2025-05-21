@@ -32,6 +32,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
   const [rooms, setRooms] = useState([]);
   const [cinemas, setCinemas] = useState([]);
   const [selectedCinema, setSelectedCinema] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Watch form field values for real-time preview updates
   const movieId = Form.useWatch("movie_id", showtimeForm);
@@ -44,9 +45,11 @@ function AdminManageShowtimeForm({ isEditMode }) {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Fetch movies
-        const movieData = await MovieService.getAllMovies();
-        setMovies(movieData.filter((movie) => !movie.is_deleted));
+        // Fetch movies with pagination (fetch all pages if needed)
+        const movieResponse = await MovieService.getAllMovies({
+          perPage: 100, // Adjust as needed
+        });
+        setMovies(movieResponse.data.filter((movie) => !movie.is_deleted));
 
         // Fetch rooms
         const roomData = await RoomService.getAllRooms();
@@ -63,7 +66,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
         setCinemas(uniqueCinemas);
 
         // Load showtime data for edit mode
-        if (isEditMode) {
+        if (isEditMode && id) {
           const showtime = await ShowTimeService.getShowTimeById(id);
           if (showtime) {
             showtimeForm.setFieldsValue({
@@ -97,6 +100,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
   );
 
   const handleSubmit = async (values) => {
+    setSubmitting(true);
     try {
       const showtimeData = {
         movie_id: values.movie_id,
@@ -119,6 +123,8 @@ function AdminManageShowtimeForm({ isEditMode }) {
       message.error(
         error.message || `Failed to ${isEditMode ? "update" : "add"} showtime`
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -145,7 +151,11 @@ function AdminManageShowtimeForm({ isEditMode }) {
                   name="movie_id"
                   rules={[{ required: true, message: "Please select a movie" }]}
                 >
-                  <Select placeholder="Select a movie">
+                  <Select
+                    placeholder="Select a movie"
+                    showSearch
+                    optionFilterProp="children"
+                  >
                     {movies.map((movie) => (
                       <Option key={movie.movie_id} value={movie.movie_id}>
                         {movie.title}
@@ -163,6 +173,8 @@ function AdminManageShowtimeForm({ isEditMode }) {
                   <Select
                     placeholder="Select a cinema"
                     onChange={handleCinemaChange}
+                    showSearch
+                    optionFilterProp="children"
                   >
                     {cinemas.map((cinema) => (
                       <Option key={cinema.cinema_id} value={cinema.cinema_id}>
@@ -179,6 +191,8 @@ function AdminManageShowtimeForm({ isEditMode }) {
                   <Select
                     placeholder="Select a room"
                     disabled={!selectedCinema}
+                    showSearch
+                    optionFilterProp="children"
                   >
                     {filteredRooms.map((room) => (
                       <Option key={room.room_id} value={room.room_id}>
@@ -198,6 +212,9 @@ function AdminManageShowtimeForm({ isEditMode }) {
                     showTime
                     style={{ width: "100%" }}
                     format="YYYY-MM-DD HH:mm:ss"
+                    disabledDate={(current) =>
+                      current && current < moment().startOf("day")
+                    }
                   />
                 </Form.Item>
                 <Form.Item
@@ -216,7 +233,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
                   <Input type="number" placeholder="Enter ticket price" />
                 </Form.Item>
                 <Form.Item>
-                  <Button type="primary" htmlType="submit" loading={loading}>
+                  <Button type="primary" htmlType="submit" loading={submitting}>
                     {isEditMode ? "Update Showtime" : "Add Showtime"}
                   </Button>
                   <Button

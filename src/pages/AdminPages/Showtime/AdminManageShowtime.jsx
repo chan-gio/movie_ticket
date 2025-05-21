@@ -12,14 +12,16 @@ import {
   Typography,
   Statistic,
   Spin,
+  Input,
 } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
   ReloadOutlined,
   PlusOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
-import ShowTimeService from "../../../services/ShowtimeService"; // Import the updated service
+import ShowTimeService from "../../../services/ShowtimeService";
 import styles from "./AdminManageShowtime.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -28,34 +30,75 @@ const { Title, Text: TypographyText } = Typography;
 function AdminManageShowtime() {
   const navigate = useNavigate();
   const [showtimes, setShowtimes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [searchKeyword, setSearchKeyword] = useState(""); // State for keyword search
+  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
     setLoading(true);
     try {
-      const data = await ShowTimeService.getAllShowTimes();
-      // Filter out soft-deleted showtimes
-      const activeShowtimes = data.filter((showtime) => !showtime.is_deleted);
-      setShowtimes(activeShowtimes);
+      let response;
+      if (keyword) {
+        response = await ShowTimeService.searchShowtimes(
+          keyword,
+          page,
+          pageSize
+        );
+        setIsSearching(true);
+      } else {
+        response = await ShowTimeService.getAllShowTimes(page, pageSize);
+        setIsSearching(false);
+      }
+      setShowtimes(response.data || []);
+      setPagination({
+        current: response.current_page,
+        pageSize: response.per_page,
+        total: response.total,
+      });
     } catch (error) {
+      console.error("Error loading showtimes:", error.message);
       message.error(error.message || "Failed to load showtimes");
+      setIsSearching(true); // Ensure clearButton is visible even if search fails
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadData(pagination.current, pagination.pageSize);
+  }, []);
+
   const handleDeleteShowtime = async (id) => {
     try {
       await ShowTimeService.deleteShowTime(id);
-      setShowtimes(showtimes.filter((showtime) => showtime.showtime_id !== id));
       message.success("Showtime deleted successfully");
+      loadData(pagination.current, pagination.pageSize); // Reload current page
     } catch (error) {
       message.error(error.message || "Failed to delete showtime");
     }
+  };
+
+  const handleTableChange = (newPagination) => {
+    loadData(newPagination.current, newPagination.pageSize);
+  };
+
+  const handleSearch = () => {
+    if (!searchKeyword.trim()) {
+      message.warning("Please enter a keyword to search");
+      return;
+    }
+    loadData(1, pagination.pageSize, searchKeyword); // Reset to page 1 on new search
+  };
+
+  const handleClearSearch = () => {
+    setSearchKeyword("");
+    setIsSearching(false);
+    loadData(1, pagination.pageSize, ""); // Reset to full list
   };
 
   const formatDateTime = (dateTime) => {
@@ -149,6 +192,32 @@ function AdminManageShowtime() {
         </Col>
         <Col>
           <Space>
+            <Input
+              placeholder="Search by movie, cinema, or date (YYYY-MM-DD)"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              className={styles.searchInput}
+              allowClear
+            />
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={handleSearch}
+              className={styles.searchButton}
+            >
+              Search
+            </Button>
+            {console.log("isSearching:", isSearching)}
+            {isSearching && (
+              <Button
+                type="default"
+                onClick={handleClearSearch}
+                className={styles.clearButton}
+              >
+                Clear Search
+              </Button>
+            )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -160,7 +229,9 @@ function AdminManageShowtime() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={loadData}
+              onClick={() =>
+                loadData(pagination.current, pagination.pageSize, searchKeyword)
+              }
               loading={loading}
               className={styles.refreshButton}
             >
@@ -176,7 +247,7 @@ function AdminManageShowtime() {
               title={
                 <span className={styles.statisticTitle}>Total Showtimes</span>
               }
-              value={showtimes.length}
+              value={pagination.total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
@@ -197,10 +268,11 @@ function AdminManageShowtime() {
                 dataSource={showtimes}
                 rowKey="showtime_id"
                 pagination={{
-                  pageSize: 10,
+                  ...pagination,
                   showSizeChanger: true,
                   pageSizeOptions: ["10", "20", "50"],
                 }}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
               />

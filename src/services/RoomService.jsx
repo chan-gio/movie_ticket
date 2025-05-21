@@ -3,7 +3,7 @@ import api from "./api"; // Import the configured Axios instance
 const RoomService = {
   /**
    * Fetch all non-deleted rooms with their cinema data
-   * @returns {Promise<Array>} Array of room objects including cinema.cinema_name
+   * @returns {Promise<Array>} Array of room objects including cinema.name
    */
   getAllRooms: async () => {
     try {
@@ -37,7 +37,7 @@ const RoomService = {
   /**
    * Fetch a single room by ID
    * @param {string} roomId - Room ID
-   * @returns {Promise<Object>} Room object including cinema.cinema_name
+   * @returns {Promise<Object>} Room object including cinema.name
    */
   getRoomById: async (roomId) => {
     try {
@@ -77,13 +77,17 @@ const RoomService = {
    */
   updateCapacity: async (roomId, capacity) => {
     try {
-      const response = await api.put(`/rooms/update-capacity/${roomId}`, { capacity });
+      const response = await api.put(`/rooms/${roomId}`, { capacity });
       if (response.data.code === 200) {
         return response.data.data;
       }
-      throw new Error(response.data.message || "Failed to update room capacity");
+      throw new Error(
+        response.data.message || "Failed to update room capacity"
+      );
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to update room capacity");
+      throw new Error(
+        error.response?.data?.message || "Failed to update room capacity"
+      );
     }
   },
 
@@ -94,13 +98,15 @@ const RoomService = {
    */
   softDeleteRoom: async (roomId) => {
     try {
-      const response = await api.delete(`/rooms/soft-delete/${roomId}`);
+      const response = await api.post(`/rooms/${roomId}/soft-delete`);
       if (response.data.code === 200) {
         return true;
       }
       throw new Error(response.data.message || "Failed to soft delete room");
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to soft delete room");
+      throw new Error(
+        error.response?.data?.message || "Failed to soft delete room"
+      );
     }
   },
 
@@ -111,13 +117,15 @@ const RoomService = {
    */
   restoreRoom: async (roomId) => {
     try {
-      const response = await api.patch(`/rooms/restore/${roomId}`);
+      const response = await api.post(`/rooms/${roomId}/restore`);
       if (response.data.code === 200) {
         return response.data.data;
       }
       throw new Error(response.data.message || "Failed to restore room");
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to restore room");
+      throw new Error(
+        error.response?.data?.message || "Failed to restore room"
+      );
     }
   },
 
@@ -132,26 +140,52 @@ const RoomService = {
       if (response.data.code === 200) {
         return true;
       }
-      throw new Error(response.data.message || "Failed to permanently delete room");
+      throw new Error(
+        response.data.message || "Failed to permanently delete room"
+      );
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to permanently delete room");
+      throw new Error(
+        error.response?.data?.message || "Failed to permanently delete room"
+      );
     }
   },
 
   /**
    * Fetch non-deleted rooms for a specific cinema
    * @param {string} cinemaId - Cinema ID
-   * @returns {Promise<Array>} Array of room objects including cinema.cinema_name
+   * @param {number} page - Page number
+   * @param {number} perPage - Items per page
+   * @returns {Promise<Object>} Paginated room objects including cinema.name
    */
-  getRoomsByCinemaId: async (cinemaId) => {
+  getRoomsByCinemaId: async (cinemaId, page = 1, perPage = 10) => {
     try {
-      const response = await api.get(`/rooms/cinema/${cinemaId}`);
+      const response = await api.get(
+        `/rooms/cinema/${cinemaId}?page=${page}&per_page=${perPage}`
+      );
       if (response.data.code === 200) {
-        return response.data.data.data || [];
+        return response.data.data; // Returns paginated data object
       }
-      throw new Error(response.data.message || "Failed to fetch rooms for cinema");
+      throw new Error(
+        response.data.message || "Failed to fetch rooms for cinema"
+      );
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to fetch rooms for cinema");
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch rooms for cinema"
+      );
+    }
+  },
+
+  searchRoomsByName: async (keyword) => {
+    try {
+      const response = await api.get("/rooms/search", { params: { keyword } });
+      if (response.data.code === 200) {
+        return response.data.data || [];
+      }
+      throw new Error(response.data.message || "Failed to search rooms");
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search rooms"
+      );
     }
   },
 };

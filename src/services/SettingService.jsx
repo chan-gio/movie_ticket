@@ -11,7 +11,9 @@ const SettingService = {
         throw new Error(response.data.message || "Failed to fetch setting");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to fetch setting");
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch setting"
+      );
     }
   },
 
@@ -25,7 +27,9 @@ const SettingService = {
         throw new Error(response.data.message || "Failed to update setting");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to update setting");
+      throw new Error(
+        error.response?.data?.message || "Failed to update setting"
+      );
     }
   },
 };
