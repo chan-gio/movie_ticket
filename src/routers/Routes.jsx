@@ -2,7 +2,6 @@ import { lazy } from 'react';
 import ShowMoviesPage from '../pages/UserPages/ShowMoviesPage/ShowMoviesPage';
 import CinemaPage from '../pages/UserPages/CinemaPage/CinemaPage';
 
-// Lazy load all page components
 const Home = lazy(() => import('../pages/UserPages/HomePage/Home'));
 const Auth = lazy(() => import('../pages/UserPages/Auth/Auth'));
 const Profile = lazy(() => import('../pages/UserPages/ProfilePage/Profile'));
@@ -34,17 +33,19 @@ const AdminManageBookingDetails = lazy(() => import('../pages/AdminPages/Booking
 const AdminManageCoupon = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCoupon'));
 const AdminManageCouponForm = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCouponForm'));
 
-// Define routes using an array of objects
 const Routes = [
+  // User routes
   { path: '/', component: <Home /> },
   { path: '/auth', component: <Auth /> },
   { path: '/profile', component: <Profile /> },
   { path: '/movies', component: <ShowMoviesPage /> },
   { path: '/movie/:id', component: <MovieDetails /> },
   { path: '/cinema/:cinemaName', component: <CinemaPage /> },
-  { path: '/seats', component: <SeatSelection /> },
-  { path: '/payment', component: <Payment /> },
-  { path: '/confirmation', component: <Confirmation /> },
+  { path: '/seats/:roomId/:bookingId', component: <SeatSelection /> },
+  { path: '/payment/:bookingId', component: <Payment /> },
+  { path: '/confirmation/:bookingId', component: <Confirmation /> },
+
+  // Admin routes
   { path: '/admin', component: <Admin><AdminDashboard /></Admin> },
   { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
   { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
