@@ -2,12 +2,17 @@ import api from "./api"; // Import the configured Axios instance
 import { uploadMoviePosterToCloudinary } from "../utils/cloudinaryConfig";
 // Service methods for MovieController endpoints
 const MovieService = {
-  // Fetch all movies that are not deleted
-  getAllMovies: async () => {
+  // Fetch all movies that are not deleted with pagination
+  getAllMovies: async ({ perPage, page } = {}) => {
     try {
-      const response = await api.get("/movies/");
+      const params = {};
+      if (perPage) params.per_page = perPage;
+      if (page) params.page = page;
+
+      const response = await api.get("/movies/", { params });
+
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data.data; // response.data.data sẽ là object của Laravel paginator
       } else {
         throw new Error(response.data.message || "Failed to fetch movies");
       }

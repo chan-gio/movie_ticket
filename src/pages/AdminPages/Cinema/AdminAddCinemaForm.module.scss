@@ -1,0 +1,38 @@
+.container {
+  padding: 40px 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #14142b;
+}
+
+.mainContent {
+  margin-top: 16px;
+}
+
+.form {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton {
+  border-radius: 12px;
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+  height: 48px;
+  font-size: 16px;
+  padding: 0 24px;
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
+}

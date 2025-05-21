@@ -77,17 +77,13 @@ const RoomService = {
    */
   updateCapacity: async (roomId, capacity) => {
     try {
-      const response = await api.put(`/rooms/${roomId}/capacity`, { capacity });
+      const response = await api.put(`/rooms/update-capacity/${roomId}`, { capacity });
       if (response.data.code === 200) {
         return response.data.data;
       }
-      throw new Error(
-        response.data.message || "Failed to update room capacity"
-      );
+      throw new Error(response.data.message || "Failed to update room capacity");
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to update room capacity"
-      );
+      throw new Error(error.response?.data?.message || "Failed to update room capacity");
     }
   },
 
@@ -98,15 +94,13 @@ const RoomService = {
    */
   softDeleteRoom: async (roomId) => {
     try {
-      const response = await api.delete(`/rooms/${roomId}/soft`);
+      const response = await api.delete(`/rooms/soft-delete/${roomId}`);
       if (response.data.code === 200) {
         return true;
       }
       throw new Error(response.data.message || "Failed to soft delete room");
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to soft delete room"
-      );
+      throw new Error(error.response?.data?.message || "Failed to soft delete room");
     }
   },
 
@@ -117,15 +111,13 @@ const RoomService = {
    */
   restoreRoom: async (roomId) => {
     try {
-      const response = await api.put(`/rooms/${roomId}/restore`);
+      const response = await api.patch(`/rooms/restore/${roomId}`);
       if (response.data.code === 200) {
         return response.data.data;
       }
       throw new Error(response.data.message || "Failed to restore room");
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to restore room"
-      );
+      throw new Error(error.response?.data?.message || "Failed to restore room");
     }
   },
 
@@ -140,13 +132,26 @@ const RoomService = {
       if (response.data.code === 200) {
         return true;
       }
-      throw new Error(
-        response.data.message || "Failed to permanently delete room"
-      );
+      throw new Error(response.data.message || "Failed to permanently delete room");
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to permanently delete room"
-      );
+      throw new Error(error.response?.data?.message || "Failed to permanently delete room");
+    }
+  },
+
+  /**
+   * Fetch non-deleted rooms for a specific cinema
+   * @param {string} cinemaId - Cinema ID
+   * @returns {Promise<Array>} Array of room objects including cinema.cinema_name
+   */
+  getRoomsByCinemaId: async (cinemaId) => {
+    try {
+      const response = await api.get(`/rooms/cinema/${cinemaId}`);
+      if (response.data.code === 200) {
+        return response.data.data.data || [];
+      }
+      throw new Error(response.data.message || "Failed to fetch rooms for cinema");
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Failed to fetch rooms for cinema");
     }
   },
 };

@@ -1,6 +1,6 @@
 .container {
-    width: 100%;
-    margin-bottom: 100px;
+  width: 100%;
+  margin-bottom: 100px;
 }
 
 .headerContainer {
@@ -10,9 +10,9 @@
   margin-bottom: 20px;
   height: 120px;
   width: 100%;
-  background-size: cover;    
-  background-position: center; 
-  background-repeat: no-repeat; 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   text-align: center;
 }
 
@@ -41,7 +41,6 @@
   align-items: center;
   justify-content: center;
 }
-
 
 .select {
   width: 250px;
@@ -78,4 +77,32 @@
 .select :global(.anticon) {
   color: #bfbfbf;
   font-size: 14px;
+}
+
+.loadMoreContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.loadMoreButton {
+  border-radius: 8px;
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+  height: 40px;
+  font-size: 14px;
+  padding: 0 24px;
+  color: #ffffff;
+
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 18px;
+  color: #6b7280;
 }

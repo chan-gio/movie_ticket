@@ -13,7 +13,7 @@
   color: #14142b;
 }
 
-.refreshButton, .addButton, .viewDeletedButton, .roomsButton {
+.refreshButton, .backButton {
   border-radius: 12px;
   background-color: #5f2eea;
   border-color: #5f2eea;
@@ -31,44 +31,37 @@
   margin-bottom: 40px;
 }
 
-.tableCard {
+.statisticCard {
   border-radius: 16px;
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
   padding: 24px;
-  margin-bottom: 16px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .statisticTitle {
+    color: #6b7280;
+    font-size: 16px;
+  }
+
+  .ant-statistic-content {
+    font-size: 32px;
+    font-weight: 600;
+  }
 }
 
-.label {
-  font-weight: 600;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.select {
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 16px;
-
-  .ant-select-selector {
-    border-radius: 8px !important;
-    border-color: #e5e7eb !important;
-    background-color: #f9f5ff !important;
-    color: #14142b !important;
-    height: 40px !important;
-    display: flex;
-    align-items: center;
-  }
-
-  &:hover .ant-select-selector {
-    border-color: #5f2eea !important;
-  }
-
-  &.ant-select-disabled .ant-select-selector {
-    background-color: #f0f0f0 !important;
-    color: #a0a0a0 !important;
-  }
+.tableCard {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 16px;
 }
 
 .table {
@@ -92,29 +85,15 @@
   }
 }
 
-.editButton, .deleteButton {
+.restoreButton {
   border-radius: 8px;
-  font-size: 14px;
-}
-
-.editButton {
-  background-color: #5f2eea;
-  border-color: #5f2eea;
-
-  &:hover {
-    background-color: #3f1dc7;
-    border-color: #3f1dc7;
-  }
-}
-
-.deleteButton {
-  background-color: #ff4d4f;
-  border-color: #ff4d4f;
+  background-color: #52c41a;
+  border-color: #52c41a;
   color: #ffffff;
 
   &:hover {
-    background-color: #d9363e;
-    border-color: #d9363e;
+    background-color: #389e0d;
+    border-color: #389e0d;
   }
 }
 
