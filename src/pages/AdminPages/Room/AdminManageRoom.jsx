@@ -155,15 +155,6 @@ function AdminManageRoom() {
       render: (_, record) => (
         <Space>
           <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/admin/manage_cinema/edit_room/${record.room_id}`)}
-            className={styles.editButton}
-            disabled={deleting || addingRoom}
-          >
-            Edit
-          </Button>
-          <Button
             type="default"
             icon={<SettingOutlined />}
             onClick={() => navigate(`/admin/manage_seats/edit_room/${record.room_id}`)}

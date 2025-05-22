@@ -155,7 +155,7 @@ const RoomService = {
    * @param {string} cinemaId - Cinema ID
    * @param {number} page - Page number
    * @param {number} perPage - Items per page
-   * @returns {Promise<Object>} Paginated room objects including cinema.name
+   * @returns {Promise<Array>} Array of room objects
    */
   getRoomsByCinemaId: async (cinemaId, page = 1, perPage = 10) => {
     try {
@@ -163,7 +163,10 @@ const RoomService = {
         `/rooms/cinema/${cinemaId}?page=${page}&per_page=${perPage}`
       );
       if (response.data.code === 200) {
-        return response.data.data; // Returns paginated data object
+        // Extract the rooms array, default to empty array if undefined
+        return Array.isArray(response.data.data?.data)
+          ? response.data.data.data
+          : [];
       }
       throw new Error(
         response.data.message || "Failed to fetch rooms for cinema"

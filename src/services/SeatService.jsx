@@ -1,46 +1,86 @@
-import api from './api'; // Import the configured Axios instance
+import api from "./api"; // Import the configured Axios instance
 
 // Service methods for SeatController endpoints
 const SeatService = {
   // Fetch all seats that are not deleted
   getAllSeats: async () => {
     try {
-      const response = await api.get('/seats');
+      const response = await api.get("/seats");
       if (response.data.code === 200) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch seats');
+        throw new Error(response.data.message || "Failed to fetch seats");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch seats');
+      throw new Error(error.response?.data?.message || "Failed to fetch seats");
     }
   },
 
   // Create a new seat
   createSeat: async (seatData) => {
     try {
-      const response = await api.post('/seats', seatData);
+      const response = await api.post("/seats", seatData);
       if (response.data.code === 201) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to create seat');
+        throw new Error(response.data.message || "Failed to create seat");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create seat');
+      throw new Error(error.response?.data?.message || "Failed to create seat");
     }
   },
 
   // Create multiple seats
   storeMultipleSeats: async (seatData) => {
     try {
-      const response = await api.post('/seats/store-multiple', seatData);
+      const response = await api.post("/seats/store-multiple", seatData);
       if (response.data.code === 201) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to create multiple seats');
+        throw new Error(
+          response.data.message || "Failed to create multiple seats"
+        );
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create multiple seats');
+      throw new Error(
+        error.response?.data?.message || "Failed to create multiple seats"
+      );
+    }
+  },
+
+  // Create multiple seats in batch
+  createBatchSeats: async (seatData) => {
+    try {
+      const response = await api.post("/seats/batch", seatData);
+      if (response.data.code === 201) {
+        return response.data.data; // Return the created seats
+      } else {
+        throw new Error(
+          response.data.message || "Failed to create batch seats"
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to create batch seats"
+      );
+    }
+  },
+
+  // Soft delete multiple seats in batch
+  softDeleteBatchSeats: async (seatData) => {
+    try {
+      const response = await api.post("/seats/softDeleteMultipe", seatData);
+      if (response.data.code === 200) {
+        return response.data;
+      } else {
+        throw new Error(
+          response.data.message || "Failed to soft delete batch seats"
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to soft delete batch seats"
+      );
     }
   },
 
@@ -51,26 +91,25 @@ const SeatService = {
       if (response.data.code === 200) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch seat');
+        throw new Error(response.data.message || "Failed to fetch seat");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch seat');
+      throw new Error(error.response?.data?.message || "Failed to fetch seat");
     }
   },
 
   getSeatByRoomId: async (roomId) => {
     try {
-      const response = await api.get(`/seats/roomId/${roomId}`);
+      const response = await api.get(`/seats/room/${roomId}/seats`);
       if (response.data.code === 200) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch seat');
+        throw new Error(response.data.message || "Failed to fetch seats");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch seat');
+      throw new Error(error.response?.data?.message || "Failed to fetch seats");
     }
   },
-
 
   // Update a seat
   updateSeat: async (seatId, seatData) => {
@@ -79,10 +118,10 @@ const SeatService = {
       if (response.data.code === 200) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to update seat');
+        throw new Error(response.data.message || "Failed to update seat");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update seat');
+      throw new Error(error.response?.data?.message || "Failed to update seat");
     }
   },
 
@@ -93,10 +132,12 @@ const SeatService = {
       if (response.data.code === 200) {
         return true;
       } else {
-        throw new Error(response.data.message || 'Failed to soft delete seat');
+        throw new Error(response.data.message || "Failed to soft delete seat");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to soft delete seat');
+      throw new Error(
+        error.response?.data?.message || "Failed to soft delete seat"
+      );
     }
   },
 
@@ -107,10 +148,12 @@ const SeatService = {
       if (response.data.code === 200) {
         return response.data;
       } else {
-        throw new Error(response.data.message || 'Failed to restore seat');
+        throw new Error(response.data.message || "Failed to restore seat");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to restore seat');
+      throw new Error(
+        error.response?.data?.message || "Failed to restore seat"
+      );
     }
   },
 
@@ -121,10 +164,14 @@ const SeatService = {
       if (response.data.code === 200) {
         return true;
       } else {
-        throw new Error(response.data.message || 'Failed to permanently delete seat');
+        throw new Error(
+          response.data.message || "Failed to permanently delete seat"
+        );
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to permanently delete seat');
+      throw new Error(
+        error.response?.data?.message || "Failed to permanently delete seat"
+      );
     }
   },
 };
