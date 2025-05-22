@@ -106,3 +106,8 @@
   font-size: 18px;
   color: #6b7280;
 }
+
+:global(.ant-row){
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}

@@ -216,6 +216,28 @@ const MovieService = {
       );
     }
   },
+
+  getAllMoviesFE: async ({ perPage, page } = {}) => {
+    try {
+      const params = {};
+      if (perPage) params.per_page = perPage;
+      if (page) params.page = page;
+
+      const response = await api.get("/movies/movies/get-all-movies", {
+        params,
+      });
+
+      if (response.data.code === 200) {
+        return response.data.data; // response.data.data sẽ là object của Laravel paginator
+      } else {
+        throw new Error(response.data.message || "Failed to fetch movies");
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch movies"
+      );
+    }
+  },
 };
 
 export default MovieService;

@@ -143,11 +143,13 @@ function AdminManageBooking() {
     },
     {
       title: "Room",
-      dataIndex: ["showtime", "room_id"],
-      key: "room_id",
+      dataIndex: ["showtime", "room", "room_name"],
+      key: "room_name",
       sorter: (a, b) =>
-        (a.showtime?.room_id || "").localeCompare(b.showtime?.room_id || ""),
-      render: (_, record) => record.showtime?.room_id || "N/A",
+        (a.showtime?.room?.room_name || "").localeCompare(
+          b.showtime?.room?.room_name || ""
+        ),
+      render: (_, record) => record.showtime?.room?.room_name || "N/A",
     },
     {
       title: "Showtime",
@@ -163,7 +165,7 @@ function AdminManageBooking() {
       dataIndex: "booking_seats",
       key: "seats",
       render: (bookingSeats) =>
-        bookingSeats?.map((seat) => seat.seat_id).join(", ") || "N/A",
+        bookingSeats?.map((seat) => seat.seat?.seat_number).join(", ") || "N/A",
     },
     {
       title: "Total Price (VND)",

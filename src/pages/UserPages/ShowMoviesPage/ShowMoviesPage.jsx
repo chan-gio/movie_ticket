@@ -1,52 +1,95 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Select, Button, Spin, Typography } from "antd";
-import { CalendarOutlined, EnvironmentOutlined } from '@ant-design/icons';
-import { toast } from 'react-toastify';
+import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
+import { useLocation } from "react-router-dom";
 import styles from "./ShowMoviesPage.module.scss";
 import bannerImg from "/assets/banner.png";
 import MovieCard from "../../../components/UserPages/ShowMoviesPage/MovieCard";
 import MovieService from "../../../services/MovieService";
+import CinemaService from "../../../services/CinemaService";
 
 const { Option } = Select;
 const { Text } = Typography;
 
 export default function ShowMoviesPage() {
+  const location = useLocation();
+  const initialType = location.state?.type || null;
+
   const [movies, setMovies] = useState([]);
   const [filteredMovies, setFilteredMovies] = useState([]);
+  const [cinemas, setCinemas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({
-    genre: null,
-    city: null,
+    type: initialType,
     date: null,
+    cinema: null,
   });
 
   const moviesPerPage = 20;
 
+  // Fetch cinemas on mount
+  useEffect(() => {
+    const fetchCinemas = async () => {
+      try {
+        const response = await CinemaService.getAllCinemas();
+        // Ensure response is an array
+        const cinemaData = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+          ? response.data
+          : [];
+        setCinemas(cinemaData);
+      } catch (error) {
+        toast.error(error.message || "Failed to load cinemas", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+        setCinemas([]); // Fallback to empty array on error
+      }
+    };
+    fetchCinemas();
+  }, []);
+
   useEffect(() => {
     loadMovies();
-  }, [page]);
+  }, [page, filters.type]);
 
   const loadMovies = async () => {
     setLoading(true);
     try {
-      const response = await MovieService.getNowShowing({
-        perPage: moviesPerPage,
-        page,
-      });
-      const newMovies = response.data || [];
-      setMovies(prev => page === 1 ? newMovies : [...prev, ...newMovies]);
+      let response;
+      if (filters.type === "now-showing") {
+        response = await MovieService.getNowShowing();
+      } else if (filters.type === "upcoming") {
+        response = await MovieService.getUpcomingMovie();
+      } else {
+        response = await MovieService.getAllMoviesFE({
+          perPage: moviesPerPage,
+          page,
+        });
+      }
+
+      // Handle paginated vs non-paginated responses
+      const newMovies = response.data ? response.data : response;
+      setMovies((prev) => (page === 1 ? newMovies : [...prev, ...newMovies]));
       setHasMore(newMovies.length === moviesPerPage);
     } catch (error) {
-      toast.error(error.message || 'Failed to load movies', {
-        position: 'top-right',
+      toast.error(error.message || "Failed to load movies", {
+        position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        progressStyle: { background: '#5f2eea' },
+        progressStyle: { background: "#5f2eea" },
       });
     } finally {
       setLoading(false);
@@ -60,29 +103,23 @@ export default function ShowMoviesPage() {
   const applyFilters = () => {
     let filtered = [...movies];
 
-    if (filters.genre) {
-      filtered = filtered.filter(movie => 
-        movie.genre.toLowerCase() === filters.genre.toLowerCase()
+    if (filters.date) {
+      filtered = filtered.filter(
+        (movie) => movie.release_date === filters.date
       );
     }
 
-    if (filters.city) {
-      // Note: Assuming movie data includes a city field or related showtime data
-      // For now, this is a placeholder as the movie data structure lacks city info
-      // filtered = filtered.filter(movie => movie.city?.toLowerCase() === filters.city.toLowerCase());
-    }
-
-    if (filters.date) {
-      // Note: Assuming movie data includes showtime dates
-      // For now, this is a placeholder as the movie data structure lacks date info
-      // filtered = filtered.filter(movie => movie.showtimeDate === filters.date);
+    if (filters.cinema) {
+      filtered = filtered.filter((movie) =>
+        movie.cinemas?.some((cinema) => cinema.cinema_id === filters.cinema)
+      );
     }
 
     setFilteredMovies(filtered);
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [key]: value,
     }));
@@ -90,7 +127,7 @@ export default function ShowMoviesPage() {
   };
 
   const handleLoadMore = () => {
-    setPage(prev => prev + 1);
+    setPage((prev) => prev + 1);
   };
 
   return (
@@ -100,12 +137,11 @@ export default function ShowMoviesPage() {
         style={{ backgroundImage: `url(${bannerImg})` }}
       >
         <span>
-          Danh sách phim đang chiếu <br />
+          Danh sách phim <br />
           Danh sách các phim hiện đang chiếu rạp trên toàn quốc 16/05/2025. Xem
           lịch chiếu phim, giá vé tiện lợi, đặt vé nhanh chỉ với 1 bước!
         </span>
       </div>
-
       {loading && page === 1 ? (
         <div className={styles.loading}>
           <Spin size="large" />
@@ -116,45 +152,50 @@ export default function ShowMoviesPage() {
           <Col xs={24} md={24} lg={6}>
             <div className={styles.filterColumn}>
               <Select
-                placeholder="Chọn thể loại"
+                placeholder="Chọn loại"
                 className={styles.select}
                 suffixIcon={<CalendarOutlined />}
-                onChange={value => handleFilterChange('genre', value)}
-                value={filters.genre}
+                onChange={(value) => handleFilterChange("type", value)}
+                value={filters.type}
                 allowClear
               >
-                <Option value="action">Hành động</Option>
-                <Option value="comedy">Hài</Option>
-                <Option value="drama">Tâm lý</Option>
-                <Option value="sci-fi">Khoa học viễn tưởng</Option>
-              </Select>
-              <Select
-                placeholder="Chọn thành phố"
-                className={styles.select}
-                suffixIcon={<EnvironmentOutlined />}
-                onChange={value => handleFilterChange('city', value)}
-                value={filters.city}
-                allowClear
-              >
-                <Option value="hanoi">Hà Nội</Option>
-                <Option value="hcm">Hồ Chí Minh</Option>
-                <Option value="danang">Đà Nẵng</Option>
-                <Option value="haiphong">Hải Phòng</Option>
-                <Option value="cantho">Cần Thơ</Option>
-                <Option value="nha-trang">Nha Trang</Option>
+                <Option value="now-showing">Now Showing</Option>
+                <Option value="upcoming">Upcoming Movie</Option>
               </Select>
               <Select
                 placeholder="Chọn ngày"
                 className={styles.select}
                 suffixIcon={<CalendarOutlined />}
-                onChange={value => handleFilterChange('date', value)}
+                onChange={(value) => handleFilterChange("date", value)}
                 value={filters.date}
                 allowClear
               >
-                <Option value="2025-05-15">15/05/2025</Option>
-                <Option value="2025-05-16">16/05/2025</Option>
-                <Option value="2025-05-17">17/05/2025</Option>
-                <Option value="2025-05-18">18/05/2025</Option>
+                <Option value="2019-04-26">26 Apr 2019</Option>
+                <Option value="2019-10-04">04 Oct 2019</Option>
+                <Option value="2019-11-22">22 Nov 2019</Option>
+                <Option value="2019-05-30">30 May 2019</Option>
+                <Option value="2010-07-16">16 Jul 2010</Option>
+              </Select>
+              <Select
+                placeholder="Chọn rạp"
+                className={styles.select}
+                suffixIcon={<EnvironmentOutlined />}
+                onChange={(value) => handleFilterChange("cinema", value)}
+                value={filters.cinema}
+                allowClear
+                loading={!cinemas.length && loading} // Show loading state
+              >
+                {Array.isArray(cinemas) && cinemas.length > 0 ? (
+                  cinemas.map((cinema) => (
+                    <Option key={cinema.cinema_id} value={cinema.cinema_id}>
+                      {cinema.name}
+                    </Option>
+                  ))
+                ) : (
+                  <Option disabled value={null}>
+                    Không có rạp
+                  </Option>
+                )}
               </Select>
             </div>
           </Col>
@@ -163,7 +204,7 @@ export default function ShowMoviesPage() {
           <Col xs={24} md={24} lg={18}>
             {filteredMovies.length === 0 ? (
               <div className={styles.empty}>
-                <Text>No movies found</Text>
+                <Text>Không tìm thấy phim</Text>
               </div>
             ) : (
               <>

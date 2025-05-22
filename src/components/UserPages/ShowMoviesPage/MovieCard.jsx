@@ -1,41 +1,38 @@
 import React from "react";
-import { Typography, Button } from "antd";
+import { Typography, Tag } from "antd";
 import { Link } from "react-router-dom";
 import styles from "./MovieCard.module.scss";
-const fallbackPoster = "https://betravingknows.com/wp-content/uploads/2017/06/video-movie-placeholder-image-grey.png"; 
 
 const { Title, Paragraph } = Typography;
 
 const MovieCard = ({ movie }) => {
+  // Fallbacks for missing data
+  const title = movie.title || "Untitled";
+  const poster =
+    movie.poster_url || "https://wallpapercave.com/wp/wp1816326.jpg";
+  const genre = movie.genre || "Unknown";
+  const ageRating = movie.adult || "N/A";
+  const releaseDate = movie.release_date
+    ? new Date(movie.release_date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "Unknown";
+
   return (
     <div className={styles.movieCard}>
-      <Link to={`/movie/${movie.movie_id}`} className={styles.posterLink}>
-        <img
-          src={movie.poster_url || fallbackPoster}
-          alt={movie.title}
-          className={styles.moviePoster}
-        />
+      <Link to={`/movie/${movie.movie_id}`}>
+        <img src={poster} alt={title} className={styles.moviePoster} />
       </Link>
-      <div className={styles.movieContent}>
-        <Title level={5} className={styles.movieTitle}>
-          <Link to={`/movie/${movie.id}`}>{movie.title}</Link>
-        </Title>
-        <Paragraph className={styles.movieText}>
-          {movie.genre || "N/A"}
-        </Paragraph>
-        {movie.release_date && (
-          <Paragraph className={styles.movieText}>
-            Release: {new Date(movie.release_date).toLocaleDateString("vi-VN")}
-          </Paragraph>
-        )}
-        <Button
-          type="primary"
-          className={styles.viewButton}
-          onClick={() => window.location.href = `/movie/${movie.id}`}
-        >
-          View Details
-        </Button>
-      </div>
+      <Title level={5} className={styles.movieCardTitle}>
+        {title}
+      </Title>
+      <Paragraph className={styles.movieCardText}>{genre}</Paragraph>
+      <Paragraph className={styles.movieCardText}>
+        <Tag color="blue">{ageRating}</Tag>
+        <span> | {releaseDate}</span>
+      </Paragraph>
     </div>
   );
 };

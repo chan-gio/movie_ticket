@@ -1,11 +1,7 @@
 .movieCard {
   min-width: 200px;
-  width: 250px;
+  width: 200px;
   transition: transform 0.3s;
-  background: white;
-  padding: 16px;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   &:hover {
     transform: scale(1.05);

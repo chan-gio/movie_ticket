@@ -20,12 +20,15 @@ const NowShowing = () => {
     const fetchNowShowingMovies = async () => {
       try {
         const response = await MovieService.getNowShowing();
-        const movies = response.data;
+        const movies = response.data || response; // Handle API response structure
         const formattedMovies = movies.map((movie) => ({
           id: movie.movie_id,
           title: movie.title,
-          poster: movie.poster_url || "https://wallpapercave.com/wp/wp1816326.jpg",
+          poster:
+            movie.poster_url || "https://wallpapercave.com/wp/wp1816326.jpg",
           genre: movie.genre || "Unknown",
+          adult: movie.adult || "N/A",
+          release_date: movie.release_date || "Unknown",
         }));
         setNowShowingMovies(formattedMovies);
         setLoading(false);
@@ -75,7 +78,7 @@ const NowShowing = () => {
               </Title>
             </Col>
             <Col>
-              <Link to="/movies">
+              <Link to="/movies" state={{ type: "now-showing" }}>
                 <Button type="default" className={styles.viewAllButton}>
                   View All
                 </Button>
@@ -96,7 +99,11 @@ const NowShowing = () => {
                 }}
               >
                 <FrownOutlined
-                  style={{ fontSize: "48px", color: "#888", marginBottom: "16px" }}
+                  style={{
+                    fontSize: "48px",
+                    color: "#888",
+                    marginBottom: "16px",
+                  }}
                 />
                 <Typography.Text style={{ fontSize: "18px", color: "#888" }}>
                   No movies currently showing
