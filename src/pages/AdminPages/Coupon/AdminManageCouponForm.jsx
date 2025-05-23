@@ -12,6 +12,7 @@ import {
   Typography,
   Switch,
   Spin,
+  InputNumber,
 } from "antd";
 import styles from "./AdminManageCouponForm.module.scss";
 import "../GlobalStyles.module.scss";
@@ -28,15 +29,22 @@ function AdminManageCouponForm({ isEditMode }) {
 
   // Watch form field values for real-time preview updates
   const code = Form.useWatch("code", couponForm);
+  const description = Form.useWatch("description", couponForm);
   const discount = Form.useWatch("discount", couponForm);
   const expiryDate = Form.useWatch("expiry_date", couponForm);
   const isActive = Form.useWatch("is_active", couponForm);
+  const isUsed = Form.useWatch("is_used", couponForm);
+  const quantity = Form.useWatch("quantity", couponForm);
 
   useEffect(() => {
     if (isEditMode) {
       loadCouponData();
     } else {
-      couponForm.setFieldsValue({ is_active: true }); // Default for new coupons
+      couponForm.setFieldsValue({ 
+        is_active: true, // Default for new coupons
+        is_used: 0, // Default for new coupons
+        quantity: 1, // Default for new coupons
+      });
     }
   }, [id, isEditMode, couponForm]);
 
@@ -111,6 +119,12 @@ function AdminManageCouponForm({ isEditMode }) {
                   <Input placeholder="Enter coupon code" />
                 </Form.Item>
                 <Form.Item
+                  label="Description"
+                  name="description"
+                >
+                  <Input.TextArea rows={4} placeholder="Enter coupon description" />
+                </Form.Item>
+                <Form.Item
                   label="Discount (%)"
                   name="discount"
                   rules={[
@@ -124,9 +138,11 @@ function AdminManageCouponForm({ isEditMode }) {
                   ]}
                   normalize={(value) => (value ? Number(value) : value)}
                 >
-                  <Input
-                    type="number"
+                  <InputNumber
+                    min={0}
+                    max={100}
                     placeholder="Enter discount percentage"
+                    style={{ width: "100%" }}
                   />
                 </Form.Item>
                 <Form.Item
@@ -142,6 +158,53 @@ function AdminManageCouponForm({ isEditMode }) {
                   valuePropName="checked"
                 >
                   <Switch />
+                </Form.Item>
+                <Form.Item
+                  label="Usage Count"
+                  name="is_used"
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      type: "number",
+                      min: 0,
+                      message: "Must be 0 or greater",
+                    },
+                  ]}
+                  normalize={(value) => (value ? Number(value) : value)}
+                >
+                  <InputNumber
+                    min={0}
+                    placeholder="Enter number of times used"
+                    style={{ width: "100%" }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  label="Quantity (Max Uses)"
+                  name="quantity"
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      type: "number",
+                      min: 1,
+                      message: "Must be 1 or greater",
+                    },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        const isUsedValue = getFieldValue("is_used");
+                        if (value >= isUsedValue) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error("Quantity must be greater than or equal to Usage Count"));
+                      },
+                    }),
+                  ]}
+                  normalize={(value) => (value ? Number(value) : value)}
+                >
+                  <InputNumber
+                    min={1}
+                    placeholder="Enter maximum number of uses"
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
                 <Form.Item>
                   <Button type="primary" htmlType="submit" loading={loading}>
@@ -165,6 +228,10 @@ function AdminManageCouponForm({ isEditMode }) {
               </Text>
               <br />
               <Text>
+                <strong>Description:</strong> {description || "Not Set"}
+              </Text>
+              <br />
+              <Text>
                 <strong>Discount:</strong>{" "}
                 {discount ? `${discount}%` : "Not Set"}
               </Text>
@@ -176,6 +243,14 @@ function AdminManageCouponForm({ isEditMode }) {
               <br />
               <Text>
                 <strong>Active:</strong> {isActive ? "Yes" : "No"}
+              </Text>
+              <br />
+              <Text>
+                <strong>Usage Count:</strong> {isUsed !== undefined ? isUsed : "Not Set"}
+              </Text>
+              <br />
+              <Text>
+                <strong>Quantity (Max Uses):</strong> {quantity !== undefined ? quantity : "Not Set"}
               </Text>
             </Card>
           </Col>

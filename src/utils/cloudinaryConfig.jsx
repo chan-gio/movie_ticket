@@ -1,10 +1,5 @@
-// Config chung cho Cloudinary
-export const CLOUDINARY_CLOUD_NAME = "dzkzebsn7";      // Cloud name chung
-
-export const MOVIE_POSTER_UPLOAD_PRESET = "d2b04cse";  // Preset cho upload ảnh poster phim
-
 // Hàm upload chung
-const uploadImageToCloudinary = async (image, uploadPreset, onProgress) => {
+export const uploadImageToCloudinary = async (image, uploadPreset, onProgress) => {
     const formData = new FormData();
     formData.append("file", image);
     formData.append("upload_preset", uploadPreset);
@@ -13,7 +8,7 @@ const uploadImageToCloudinary = async (image, uploadPreset, onProgress) => {
         const xhr = new XMLHttpRequest();
 
         const promise = new Promise((resolve, reject) => {
-            xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`);
+            xhr.open("POST", `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`);
             xhr.upload.addEventListener("progress", (event) => {
                 if (event.lengthComputable && onProgress) {
                     const progress = Math.round((event.loaded * 100) / event.total);
@@ -43,5 +38,5 @@ const uploadImageToCloudinary = async (image, uploadPreset, onProgress) => {
 
 // Hàm upload ảnh poster phim
 export const uploadMoviePosterToCloudinary = async (image, onProgress) => {
-    return uploadImageToCloudinary(image, MOVIE_POSTER_UPLOAD_PRESET, onProgress);
+    return uploadImageToCloudinary(image, import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET, onProgress);
 };

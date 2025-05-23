@@ -5,7 +5,8 @@ import styles from "./SeatSelection.module.scss";
 import SeatService from "../../../services/SeatService";
 import BookingService from "../../../services/BookingService";
 import BookingSeatService from "../../../services/BookingSeatService";
-import SettingService from "../../../services/SettingService";
+import { useSettings } from "../../../Context/SettingContext";
+import { useBookingTimer } from "../../../Context/BookingTimerContext";
 
 const { Title, Paragraph } = Typography;
 
@@ -13,15 +14,26 @@ function SeatSelection() {
   const { roomId, bookingId } = useParams();
   const navigate = useNavigate();
   const hasFetched = useRef(false);
+  const { settings, error: settingsError } = useSettings();
+  const { bookings, updateProgress } = useBookingTimer();
 
-  const [selectedSeats, setSelectedSeats] = useState([]);
+  // Find the booking from the bookings array
+  const currentBooking = bookings.find((b) => b.bookingId === bookingId);
+  const initialSeats =
+    currentBooking?.progress.step === "SeatSelection" &&
+    currentBooking?.progress.bookingId === bookingId &&
+    Array.isArray(currentBooking?.progress.data.selectedSeats)
+      ? currentBooking.progress.data.selectedSeats
+      : [];
+
+  const [selectedSeats, setSelectedSeats] = useState(initialSeats);
   const [seats, setSeats] = useState([]);
   const [seatBookingStatus, setSeatBookingStatus] = useState([]);
   const [booking, setBooking] = useState(null);
-  const [setting, setSetting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch initial data
   useEffect(() => {
     if (hasFetched.current) {
       return;
@@ -42,9 +54,6 @@ function SeatSelection() {
 
         const bookingResponse = await BookingService.getBookingById(bookingId);
         setBooking(bookingResponse);
-
-        const settingResponse = await SettingService.getSetting();
-        setSetting(settingResponse);
 
         const showtimeId = bookingResponse.showtime?.showtime_id;
         if (showtimeId) {
@@ -93,7 +102,7 @@ function SeatSelection() {
         picture: booking.showtime?.movie?.poster_url || "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
         date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split("T")[0] : "Unknown Date",
         time: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Unknown Time",
-        basePrice: booking.showtime?.price || 0, // Base price per ticket
+        basePrice: booking.showtime?.price || 0,
       }
     : {
         movieTitle: "Movie 1",
@@ -106,16 +115,16 @@ function SeatSelection() {
 
   const calculateSeatPrice = (seatNumber) => {
     const seat = seats.find((s) => s.seat_number === seatNumber);
-    if (!seat || !setting) return orderInfo.basePrice; // Default to base price if seat or setting not found
+    if (!seat || !settings) return orderInfo.basePrice;
 
     const basePrice = orderInfo.basePrice;
     const seatType = seat.seat_type;
 
     switch (seatType) {
       case "VIP":
-        return basePrice + (basePrice * setting.vip / 100);
+        return basePrice + (basePrice * settings.vip / 100);
       case "Couple":
-        return basePrice + (basePrice * setting.couple / 100);
+        return basePrice + (basePrice * settings.couple / 100);
       case "Standard":
       default:
         return basePrice;
@@ -130,18 +139,21 @@ function SeatSelection() {
   };
 
   const toggleSeat = (seat) => {
-    const seatStatus = Array.isArray(seatBookingStatus) ? seatBookingStatus.find(
-      (s) => s.seat_number === seat
-    ) : null;
+    const seatStatus = Array.isArray(seatBookingStatus)
+      ? seatBookingStatus.find((s) => s.seat_number === seat)
+      : null;
     const isBooked = seatStatus ? seatStatus.is_booked : false;
 
     if (isBooked) {
       return;
     }
 
-    setSelectedSeats((prev) =>
-      prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]
-    );
+    setSelectedSeats((prev) => {
+      const newSeats = prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat];
+      const path = `/seats/${roomId}/${bookingId}`;
+      updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
+      return newSeats;
+    });
   };
 
   const formatDate = (date) => {
@@ -178,20 +190,9 @@ function SeatSelection() {
       await Promise.all(bookingSeatPromises);
       message.success("Seats booked successfully!");
 
-      const totalPrice = calculateTotalPrice()
-      const totalPriceNumber = Number(totalPrice);
-      if (isNaN(totalPriceNumber)) {
-        throw new Error("Total price calculation resulted in a non-numeric value.");
-      }
-
-
-
-      sessionStorage.setItem('paymentData', JSON.stringify({
-        selectedSeats,
-        date: orderInfo.date,
-        time: orderInfo.time,
-      }));
-      navigate(`/payment/${bookingId}`);
+      const path = `/payment/${bookingId}`;
+      updateProgress(bookingId, "Payment", { selectedSeats }, path);
+      navigate(path);
     } catch (err) {
       console.error('Checkout error:', err);
       message.error(err.message || "Failed to complete checkout. Please try again.");
@@ -201,8 +202,9 @@ function SeatSelection() {
   };
 
   const handleChangeMovie = () => {
-    sessionStorage.removeItem('paymentData');
-    navigate('/movies');
+    const path = `/movies`;
+    updateProgress(bookingId, "MovieSelection", { selectedSeats }, path);
+    navigate(path);
   };
 
   if (loading) {
@@ -307,6 +309,18 @@ function SeatSelection() {
     );
   }
 
+  if (settingsError) {
+    return (
+      <div className={styles.seatSelection}>
+        <Title level={3}>Error</Title>
+        <Paragraph>{settingsError}</Paragraph>
+        <Button type="primary" onClick={() => navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`)}>
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.seatSelection}>
       <div className={styles.secondaryNavbar}>
@@ -317,7 +331,7 @@ function SeatSelection() {
             </Title>
           </Col>
           <Col>
-            <Button className={styles.changeButton} onClick={() => navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`)}>
+            <Button className={styles.changeButton} onClick={handleChangeMovie}>
               Go back
             </Button>
           </Col>
@@ -343,9 +357,9 @@ function SeatSelection() {
                         const seat = seats.find(
                           (s) => s.seat_number === seatNumber
                         );
-                        const seatStatus = Array.isArray(seatBookingStatus) ? seatBookingStatus.find(
-                          (s) => s.seat_number === seatNumber
-                        ) : null;
+                        const seatStatus = Array.isArray(seatBookingStatus)
+                          ? seatBookingStatus.find((s) => s.seat_number === seatNumber)
+                          : null;
                         const isSelected = selectedSeats.includes(seatNumber);
                         const isBooked = seatStatus ? seatStatus.is_booked : false;
                         const seatType = seat ? seat.seat_type : null;
@@ -476,11 +490,15 @@ function SeatSelection() {
             </Row>
             <Row justify="space-between">
               <Paragraph className={styles.label}>VIP price</Paragraph>
-              <Paragraph className={styles.value}>{setting ? (orderInfo.basePrice + (orderInfo.basePrice * setting.vip / 100)) : orderInfo.basePrice}đ</Paragraph>
+              <Paragraph className={styles.value}>
+                {settings ? (orderInfo.basePrice + (orderInfo.basePrice * settings.vip / 100)) : orderInfo.basePrice}đ
+              </Paragraph>
             </Row>
             <Row justify="space-between">
               <Paragraph className={styles.label}>Couple price</Paragraph>
-              <Paragraph className={styles.value}>{setting ? (orderInfo.basePrice + (orderInfo.basePrice * setting.couple / 100)) : orderInfo.basePrice}đ</Paragraph>
+              <Paragraph className={styles.value}>
+                {settings ? (orderInfo.basePrice + (orderInfo.basePrice * settings.couple / 100)) : orderInfo.basePrice}đ
+              </Paragraph>
             </Row>
             <Row justify="space-between">
               <Paragraph className={styles.label}>Seat choosed</Paragraph>
@@ -492,7 +510,7 @@ function SeatSelection() {
             <Row justify="space-between">
               <Paragraph className={styles.totalLabel}>Total Payment</Paragraph>
               <Paragraph className={styles.totalValue}>
-                ${calculateTotalPrice()}
+                {calculateTotalPrice()}đ
               </Paragraph>
             </Row>
           </Card>

@@ -17,6 +17,11 @@ const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [orderHistory, setOrderHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   const handleSignOut = () => {
     localStorage.removeItem('access_token');
@@ -24,56 +29,78 @@ const Profile = () => {
     navigate('/auth');
   };
 
+  const fetchData = async (page = 1, pageSize = 10) => {
+    if (!userId) {
+      message.error("User ID not found. Please log in.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Fetch user data
+      const userResponse = await UserService.getUserById(userId);
+      const [firstName, ...lastNameParts] = userResponse.full_name.split(" ");
+      const user = {
+        firstName,
+        lastName: lastNameParts.join(" "),
+        email: userResponse.email,
+        phoneNumber: userResponse.phone,
+        picture: userResponse.profile_picture_url,
+      };
+      setUserData(user);
+
+      // Fetch order history with pagination
+      const bookingResponse = await BookingService.getBookingsByUserId(userId, { page, per_page: pageSize });
+      const transformedOrders = bookingResponse.data.map((booking) => ({
+        id: booking.booking_id,
+        date: new Date(booking.showtime.start_time).toLocaleString('en-US', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }),
+        movie: booking.showtime.movie.title,
+        orderCode: booking.order_code,
+        status: booking.status === "CONFIRMED" ? "active" : booking.status === "PENDING" ? "pending" : booking.status === "CANCELLED" ? "cancelled" : booking.status,
+        createdAt: new Date(booking.created_at).toLocaleString('en-US', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }),
+      }));
+
+      setOrderHistory(transformedOrders);
+      setPagination({
+        current: bookingResponse.current_page,
+        pageSize: bookingResponse.per_page,
+        total: bookingResponse.total,
+      });
+    } catch (error) {
+      message.error(error.message || "Failed to fetch profile data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!userId) {
-        message.error("User ID not found. Please log in.");
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        // Fetch user data
-        const userResponse = await UserService.getUserById(userId);
-        const [firstName, ...lastNameParts] = userResponse.full_name.split(" ");
-        const user = {
-          firstName,
-          lastName: lastNameParts.join(" "),
-          email: userResponse.email,
-          phoneNumber: userResponse.phone,
-          picture: userResponse.profile_picture_url,
-          loyaltyPoints: 320, // Placeholder since this field isn't in the API response
-        };
-        setUserData(user);
-
-        // Fetch order history
-        const bookingResponse = await BookingService.getBookingsByUserId(userId, { per_page: 10 });
-        const transformedOrders = bookingResponse.data.map((booking) => ({
-          id: booking.booking_id,
-          date: new Date(booking.showtime.start_time).toLocaleString('en-US', {
-            weekday: 'long',
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          }),
-          movie: booking.showtime.movie.title,
-          cinemaLogo: "https://via.placeholder.com/50x21?text=Cinema",
-          status: booking.status === "CONFIRMED" ? "active" : booking.status === "PENDING" ? "pending" : "used",
-        }));
-        setOrderHistory(transformedOrders);
-      } catch (error) {
-        message.error(error.message || "Failed to fetch profile data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchData(pagination.current, pagination.pageSize);
   }, [userId, navigate]);
+
+  const handlePaginationChange = (page, pageSize) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize,
+    }));
+    fetchData(page, pageSize);
+  };
 
   if (!userData && !loading) {
     return (
@@ -96,7 +123,12 @@ const Profile = () => {
                 <AccountTab userData={userData} loading={loading} />
               </TabPane>
               <TabPane tab="Order History" key="history">
-                <OrderHistory orderHistory={orderHistory} loading={loading} />
+                <OrderHistory
+                  orderHistory={orderHistory}
+                  loading={loading}
+                  pagination={pagination}
+                  onPaginationChange={handlePaginationChange}
+                />
               </TabPane>
             </Tabs>
           </Card>

@@ -1,29 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Typography, Button, Space, Select, message } from "antd";
+import { Typography, Button, Space, Select, message, Progress } from "antd";
 import { CalendarOutlined } from "@ant-design/icons";
 import styles from "./CinemaCard.module.scss";
 import BookingService from "../../../services/BookingService";
 import useAuth from "../../../utils/auth";
+import { useBookingTimer } from "../../../Context/BookingTimerContext";
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
 const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, userId } = useAuth();
+  const { isAuthenticated, userId } = useAuth({ disableRedirect: true });
+  const { startTimer } = useBookingTimer();
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Fallbacks for missing data
   const safeCinema = cinema || "Unknown Cinema";
   const safeAddress = address || "Unknown Address";
   const safeShowtimes = Array.isArray(showtimes) && showtimes.length > 0 ? showtimes : [];
   const safePrice = price && price !== "N/A" ? `$${price}/seat` : "Price N/A";
 
-  // Extract unique dates
   const getUniqueDates = () => {
     const dates = new Set();
     safeShowtimes.forEach((showtime) => {
@@ -45,7 +45,6 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
       : "Unknown";
   };
 
-  // Extract times for the selected date
   const getTimesForDate = (date) => {
     if (!date) return [];
     const times = safeShowtimes
@@ -63,7 +62,6 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     return [...new Set(times)].sort();
   };
 
-  // Extract rooms for the selected date and time
   const getRoomsForDateAndTime = (date, time) => {
     if (!date || !time) return [];
     const rooms = safeShowtimes
@@ -84,7 +82,6 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     return [...new Set(rooms.map(room => JSON.stringify(room)))].map(room => JSON.parse(room)).sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  // Find the showtime_id based on the selected date, time, and room
   const getShowtimeId = (date, time, roomId) => {
     if (!date || !time || !roomId) return null;
     const showtime = safeShowtimes.find((showtime) => {
@@ -104,8 +101,9 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
   const rooms = getRoomsForDateAndTime(selectedDate, selectedTime);
 
   const handleBookNow = async () => {
-    if (!isAuthenticated) {
-      message.error("You need to log in to book a movie.");
+    if (!isAuthenticated || !userId) {
+      message.error("You need to log in to book a movie. Redirecting to login...");
+      navigate('/auth');
       return;
     }
 
@@ -129,9 +127,11 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     try {
       setLoading(true);
       const response = await BookingService.createBooking(bookingData);
-      const bookingId = response.booking_id; // Adjust based on actual response field
+      const bookingId = response.booking_id;
       if (bookingId) {
-        navigate(`/seats/${selectedRoomId}/${bookingId}`);
+        const path = `/seats/${selectedRoomId}/${bookingId}`;
+        startTimer(bookingId, "SeatSelection", { selectedDate, selectedTime, selectedRoomId }, path);
+        navigate(path);
       } else {
         throw new Error("Booking ID not returned from server.");
       }
@@ -154,7 +154,6 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
       </Title>
       <Paragraph className={styles.cinemaAddress}>{safeAddress}</Paragraph>
 
-      {/* Date Selection */}
       <Select
         placeholder="Select date"
         className={styles.select}
@@ -174,7 +173,6 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
         ))}
       </Select>
 
-      {/* Time Selection */}
       {selectedDate && (
         <Space wrap className={styles.timeButtons}>
           {times.length > 0 ? (
@@ -197,7 +195,6 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
         </Space>
       )}
 
-      {/* Room Selection */}
       {selectedTime && (
         <Select
           placeholder="Select room"

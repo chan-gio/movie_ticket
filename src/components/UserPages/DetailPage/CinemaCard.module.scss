@@ -110,3 +110,34 @@
   border-color: #531dab;
   color: #531dab;
 }
+
+/* Timer Styles */
+.timer {
+  margin: 16px 0; /* Khoảng cách trên dưới */
+  text-align: center; /* Căn giữa nội dung */
+}
+
+.timerText {
+  font-size: 14px; /* Kích thước chữ */
+  color: #555; /* Màu xám đậm */
+  margin-bottom: 8px; /* Khoảng cách với progress bar */
+}
+
+.timerProgress {
+  width: 100%; /* Chiều rộng đầy đủ */
+}
+
+/* Khi thời gian còn dưới 30 giây, progress bar chuyển màu đỏ (do Ant Design xử lý với status="exception") */
+:global(.ant-progress-line .ant-progress-bg) {
+  transition: all 0.3s ease; /* Hiệu ứng mượt mà khi thay đổi */
+}
+
+/* Đảm bảo progress bar có màu tím khi status là "active" */
+:global(.ant-progress-line .ant-progress-bg) {
+  background-color: #722ed1; /* Màu tím khi còn nhiều thời gian */
+}
+
+/* Khi status là "exception" (dưới 30 giây), progress bar chuyển màu đỏ */
+:global(.ant-progress-status-exception .ant-progress-bg) {
+  background-color: #ff4d4f !important; /* Màu đỏ khi sắp hết thời gian */
+}

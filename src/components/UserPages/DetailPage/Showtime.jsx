@@ -102,7 +102,6 @@ export default function Showtime({ movieId }) {
       {showtimes.length > 0 ? (
         <Row gutter={[16, 16]} className={styles.cinemaGrid}>
           {showtimes.map((item) => {
-            console.log(item);
             return (
               <Col xs={24} md={12} lg={8} key={item.cinema_id}>
                 <CinemaCard

@@ -4,19 +4,14 @@ import { Menu, Dropdown, Select, Input, Space, Avatar } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import styles from "./Navbar.module.scss";
 import SelectCinemaModal from "../Modal/SelectCinemaModal";
+import { useSettings } from "../../Context/SettingContext";
 
 const { Option } = Select;
 
-const logo = "https://via.placeholder.com/150x50?text=Movie";
-const user = {
-  picture: null,
-  fullName: "John Doe",
-  email: "john.doe@example.com",
-};
-
 function Navbar() {
+  const { settings } = useSettings(); 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleAvatarClick = () => {
     navigate('/profile');
@@ -40,7 +35,7 @@ function Navbar() {
       <div className={styles.navbarContainer}>
         <div className={styles.leftSection}>
           <Link to="/" className={styles.navbarLogo}>
-            <img src={logo} alt="Movie" />
+            <img src={settings.name} alt="Movie" />
           </Link>
           <div className={styles.navLinks}>
             <Link to="/movies" className={styles.navLink}>
@@ -74,16 +69,15 @@ function Navbar() {
               suffix={<SearchOutlined className={styles.searchIcon} />}
             />
           </div>
-              <Avatar
-                size={35}
-                src={
-                  user.picture ||
-                  "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
-                }
-                icon={<UserOutlined />}
-                className={styles.userAvatar}
-                onClick={handleAvatarClick}
-              />
+          <Avatar
+            size={35}
+            src={
+              "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
+            }
+            icon={<UserOutlined />}
+            className={styles.userAvatar}
+            onClick={handleAvatarClick}
+          />
         </div>
       </div>
       <SelectCinemaModal

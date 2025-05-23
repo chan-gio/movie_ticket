@@ -13,6 +13,7 @@ import {
   Statistic,
   Spin,
   Tag,
+  Input,
 } from "antd";
 import {
   EditOutlined,
@@ -20,6 +21,7 @@ import {
   ReloadOutlined,
   PlusOutlined,
   CheckCircleOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import CouponService from "../../../services/CouponService";
 import styles from "./AdminManageCoupon.module.scss";
@@ -36,6 +38,8 @@ function AdminManageCoupon() {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState(""); // State for search input
+  const [filteredCoupons, setFilteredCoupons] = useState([]); // State for filtered coupons
 
   useEffect(() => {
     loadData(pagination.current, pagination.pageSize);
@@ -46,6 +50,7 @@ function AdminManageCoupon() {
     try {
       const response = await CouponService.getAllCoupons(page, pageSize);
       setCoupons(response.data);
+      setFilteredCoupons(response.data); // Initially, filtered coupons are the same as all coupons
       setPagination({
         current: response.pagination.current,
         pageSize: response.pagination.pageSize,
@@ -53,6 +58,25 @@ function AdminManageCoupon() {
       });
     } catch (error) {
       message.error(error.message || "Failed to load coupons");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (value) => {
+    setSearchText(value);
+    if (!value) {
+      setFilteredCoupons(coupons); // Reset to all coupons if search is empty
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await CouponService.searchCouponsByCode(value);
+      setFilteredCoupons(response);
+    } catch (error) {
+      message.error(error.message || "Failed to search coupons");
+      setFilteredCoupons([]);
     } finally {
       setLoading(false);
     }
@@ -108,6 +132,12 @@ function AdminManageCoupon() {
       sorter: (a, b) => a.code.localeCompare(b.code),
     },
     {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      render: (description) => description || "N/A",
+    },
+    {
       title: "Discount (%)",
       dataIndex: "discount",
       key: "discount",
@@ -139,6 +169,16 @@ function AdminManageCoupon() {
       render: (active) => (
         <Tag color={active ? "green" : "red"}>{active ? "Yes" : "No"}</Tag>
       ),
+    },
+    {
+      title: "Usage",
+      key: "usage",
+      render: (_, record) => (
+        <TypographyText>
+          {record.is_used}/{record.quantity}
+        </TypographyText>
+      ),
+      sorter: (a, b) => a.is_used - b.is_used,
     },
     {
       title: "Actions",
@@ -200,6 +240,10 @@ function AdminManageCoupon() {
     },
   ];
 
+  // Calculate statistics
+  const totalActiveCoupons = coupons.filter(coupon => coupon.is_active).length;
+  const totalUsableCoupons = coupons.filter(coupon => coupon.is_used < coupon.quantity).length;
+
   return (
     <div className={styles.container}>
       <Row justify="space-between" align="middle" className={styles.header}>
@@ -210,6 +254,13 @@ function AdminManageCoupon() {
         </Col>
         <Col>
           <Space>
+            <Input
+              placeholder="Search by code"
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              prefix={<SearchOutlined />}
+              className={styles.searchInput}
+            />
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -234,11 +285,27 @@ function AdminManageCoupon() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={
-                <span className={styles.statisticTitle}>Total Coupons</span>
-              }
+              title={<span className={styles.statisticTitle}>Total Coupons</span>}
               value={pagination.total}
               valueStyle={{ color: "#5f2eea" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statisticCard} hoverable>
+            <Statistic
+              title={<span className={styles.statisticTitle}>Active Coupons</span>}
+              value={totalActiveCoupons}
+              valueStyle={{ color: "#52c41a" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statisticCard} hoverable>
+            <Statistic
+              title={<span className={styles.statisticTitle}>Usable Coupons</span>}
+              value={totalUsableCoupons}
+              valueStyle={{ color: "#1890ff" }}
             />
           </Card>
         </Col>
@@ -248,14 +315,14 @@ function AdminManageCoupon() {
               <div className={styles.loading}>
                 <Spin size="large" />
               </div>
-            ) : coupons.length === 0 ? (
+            ) : filteredCoupons.length === 0 ? (
               <div className={styles.empty}>
                 <TypographyText>No coupons found</TypographyText>
               </div>
             ) : (
               <Table
                 columns={couponColumns}
-                dataSource={coupons}
+                dataSource={filteredCoupons}
                 rowKey="coupon_id"
                 pagination={pagination}
                 onChange={handleTableChange}

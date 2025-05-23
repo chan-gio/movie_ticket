@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const useAuth = () => {
+const useAuth = ({ disableRedirect = false } = {}) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
@@ -16,9 +16,11 @@ const useAuth = () => {
     } else {
       setIsAuthenticated(false);
       setUserId(null);
-      navigate('/auth');
+      if (!disableRedirect) {
+        navigate('/auth');
+      }
     }
-  }, [navigate]);
+  }, [navigate, disableRedirect]);
 
   return { isAuthenticated, userId };
 };

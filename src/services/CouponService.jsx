@@ -1,12 +1,6 @@
 import api from "./api"; // Import the configured Axios instance
 
 const CouponService = {
-  /**
-   * Fetch all coupons with pagination
-   * @param {number} page - Page number
-   * @param {number} perPage - Items per page
-   * @returns {Promise<Object>} Object containing coupons array and pagination info
-   */
   getAllCoupons: async (page = 1, perPage = 10) => {
     try {
       const response = await api.get("/coupons", {
@@ -32,11 +26,6 @@ const CouponService = {
     }
   },
 
-  /**
-   * Create a new coupon
-   * @param {Object} couponData - { code: string, discount: number, expiry_date: string, is_active: boolean }
-   * @returns {Promise<Object>} Created coupon object
-   */
   createCoupon: async (couponData) => {
     try {
       const response = await api.post("/coupons", couponData);
@@ -53,11 +42,6 @@ const CouponService = {
     }
   },
 
-  /**
-   * Fetch a single coupon by ID
-   * @param {string} couponId - Coupon ID
-   * @returns {Promise<Object>} Coupon object
-   */
   getCouponById: async (couponId) => {
     try {
       const response = await api.get(`/coupons/${couponId}`);
@@ -74,12 +58,6 @@ const CouponService = {
     }
   },
 
-  /**
-   * Update a coupon
-   * @param {string} couponId - Coupon ID
-   * @param {Object} couponData - { code: string, discount: number, expiry_date: string, is_active: boolean }
-   * @returns {Promise<Object>} Updated coupon object
-   */
   updateCoupon: async (couponId, couponData) => {
     try {
       const response = await api.put(`/coupons/${couponId}`, couponData);
@@ -96,11 +74,6 @@ const CouponService = {
     }
   },
 
-  /**
-   * Soft delete a coupon (set is_active to false)
-   * @param {string} couponId - Coupon ID
-   * @returns {Promise<boolean>} True if successful
-   */
   softDeleteCoupon: async (couponId) => {
     try {
       const response = await api.delete(`/coupons/soft/${couponId}`);
@@ -117,11 +90,6 @@ const CouponService = {
     }
   },
 
-  /**
-   * Restore a soft-deleted coupon (set is_active to true)
-   * @param {string} couponId - Coupon ID
-   * @returns {Promise<Object>} Restored coupon object
-   */
   restoreCoupon: async (couponId) => {
     try {
       const response = await api.patch(`/coupons/restore/${couponId}`);
@@ -138,14 +106,9 @@ const CouponService = {
     }
   },
 
-  /**
-   * Hard delete a coupon
-   * @param {string} couponId - Coupon ID
-   * @returns {Promise<boolean>} True if successful
-   */
   forceDeleteCoupon: async (couponId) => {
     try {
-      const response = await api.delete(`/coupons/${couponId}`);
+      const response = await api.delete(`/coupons/force/${couponId}`);
       if (response.data.code === 200) {
         return true;
       }
@@ -155,6 +118,44 @@ const CouponService = {
         error.response?.status === 500
           ? "Server error: Unable to hard delete coupon. Please try again later."
           : error.response?.data?.message || "Failed to hard delete coupon";
+      throw new Error(message);
+    }
+  },
+
+  // Search coupons by code (partial match)
+  searchCouponsByCode: async (code) => {
+    try {
+      const response = await api.get("/coupons/search/code", {
+        params: { code },
+      });
+      if (response.data.code === 200) {
+        return response.data.data; // Returns an array of matching coupons
+      }
+      throw new Error(response.data.message || "Failed to search coupons");
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to search coupons. Please try again later."
+          : error.response?.data?.message || "Failed to search coupons";
+      throw new Error(message);
+    }
+  },
+
+  // Search coupon by code (exact match)
+  searchCouponByExactCode: async (code) => {
+    try {
+      const response = await api.get("/coupons/search/exact-code", {
+        params: { code },
+      });
+      if (response.data.code === 200) {
+        return response.data.data; // Returns a single coupon (or null if not found)
+      }
+      throw new Error(response.data.message || "Failed to search coupon by exact code");
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to search coupon by exact code. Please try again later."
+          : error.response?.data?.message || "Failed to search coupon by exact code";
       throw new Error(message);
     }
   },

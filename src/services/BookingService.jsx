@@ -69,7 +69,12 @@ const BookingService = {
     try {
       const response = await api.get(`/bookings/userId/${userId}`, { params });
       if (response.data.code === 200) {
-        return response.data.data;
+        return {
+          data: response.data.data.data,
+          current_page: response.data.data.current_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+        };
       } else {
         throw new Error(
           response.data.message || "Failed to fetch bookings for user"
@@ -123,6 +128,28 @@ const BookingService = {
         error.response?.status === 500
           ? "Server error: Unable to update total price. Please try again later."
           : error.response?.data?.message || "Failed to update total price";
+      throw new Error(message);
+    }
+  },
+
+  // Update booking order code
+  updateOrderCode: async (bookingId, orderCode) => {
+    try {
+      const response = await api.put(`/bookings/${bookingId}/order-code`, {
+        order_code: orderCode,
+      });
+      if (response.data.code === 200) {
+        return response.data.data;
+      } else {
+        throw new Error(
+          response.data.message || "Failed to update order code"
+        );
+      }
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to update order code. Please try again later."
+          : error.response?.data?.message || "Failed to update order code";
       throw new Error(message);
     }
   },
