@@ -7,7 +7,7 @@ const CinemaService = {
     try {
       const response = await api.get("/cinemas/", { params });
       if (response.data.code === 200) {
-        return response.data.data;
+        return response.data.data.data; // Trả về mảng rạp
       } else {
         throw new Error(response.data.message || "Failed to fetch cinemas");
       }
@@ -18,7 +18,71 @@ const CinemaService = {
     }
   },
 
-  // Create a new cinema
+  // Search cinemas by address
+  searchCinemaByAddress: async (searchTerm, page = 1) => {
+    try {
+      const response = await api.get("/cinemas/search-by-address", {
+        params: {
+          address: searchTerm,
+          per_pages: 20,
+          pages: page,
+        },
+      });
+      if (response.data.success) {
+        return response.data.data.data; // Trả về mảng rạp
+      } else {
+        throw new Error(
+          response.data.message || "Failed to search cinemas by address"
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search cinemas by address"
+      );
+    }
+  },
+
+  // Search cinemas by name
+  searchCinemaByName: async (searchTerm, page = 1) => {
+    try {
+      const response = await api.get("/cinemas/search-by-name", {
+        params: {
+          name: searchTerm,
+          per_pages: 20,
+          pages: page,
+        },
+      });
+      if (response.data.success) {
+        return response.data.data.data; // Trả về mảng rạp
+      } else {
+        throw new Error(
+          response.data.message || "Failed to search cinemas by name"
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search cinemas by name"
+      );
+    }
+  },
+
+  // Fetch showtimes by cinema and date
+  getShowtimesByCinemaAndDate: async (cinemaId, date, params = {}) => {
+    try {
+      const response = await api.get(`/showtimes/cinema/${cinemaId}/date/${date}`, { params });
+      if (response.data.code === 200) {
+        return response.data.data.data; // Trả về mảng suất chiếu
+      } else {
+        throw new Error(response.data.message || "Failed to fetch showtimes");
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch showtimes"
+      );
+    }
+  },
+
+  // Các phương thức khác
   createCinema: async (cinemaData) => {
     try {
       const response = await api.post("/cinemas", cinemaData);
@@ -34,7 +98,6 @@ const CinemaService = {
     }
   },
 
-  // Fetch a single cinema by ID
   getCinemaById: async (cinemaId) => {
     try {
       const response = await api.get(`/cinemas/${cinemaId}`);
@@ -50,7 +113,6 @@ const CinemaService = {
     }
   },
 
-  // Update a cinema
   updateCinema: async (cinemaId, cinemaData) => {
     try {
       const response = await api.put(`/cinemas/${cinemaId}`, cinemaData);
@@ -66,7 +128,6 @@ const CinemaService = {
     }
   },
 
-  // Soft delete a cinema (set is_deleted to true)
   softDeleteCinema: async (cinemaId) => {
     try {
       const response = await api.delete(`/cinemas/${cinemaId}`);
@@ -82,7 +143,6 @@ const CinemaService = {
     }
   },
 
-  // Restore a soft-deleted cinema
   restoreCinema: async (cinemaId) => {
     try {
       const response = await api.put(`/cinemas/restore/${cinemaId}`);
@@ -98,7 +158,6 @@ const CinemaService = {
     }
   },
 
-  // Fetch all soft-deleted cinemas
   getDeletedCinemas: async () => {
     try {
       const response = await api.get("/cinemas/deleted");

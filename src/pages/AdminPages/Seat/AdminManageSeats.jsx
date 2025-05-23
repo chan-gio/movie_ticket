@@ -637,10 +637,10 @@ function AdminManageSeats() {
               <Col xs={24} md={12}>
                 <Button
                   block
-                  onClick={() => navigate('/admin/manage_cinema')}
+                  onClick={() => navigate(-1)}
                   className={styles.backButton}
                 >
-                  Back to Cinemas
+                  Back to Rooms
                 </Button>
               </Col>
               <Col xs={24} md={12}>

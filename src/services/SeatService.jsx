@@ -100,7 +100,7 @@ const SeatService = {
 
   getSeatByRoomId: async (roomId) => {
     try {
-      const response = await api.get(`/seats/room/${roomId}/seats`);
+      const response = await api.get(`/seats/roomId/${roomId}`);
       if (response.data.code === 200) {
         return response.data;
       } else {

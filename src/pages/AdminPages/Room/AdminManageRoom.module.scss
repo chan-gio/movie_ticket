@@ -58,6 +58,16 @@
   height: 40px;
 }
 
+/* Suppress autofill styling */
+.ant-input:-webkit-autofill,
+.ant-input:-webkit-autofill:hover,
+.ant-input:-webkit-autofill:focus {
+  -webkit-box-shadow: none !important;
+  -webkit-text-fill-color: inherit !important;
+  background: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 .addRoomButton, .resetButton {
   border-radius: 12px;
   height: 40px;

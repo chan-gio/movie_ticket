@@ -49,17 +49,19 @@ function AdminManageCinema() {
     setLoading(true);
     try {
       const response = await CinemaService.getAllCinemas({
-        per_page: pagination.pageSize,
-        page: pagination.current,
+        per_pages: pagination.pageSize,
+        pages: pagination.current,
       });
-      setCinemas(response.data);
+      // Extract cinema data and pagination from the new response structure
+      const cinemaData = response; 
+      setCinemas(cinemaData);
       setPagination({
         ...pagination,
-        total: response.total,
-        current: response.current_page,
+        total: response.total, // response.data.data.total
+        current: response.current_page, // response.data.data.current_page
       });
-      if (response.data.length > 0 && !selectedCinemaId) {
-        setSelectedCinemaId(response.data[0].cinema_id);
+      if (cinemaData.length > 0 && !selectedCinemaId) {
+        setSelectedCinemaId(cinemaData[0].cinema_id);
       }
     } catch (error) {
       toast.error(error.message || "Failed to load cinemas", {

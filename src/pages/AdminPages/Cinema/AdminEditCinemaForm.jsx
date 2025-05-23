@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Form, Input, Button, Row, Col, Typography, Spin } from 'antd';
-import { toast } from 'react-toastify';
+import { Form, Input, Button, Row, Col, Typography, Spin, Select } from 'antd';
+import { toastSuccess, toastError, toastInfo } from  '../../../utils/toastNotifier';
 import CinemaService from '../../../services/CinemaService';
 import styles from './AdminEditCinemaForm.module.scss';
+import { VietnamCities } from '../../../../public/assets/VietnamCities';
 
 const { Title } = Typography;
+const { Option } = Select;
 
 const AdminEditCinemaForm = () => {
   const navigate = useNavigate();
@@ -20,22 +22,30 @@ const AdminEditCinemaForm = () => {
       setLoading(true);
       try {
         const cinema = await CinemaService.getCinemaById(id);
+        // Split address into address and city
+        let address = cinema.address || '';
+        let city = '';
+        let cinemaAddress = address;
+
+        const addressParts = address.split(',').map(part => part.trim());
+        if (addressParts.length > 1) {
+          const possibleCity = addressParts[addressParts.length - 1];
+          if (VietnamCities.includes(possibleCity)) {
+            city = possibleCity;
+            cinemaAddress = addressParts.slice(0, -1).join(',').trim();
+          }
+        }
+
         const formData = {
           name: cinema.name,
-          address: cinema.address,
+          cinema_address: cinemaAddress,
+          cinema_city: city || VietnamCities[0], 
         };
+
         form.setFieldsValue(formData);
         setOriginalData(formData);
       } catch (error) {
-        toast.error(error.message || 'Failed to load cinema data', {
-          position: 'top-right',
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: '#5f2eea' },
-        });
+        toastError(error.message || 'Failed to load cinema data');
       } finally {
         setLoading(false);
       }
@@ -46,44 +56,25 @@ const AdminEditCinemaForm = () => {
   const onFinish = async (values) => {
     setSubmitting(true);
     try {
-      // Only include changed fields
+      // Combine address and city
+      const fullAddress = `${values.cinema_address}, ${values.cinema_city}`;
       const cinemaData = {};
+
+      // Only include changed fields
       if (values.name !== originalData.name) cinemaData.name = values.name;
-      if (values.address !== originalData.address) cinemaData.address = values.address;
+      if (fullAddress !== `${originalData.cinema_address}, ${originalData.cinema_city}`) {
+        cinemaData.address = fullAddress;
+      }
 
       if (Object.keys(cinemaData).length > 0) {
         await CinemaService.updateCinema(id, cinemaData);
-        toast.success('Cinema updated successfully', {
-          position: 'top-right',
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: '#5f2eea' },
-        });
+        toastSuccess('Cinema updated successfully');
       } else {
-        toast.info('No changes detected', {
-          position: 'top-right',
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: '#5f2eea' },
-        });
+        toastInfo('No changes detected');
       }
       navigate('/admin/manage_cinema');
     } catch (error) {
-      toast.error(error.message || 'Failed to update cinema', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastError(error.message || 'Failed to update cinema');
     } finally {
       setSubmitting(false);
     }
@@ -110,24 +101,59 @@ const AdminEditCinemaForm = () => {
               layout="vertical"
               onFinish={onFinish}
               className={styles.form}
+              autoComplete="off"
             >
               <Row gutter={[16, 16]}>
-                <Col xs={24} md={12}>
+                <Col xs={24}>
                   <Form.Item
                     label="Name"
                     name="name"
                     rules={[{ required: true, message: 'Please enter the cinema name' }]}
                   >
-                    <Input placeholder="Enter cinema name" />
+                    <Input
+                      placeholder="Enter cinema name"
+                      autoComplete="off"
+                      data-form-type="cinema-name"
+                    />
                   </Form.Item>
                 </Col>
-                <Col xs={24} md={12}>
+              </Row>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={16}>
                   <Form.Item
                     label="Address"
-                    name="address"
+                    name="cinema_address"
                     rules={[{ required: true, message: 'Please enter the cinema address' }]}
                   >
-                    <Input placeholder="Enter cinema address" />
+                    <Input
+                      placeholder="Enter cinema address"
+                      autoComplete="new-cinema-address"
+                      data-form-type="cinema-address"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={8}>
+                  <Form.Item
+                    label="City"
+                    name="cinema_city"
+                    rules={[{ required: true, message: 'Please select a city' }]}
+                  >
+                    <Select
+                      showSearch
+                      placeholder="Select a city"
+                      optionFilterProp="children"
+                      autoComplete="new-cinema-city"
+                      data-form-type="cinema-city"
+                      filterOption={(input, option) =>
+                        option.children.toLowerCase().includes(input.toLowerCase())
+                      }
+                    >
+                      {VietnamCities.map((city) => (
+                        <Option key={city} value={city}>
+                          {city}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>

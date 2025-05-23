@@ -2,14 +2,15 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Row, Col, Card, Button, Table, Space, Popconfirm, Typography, Form, Input, Spin } from 'antd';
+import { Row, Col, Card, Button, Table, Space, Popconfirm, Typography, Form, Input, Spin, Select } from 'antd';
 import { EditOutlined, DeleteOutlined, SettingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { toast } from 'react-toastify';
+import { toastSuccess, toastError, toastInfo } from '../../../utils/toastNotifier';
 import styles from './AdminManageRoom.module.scss';
 import RoomService from '../../../services/RoomService';
 import CinemaService from '../../../services/CinemaService';
 
 const { Title, Text: TypographyText } = Typography;
+const { Option } = Select;
 
 function AdminManageRoom() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ function AdminManageRoom() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [addingRoom, setAddingRoom] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
   const [roomForm] = Form.useForm();
 
   useEffect(() => {
@@ -35,15 +37,7 @@ function AdminManageRoom() {
       setCinema(fetchedCinema);
       setRooms(fetchedRooms);
     } catch (error) {
-      toast.error(error.message || 'Failed to load data', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastError(error.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -52,35 +46,17 @@ function AdminManageRoom() {
   const handleAddRoom = async (values) => {
     setAddingRoom(true);
     try {
-      console.log('Form values:', values); // Debug: Log form values
       const roomData = {
         cinema_id: cinemaId,
         room_name: values.room_name,
-        capacity: Number(values.capacity), // Ensure capacity is a number
+        status: values.status || 'UNAVAILABLE',
       };
       const newRoom = await RoomService.createRoom(roomData);
       setRooms([...rooms, newRoom]);
       roomForm.resetFields();
-      toast.success('Room added successfully', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastSuccess('Room added successfully');
     } catch (error) {
-      console.error('Add room error:', error); // Debug: Log error details
-      toast.error(error.message || 'Failed to add room', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastError(error.message || 'Failed to add room');
     } finally {
       setAddingRoom(false);
     }
@@ -91,41 +67,32 @@ function AdminManageRoom() {
     try {
       await RoomService.softDeleteRoom(id);
       setRooms(rooms.filter(room => room.room_id !== id));
-      toast.success('Room deleted successfully', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastSuccess('Room deleted successfully');
     } catch (error) {
-      toast.error(error.message || 'Failed to delete room', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastError(error.message || 'Failed to delete room');
     } finally {
       setDeleting(false);
     }
   };
 
+  const handleUpdateStatus = async (roomId, status) => {
+    setUpdatingStatus(roomId);
+    try {
+      await RoomService.updateRoomStatus(roomId, status);
+      setRooms(rooms.map(room =>
+        room.room_id === roomId ? { ...room, status } : room
+      ));
+      toastSuccess('Room status updated successfully');
+    } catch (error) {
+      toastError(error.message || 'Failed to update room status');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
   const handleResetRoomForm = () => {
     roomForm.resetFields();
-    toast.info('Room form reset', {
-      position: 'top-right',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progressStyle: { background: '#5f2eea' },
-    });
+    toastInfo('Room form reset');
   };
 
   const roomColumns = [
@@ -143,36 +110,50 @@ function AdminManageRoom() {
       sorter: (a, b) => a.room_name.localeCompare(b.room_name),
     },
     {
-      title: 'Capacity',
-      dataIndex: 'capacity',
-      key: 'capacity',
-      sorter: (a, b) => a.capacity - b.capacity,
-      render: capacity => <TypographyText>{capacity} seats</TypographyText>,
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      sorter: (a, b) => a.status.localeCompare(b.status),
+      render: status => (
+        <TypographyText type={status === 'AVAILABLE' ? 'success' : 'danger'}>
+          {status}
+        </TypographyText>
+      ),
     },
     {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
         <Space>
+          <Select
+            value={record.status}
+            onChange={value => handleUpdateStatus(record.room_id, value)}
+            style={{ width: 140 }}
+            disabled={deleting || addingRoom || updatingStatus === record.room_id}
+            loading={updatingStatus === record.room_id}
+          >
+            <Option value="AVAILABLE">AVAILABLE</Option>
+            <Option value="UNAVAILABLE">UNAVAILABLE</Option>
+          </Select>
           <Button
             type="default"
             icon={<SettingOutlined />}
             onClick={() => navigate(`/admin/manage_seats/edit_room/${record.room_id}`)}
             className={styles.settingsButton}
-            disabled={deleting || addingRoom}
+            disabled={deleting || addingRoom || updatingStatus}
           >
             Settings
           </Button>
           <Popconfirm
             title="Are you sure to delete this room?"
             onConfirm={() => handleDeleteRoom(record.room_id)}
-            disabled={deleting || addingRoom}
+            disabled={deleting || addingRoom || updatingStatus}
           >
             <Button
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
-              disabled={deleting || addingRoom}
+              disabled={deleting || addingRoom || updatingStatus}
             >
               Delete
             </Button>
@@ -198,9 +179,17 @@ function AdminManageRoom() {
               onClick={loadData}
               loading={loading}
               className={styles.refreshButton}
-              disabled={deleting || addingRoom}
+              disabled={deleting || addingRoom || updatingStatus}
             >
               Refresh
+            </Button>
+            <Button
+              block
+              onClick={() => navigate(-1)}
+              className={styles.backButton}
+              disabled={loading || deleting || addingRoom || updatingStatus}
+            >
+              Back
             </Button>
           </Space>
         </Col>
@@ -221,43 +210,28 @@ function AdminManageRoom() {
                 layout="inline"
                 onFinish={handleAddRoom}
                 className={styles.roomForm}
+                autoComplete="off"
               >
                 <Form.Item
                   name="room_name"
                   rules={[{ required: true, message: 'Required' }]}
                 >
-                  <Input placeholder="Room Name" className={styles.input} />
-                </Form.Item>
-                <Form.Item
-                  name="capacity"
-                  rules={[
-                    { required: true, message: 'Required' },
-                    {
-                      validator: (_, value) => {
-                        const num = Number(value);
-                        if (!value || (num > 0 && Number.isInteger(num))) {
-                          return Promise.resolve();
-                        }
-                        return Promise.reject(new Error('Must be a positive integer'));
-                      },
-                    },
-                  ]}
-                  normalize={value => (value ? Number(value) : value)}
-                >
                   <Input
-                    type="number"
-                    placeholder="Capacity"
+                    placeholder="Room Name"
                     className={styles.input}
-                    min={1}
-                    step={1}
+                    autoComplete="new-room-name"
+                    data-form-type="room-name"
                   />
+                </Form.Item>
+                <Form.Item name="status" initialValue="UNAVAILABLE" hidden>
+                  <Input type="hidden" />
                 </Form.Item>
                 <Form.Item>
                   <Button
                     type="primary"
                     htmlType="submit"
                     className={styles.addRoomButton}
-                    disabled={deleting || addingRoom}
+                    disabled={deleting || addingRoom || updatingStatus}
                     loading={addingRoom}
                   >
                     Add Room
@@ -267,7 +241,7 @@ function AdminManageRoom() {
                   <Button
                     onClick={handleResetRoomForm}
                     className={styles.resetButton}
-                    disabled={deleting || addingRoom}
+                    disabled={deleting || addingRoom || updatingStatus}
                   >
                     Reset
                   </Button>

@@ -43,3 +43,16 @@
   align-items: center;
   height: 200px;
 }
+
+/* Suppress autofill styling */
+.ant-input:-webkit-autofill,
+.ant-input:-webkit-autofill:hover,
+.ant-input:-webkit-autofill:focus,
+.ant-select-selector:-webkit-autofill,
+.ant-select-selector:-webkit-autofill:hover,
+.ant-select-selector:-webkit-autofill:focus {
+  -webkit-box-shadow: none !important;
+  -webkit-text-fill-color: inherit !important;
+  background: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

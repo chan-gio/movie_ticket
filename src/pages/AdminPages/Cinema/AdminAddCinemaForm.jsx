@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Row, Col, Typography } from 'antd';
-import { toast } from 'react-toastify';
+import { Form, Input, Button, Row, Col, Typography, Select } from 'antd';
+import { toastSuccess, toastError } from '../../../utils/toastNotifier';
 import CinemaService from '../../../services/CinemaService';
 import styles from './AdminAddCinemaForm.module.scss';
+import { VietnamCities } from '../../../assets/VietnamCities';
 
 const { Title } = Typography;
+const { Option } = Select;
+
+
 
 const AdminAddCinemaForm = () => {
   const navigate = useNavigate();
@@ -17,31 +21,15 @@ const AdminAddCinemaForm = () => {
     try {
       const cinemaData = {
         name: values.name,
-        address: values.address,
+        address: `${values.cinema_address}, ${values.cinema_city}`,
       };
 
       await CinemaService.createCinema(cinemaData);
 
-      toast.success('Cinema added successfully', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastSuccess('Cinema added successfully');
       navigate('/admin/manage_cinema');
     } catch (error) {
-      toast.error(error.message || 'Failed to add cinema', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: '#5f2eea' },
-      });
+      toastError(error.message || 'Failed to add cinema');
     } finally {
       setSubmitting(false);
     }
@@ -63,24 +51,59 @@ const AdminAddCinemaForm = () => {
             layout="vertical"
             onFinish={onFinish}
             className={styles.form}
+            autoComplete="off"
           >
             <Row gutter={[16, 16]}>
-              <Col xs={24} md={12}>
+              <Col xs={24}>
                 <Form.Item
                   label="Name"
                   name="name"
                   rules={[{ required: true, message: 'Please enter the cinema name' }]}
                 >
-                  <Input placeholder="Enter cinema name" />
+                  <Input
+                    placeholder="Enter cinema name"
+                    autoComplete="off"
+                    data-form-type="cinema-name"
+                  />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={12}>
+            </Row>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={16}>
                 <Form.Item
                   label="Address"
-                  name="address"
+                  name="cinema_address"
                   rules={[{ required: true, message: 'Please enter the cinema address' }]}
                 >
-                  <Input placeholder="Enter cinema address" />
+                  <Input
+                    placeholder="Enter cinema address"
+                    autoComplete="new-cinema-address"
+                    data-form-type="cinema-address"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item
+                  label="City"
+                  name="cinema_city"
+                  rules={[{ required: true, message: 'Please select a city' }]}
+                >
+                  <Select
+                    showSearch
+                    placeholder="Select a city"
+                    optionFilterProp="children"
+                    autoComplete="new-cinema-city"
+                    data-form-type="cinema-city"
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {VietnamCities.map((city) => (
+                      <Option key={city} value={city}>
+                        {city}
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>

@@ -1,7 +1,5 @@
 .container {
-  padding: 40px 20px;
-  background-color: #f5f5f5;
-  min-height: 100vh;
+  padding: 24px;
 }
 
 .header {
@@ -10,29 +8,37 @@
 
 .pageTitle {
   margin: 0;
-  color: #14142b;
 }
 
 .mainContent {
-  margin-top: 16px;
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
 }
 
 .form {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+/* Suppress autofill styling */
+.ant-input:-webkit-autofill,
+.ant-input:-webkit-autofill:hover,
+.ant-input:-webkit-autofill:focus,
+.ant-select-selector:-webkit-autofill,
+.ant-select-selector:-webkit-autofill:hover,
+.ant-select-selector:-webkit-autofill:focus {
+  -webkit-box-shadow: none !important;
+  -webkit-text-fill-color: inherit !important;
+  background: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .submitButton {
-  border-radius: 12px;
-  background-color: #5f2eea;
+  background: #5f2eea;
   border-color: #5f2eea;
-  height: 48px;
-  font-size: 16px;
-  padding: 0 24px;
-  &:hover {
-    background-color: #3f1dc7;
-    border-color: #3f1dc7;
+  &:hover,
+  &:focus {
+    background: #4a1ed4;
+    border-color: #4a1ed4;
   }
 }
