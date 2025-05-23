@@ -1,72 +1,68 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Select, Button, Spin, Typography } from "antd";
-import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import {
+  Row,
+  Col,
+  Select,
+  Button,
+  Spin,
+  Typography,
+  DatePicker,
+  Empty,
+} from "antd";
+import { VideoCameraOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import styles from "./ShowMoviesPage.module.scss";
 import bannerImg from "/assets/banner.png";
 import MovieCard from "../../../components/UserPages/ShowMoviesPage/MovieCard";
 import MovieService from "../../../services/MovieService";
-import CinemaService from "../../../services/CinemaService";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 const { Text } = Typography;
 
 export default function ShowMoviesPage() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
   const initialType = location.state?.type || null;
+  const initialSearchQuery = location.state?.searchQuery || "";
+  const initialSearchResults = location.state?.searchResults || null;
 
   const [movies, setMovies] = useState([]);
   const [filteredMovies, setFilteredMovies] = useState([]);
-  const [cinemas, setCinemas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({
     type: initialType,
     date: null,
-    cinema: null,
   });
 
   const moviesPerPage = 20;
 
-  // Fetch cinemas on mount
   useEffect(() => {
-    const fetchCinemas = async () => {
-      try {
-        const response = await CinemaService.getAllCinemas();
-        // Ensure response is an array
-        const cinemaData = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-          ? response.data
-          : [];
-        setCinemas(cinemaData);
-      } catch (error) {
-        toast.error(error.message || "Failed to load cinemas", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-        setCinemas([]); // Fallback to empty array on error
-      }
-    };
-    fetchCinemas();
-  }, []);
-
-  useEffect(() => {
-    loadMovies();
-  }, [page, filters.type]);
+    if (initialSearchQuery && initialSearchResults) {
+      const newMovies = initialSearchResults.data || [];
+      setMovies(newMovies);
+      setHasMore(newMovies.length === moviesPerPage);
+      setPage(1); // Reset page to 1 for new search
+    } else {
+      loadMovies();
+    }
+  }, [page, filters.type, initialSearchQuery, initialSearchResults]);
 
   const loadMovies = async () => {
     setLoading(true);
     try {
       let response;
-      if (filters.type === "now-showing") {
+      if (initialSearchQuery) {
+        response = await MovieService.searchByTitleFE({
+          title: initialSearchQuery,
+          perPage: moviesPerPage,
+          page,
+        });
+      } else if (filters.type === "now-showing") {
         response = await MovieService.getNowShowing();
       } else if (filters.type === "upcoming") {
         response = await MovieService.getUpcomingMovie();
@@ -77,7 +73,6 @@ export default function ShowMoviesPage() {
         });
       }
 
-      // Handle paginated vs non-paginated responses
       const newMovies = response.data ? response.data : response;
       setMovies((prev) => (page === 1 ? newMovies : [...prev, ...newMovies]));
       setHasMore(newMovies.length === moviesPerPage);
@@ -91,6 +86,8 @@ export default function ShowMoviesPage() {
         draggable: true,
         progressStyle: { background: "#5f2eea" },
       });
+      setMovies([]); // Set empty array on error to trigger empty state
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -104,14 +101,11 @@ export default function ShowMoviesPage() {
     let filtered = [...movies];
 
     if (filters.date) {
-      filtered = filtered.filter(
-        (movie) => movie.release_date === filters.date
-      );
-    }
-
-    if (filters.cinema) {
       filtered = filtered.filter((movie) =>
-        movie.cinemas?.some((cinema) => cinema.cinema_id === filters.cinema)
+        movie.showtimes?.some((showtime) => {
+          const showtimeDate = dayjs(showtime.start_time).format("YYYY-MM-DD");
+          return showtimeDate === filters.date;
+        })
       );
     }
 
@@ -119,11 +113,18 @@ export default function ShowMoviesPage() {
   };
 
   const handleFilterChange = (key, value) => {
+    let newValue = value;
+    if (key === "date") {
+      console.log("DatePicker value:", value);
+      newValue =
+        value && dayjs.isDayjs(value) ? value.format("YYYY-MM-DD") : null;
+      console.log("Formatted date:", newValue);
+    }
     setFilters((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: newValue,
     }));
-    setPage(1); // Reset to first page on filter change
+    setPage(1);
   };
 
   const handleLoadMore = () => {
@@ -138,8 +139,8 @@ export default function ShowMoviesPage() {
       >
         <span>
           Danh sách phim <br />
-          Danh sách các phim hiện đang chiếu rạp trên toàn quốc 16/05/2025. Xem
-          lịch chiếu phim, giá vé tiện lợi, đặt vé nhanh chỉ với 1 bước!
+          Danh sách các phim hiện đang chiếu rạp trên toàn quốc. Xem lịch chiếu
+          phim, giá vé tiện lợi, đặt vé nhanh chỉ với 1 bước!
         </span>
       </div>
       {loading && page === 1 ? (
@@ -148,13 +149,12 @@ export default function ShowMoviesPage() {
         </div>
       ) : (
         <Row gutter={[16, 16]}>
-          {/* Filter column */}
           <Col xs={24} md={24} lg={6}>
             <div className={styles.filterColumn}>
               <Select
                 placeholder="Chọn loại"
                 className={styles.select}
-                suffixIcon={<CalendarOutlined />}
+                suffixIcon={<VideoCameraOutlined />}
                 onChange={(value) => handleFilterChange("type", value)}
                 value={filters.type}
                 allowClear
@@ -162,49 +162,29 @@ export default function ShowMoviesPage() {
                 <Option value="now-showing">Now Showing</Option>
                 <Option value="upcoming">Upcoming Movie</Option>
               </Select>
-              <Select
+              <DatePicker
                 placeholder="Chọn ngày"
                 className={styles.select}
-                suffixIcon={<CalendarOutlined />}
-                onChange={(value) => handleFilterChange("date", value)}
-                value={filters.date}
+                onChange={(date) => handleFilterChange("date", date)}
+                value={filters.date ? dayjs(filters.date, "YYYY-MM-DD") : null}
+                format="DD/MM/YYYY"
                 allowClear
-              >
-                <Option value="2019-04-26">26 Apr 2019</Option>
-                <Option value="2019-10-04">04 Oct 2019</Option>
-                <Option value="2019-11-22">22 Nov 2019</Option>
-                <Option value="2019-05-30">30 May 2019</Option>
-                <Option value="2010-07-16">16 Jul 2010</Option>
-              </Select>
-              <Select
-                placeholder="Chọn rạp"
-                className={styles.select}
-                suffixIcon={<EnvironmentOutlined />}
-                onChange={(value) => handleFilterChange("cinema", value)}
-                value={filters.cinema}
-                allowClear
-                loading={!cinemas.length && loading} // Show loading state
-              >
-                {Array.isArray(cinemas) && cinemas.length > 0 ? (
-                  cinemas.map((cinema) => (
-                    <Option key={cinema.cinema_id} value={cinema.cinema_id}>
-                      {cinema.name}
-                    </Option>
-                  ))
-                ) : (
-                  <Option disabled value={null}>
-                    Không có rạp
-                  </Option>
-                )}
-              </Select>
+              />
             </div>
           </Col>
-
-          {/* Movie grid column */}
           <Col xs={24} md={24} lg={18}>
             {filteredMovies.length === 0 ? (
-              <div className={styles.empty}>
-                <Text>Không tìm thấy phim</Text>
+              <div className={styles.emptyState}>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <Text strong>
+                      {searchQuery
+                        ? `Không tìm được phim trùng khớp với "${searchQuery}"`
+                        : "Không tìm được phim"}
+                    </Text>
+                  }
+                />
               </div>
             ) : (
               <>

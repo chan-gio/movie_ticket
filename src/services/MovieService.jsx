@@ -217,6 +217,7 @@ const MovieService = {
     }
   },
 
+  // Fetch all movies for frontend with pagination
   getAllMoviesFE: async ({ perPage, page } = {}) => {
     try {
       const params = {};
@@ -235,6 +236,29 @@ const MovieService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to fetch movies"
+      );
+    }
+  },
+
+  // Search movies by title for frontend with pagination
+  searchByTitleFE: async ({ title, perPage, page } = {}) => {
+    try {
+      const params = { title };
+      if (perPage) params.per_page = perPage;
+      if (page) params.page = page;
+
+      const response = await api.get("/movies/movies/search-movies", {
+        params,
+      });
+
+      if (response.data.code === 200) {
+        return response.data.data; // response.data.data sẽ là object của Laravel paginator
+      } else {
+        throw new Error(response.data.message || "Failed to search movies");
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search movies"
       );
     }
   },

@@ -1,20 +1,56 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, Dropdown, Select, Input, Space, Avatar } from "antd";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Select, Input, Avatar } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import styles from "./Navbar.module.scss";
 import SelectCinemaModal from "../Modal/SelectCinemaModal";
 import { useSettings } from "../../Context/SettingContext";
+import MovieService from "../../services/MovieService";
+import { toastError } from "../../utils/toastNotifier"; // Import toastError
 
 const { Option } = Select;
 
 function Navbar() {
-  const { settings } = useSettings(); 
+  const { settings } = useSettings();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
   const navigate = useNavigate();
 
+  // Update search query in URL
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    if (value) {
+      setSearchParams({ search: value });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  // Search function triggered by icon click or Enter
+  const handleSearch = async () => {
+    if (searchQuery.trim() === "") {
+      navigate("/movies", {
+        state: { searchQuery: "", searchResults: null },
+      });
+      return;
+    }
+    try {
+      const response = await MovieService.searchByTitleFE({
+        title: searchQuery,
+        perPage: 20,
+        page: 1,
+      });
+      navigate("/movies", {
+        state: { searchQuery, searchResults: response },
+      });
+    } catch (error) {
+      toastError(error.message || "Failed to search movies"); // Use toastError
+    }
+  };
+
   const handleAvatarClick = () => {
-    navigate('/profile');
+    navigate("/profile");
   };
 
   const handleCinemaClick = (e) => {
@@ -41,32 +77,29 @@ function Navbar() {
             <Link to="/movies" className={styles.navLink}>
               Movies
             </Link>
-            <Link to="/cinemas" className={styles.navLink} onClick={handleCinemaClick}>
+            <Link
+              to="/cinemas"
+              className={styles.navLink}
+              onClick={handleCinemaClick}
+            >
               Cinemas
-            </Link>
-            <Link to="/buy-ticket" className={styles.navLink}>
-              Buy Ticket
             </Link>
           </div>
         </div>
         <div className={styles.navActions}>
-          <Select
-            defaultValue="Location"
-            className={styles.locationSelect}
-            onChange={(value) => console.log("Selected location:", value)}
-          >
-            <Option value="Location" disabled>
-              Location
-            </Option>
-            <Option value="Jakarta">Jakarta</Option>
-            <Option value="Bandung">Bandung</Option>
-            <Option value="Surabaya">Surabaya</Option>
-          </Select>
           <div className={styles.searchForm}>
             <Input
               placeholder="Search"
               className={styles.searchInput}
-              suffix={<SearchOutlined className={styles.searchIcon} />}
+              suffix={
+                <SearchOutlined
+                  className={styles.searchIcon}
+                  onClick={handleSearch}
+                />
+              }
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              onPressEnter={handleSearch}
             />
           </div>
           <Avatar

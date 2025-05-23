@@ -29,8 +29,54 @@
 }
 
 /* Base button styles */
-.addButton,
+.button {
+  border-radius: 6px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+/* Specific button styles for refreshButton, addButton, searchButton, clearButton */
 .refreshButton,
+.addButton,
+.searchButton {
+  background: #6b46c1;
+  color: #ffffff;
+  border-color: #6b46c1;
+}
+
+.refreshButton:hover,
+.addButton:hover,
+.searchButton:hover {
+  background: #553c9a;
+  border-color: #553c9a;
+  transform: translateY(-1px);
+}
+
+.refreshButton:active,
+.addButton:active,
+.searchButton:active,
+.clearButton:active {
+  transform: translateY(0);
+}
+
+.clearButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.clearButton:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Other button styles */
 .editButton,
 .deactivateButton,
 .activateButton,
@@ -45,21 +91,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: none;
-  }
 }
 
-/* Specific button styles */
-.addButton,
-.refreshButton,
 .editButton {
   background-color: #6b46c1;
   border-color: #6b46c1;
@@ -68,6 +101,11 @@
   &:hover {
     background-color: #553c9a;
     border-color: #553c9a;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -79,6 +117,11 @@
   &:hover {
     background-color: #ed8936 !important;
     border-color: #ed8936 !important;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -89,9 +132,13 @@
   color: #ffffff !important;
 
   &:hover {
-
     background-color: #389e0d !important;
     border-color: #389e0d !important;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -103,6 +150,11 @@
   &:hover {
     background-color: #e53e3e;
     border-color: #e53e3e;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -210,8 +262,11 @@
     font-size: 24px;
   }
 
-  .addButton,
+  .button,
   .refreshButton,
+  .addButton,
+  .searchButton,
+  .clearButton,
   .editButton,
   .deactivateButton,
   .activateButton,
@@ -245,8 +300,15 @@
     align-items: center;
   }
 
-  .addButton,
-  .refreshButton {
+  .refreshButton,
+  .addButton {
+    width: 100%;
+    max-width: 200px;
+    margin-bottom: 8px;
+  }
+
+  .searchButton,
+  .clearButton {
     width: 100%;
     max-width: 200px;
     margin-bottom: 8px;
@@ -256,6 +318,7 @@
     margin-bottom: 16px;
   }
 }
-.ant-space-item{
+
+.ant-space-item {
   min-width: 50px;
 }

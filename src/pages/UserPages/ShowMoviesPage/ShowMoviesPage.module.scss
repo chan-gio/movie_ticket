@@ -111,3 +111,33 @@
   margin-left: 0px !important;
   margin-right: 0px !important;
 }
+
+.empty {
+  /* Existing empty styles, if any */
+  text-align: center;
+  padding: 20px;
+}
+
+/* New styles for the empty state */
+.emptyState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px; /* Ensure sufficient height for visibility */
+  padding: 20px;
+  text-align: center;
+
+  /* Style the Ant Design Empty component */
+  .ant-empty {
+    .ant-empty-image {
+      margin-bottom: 16px; /* Space between icon and text */
+    }
+    .ant-empty-description {
+      font-size: 16px; /* Larger font for readability */
+      color: #595959; /* Ant Design default text color */
+      .ant-typography {
+        font-weight: 500; /* Match Text strong */
+      }
+    }
+  }
+}

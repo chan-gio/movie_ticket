@@ -38,55 +38,77 @@ function AdminManageCoupon() {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState(""); // State for search input
-  const [filteredCoupons, setFilteredCoupons] = useState([]); // State for filtered coupons
+  const [searchText, setSearchText] = useState("");
+  const [filteredCoupons, setFilteredCoupons] = useState([]);
+  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
 
   useEffect(() => {
     loadData(pagination.current, pagination.pageSize);
   }, []);
 
-  const loadData = async (page = 1, pageSize = 10) => {
+  const loadData = async (page = 1, pageSize = 10, searchCode = "") => {
     setLoading(true);
     try {
-      const response = await CouponService.getAllCoupons(page, pageSize);
-      setCoupons(response.data);
-      setFilteredCoupons(response.data); // Initially, filtered coupons are the same as all coupons
+      let response;
+      if (searchCode) {
+        // Search by coupon code
+        response = await CouponService.searchCouponsByCode(
+          searchCode,
+          page,
+          pageSize
+        );
+        setIsSearching(true);
+      } else {
+        // Load all coupons
+        response = await CouponService.getAllCoupons(page, pageSize);
+        setIsSearching(false);
+      }
+      // Ensure data is an array
+      const couponData = Array.isArray(response.data) ? response.data : [];
+      setCoupons(couponData);
+      setFilteredCoupons(couponData);
       setPagination({
-        current: response.pagination.current,
-        pageSize: response.pagination.pageSize,
-        total: response.pagination.total,
+        current: response.pagination?.current || page,
+        pageSize: response.pagination?.pageSize || pageSize,
+        total: response.pagination?.total || couponData.length,
       });
     } catch (error) {
       message.error(error.message || "Failed to load coupons");
+      setCoupons([]);
+      setFilteredCoupons([]);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+        total: 0,
+      }));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = async (value) => {
-    setSearchText(value);
-    if (!value) {
-      setFilteredCoupons(coupons); // Reset to all coupons if search is empty
+  const handleSearch = () => {
+    if (!searchText.trim()) {
+      message.warning("Please enter a coupon code to search");
       return;
     }
+    loadData(1, pagination.pageSize, searchText); // Reset to page 1 on new search
+  };
 
-    setLoading(true);
-    try {
-      const response = await CouponService.searchCouponsByCode(value);
-      setFilteredCoupons(response);
-    } catch (error) {
-      message.error(error.message || "Failed to search coupons");
-      setFilteredCoupons([]);
-    } finally {
-      setLoading(false);
-    }
+  const handleClearSearch = () => {
+    setSearchText("");
+    setIsSearching(false);
+    loadData(1, pagination.pageSize, ""); // Reset to full list
   };
 
   const handleSoftDeleteCoupon = async (id) => {
     try {
       await CouponService.softDeleteCoupon(id);
       message.success("Coupon deactivated successfully");
-      loadData(pagination.current, pagination.pageSize);
+      loadData(
+        pagination.current,
+        pagination.pageSize,
+        isSearching ? searchText : ""
+      );
     } catch (error) {
       message.error(error.message || "Failed to deactivate coupon");
     }
@@ -96,7 +118,11 @@ function AdminManageCoupon() {
     try {
       await CouponService.restoreCoupon(id);
       message.success("Coupon activated successfully");
-      loadData(pagination.current, pagination.pageSize);
+      loadData(
+        pagination.current,
+        pagination.pageSize,
+        isSearching ? searchText : ""
+      );
     } catch (error) {
       message.error(error.message || "Failed to activate coupon");
     }
@@ -106,14 +132,22 @@ function AdminManageCoupon() {
     try {
       await CouponService.forceDeleteCoupon(id);
       message.success("Coupon deleted successfully");
-      loadData(pagination.current, pagination.pageSize);
+      loadData(
+        pagination.current,
+        pagination.pageSize,
+        isSearching ? searchText : ""
+      );
     } catch (error) {
       message.error(error.message || "Failed to delete coupon");
     }
   };
 
   const handleTableChange = (pagination) => {
-    loadData(pagination.current, pagination.pageSize);
+    loadData(
+      pagination.current,
+      pagination.pageSize,
+      isSearching ? searchText : ""
+    );
   };
 
   const formatDateTime = (dateTime) => {
@@ -241,8 +275,12 @@ function AdminManageCoupon() {
   ];
 
   // Calculate statistics
-  const totalActiveCoupons = coupons.filter(coupon => coupon.is_active).length;
-  const totalUsableCoupons = coupons.filter(coupon => coupon.is_used < coupon.quantity).length;
+  const totalActiveCoupons = filteredCoupons.filter(
+    (coupon) => coupon.is_active
+  ).length;
+  const totalUsableCoupons = filteredCoupons.filter(
+    (coupon) => coupon.is_used < coupon.quantity
+  ).length;
 
   return (
     <div className={styles.container}>
@@ -257,10 +295,29 @@ function AdminManageCoupon() {
             <Input
               placeholder="Search by code"
               value={searchText}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={handleSearch}
               prefix={<SearchOutlined />}
               className={styles.searchInput}
+              allowClear
             />
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={handleSearch}
+              className={styles.searchButton}
+            >
+              Search
+            </Button>
+            {isSearching && (
+              <Button
+                type="default"
+                onClick={handleClearSearch}
+                className={styles.clearButton}
+              >
+                Clear Search
+              </Button>
+            )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -272,7 +329,13 @@ function AdminManageCoupon() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={() => loadData(pagination.current, pagination.pageSize)}
+              onClick={() =>
+                loadData(
+                  pagination.current,
+                  pagination.pageSize,
+                  isSearching ? searchText : ""
+                )
+              }
               loading={loading}
               className={styles.refreshButton}
             >
@@ -285,7 +348,9 @@ function AdminManageCoupon() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Total Coupons</span>}
+              title={
+                <span className={styles.statisticTitle}>Total Coupons</span>
+              }
               value={pagination.total}
               valueStyle={{ color: "#5f2eea" }}
             />
@@ -294,7 +359,9 @@ function AdminManageCoupon() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Active Coupons</span>}
+              title={
+                <span className={styles.statisticTitle}>Active Coupons</span>
+              }
               value={totalActiveCoupons}
               valueStyle={{ color: "#52c41a" }}
             />
@@ -303,7 +370,9 @@ function AdminManageCoupon() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Usable Coupons</span>}
+              title={
+                <span className={styles.statisticTitle}>Usable Coupons</span>
+              }
               value={totalUsableCoupons}
               valueStyle={{ color: "#1890ff" }}
             />
