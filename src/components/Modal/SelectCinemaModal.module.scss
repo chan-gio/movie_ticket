@@ -53,3 +53,19 @@
 .cinemaAddress {
   color: #666;
 }
+
+.skeletonContainer {
+  padding: 10px 0;
+}
+
+.skeletonItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.skeletonText {
+  flex: 1;
+  margin-left: 10px;
+}

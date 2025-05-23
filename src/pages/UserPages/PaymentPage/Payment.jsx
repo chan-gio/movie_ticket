@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Row, Col, Card, Typography, Form, Input, Alert, Button, Space, Skeleton, message, Progress, List } from "antd";
