@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Row, Col, Card, Typography, Form, Input, Alert, Button, Space, Skeleton, message, Progress, List } from "antd";
+import { Row, Col, Card, Typography, Form, Input, Button, Space, Skeleton, Progress, List, Alert } from "antd";
 import { WarningOutlined } from "@ant-design/icons";
 import styles from "./Payment.module.scss";
 import BookingService from "../../../services/BookingService";
@@ -11,6 +11,7 @@ import PaymentService from "../../../services/PaymentService";
 import CouponService from "../../../services/CouponService";
 import { useSettings } from "../../../Context/SettingContext";
 import { useBookingTimer } from "../../../Context/BookingTimerContext";
+import { toastError } from "../../../utils/toastNotifier";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -38,6 +39,7 @@ function Payment() {
       ? currentBooking.progress.data.couponCode || ""
       : "";
 
+  // Fetch initial data
   useEffect(() => {
     if (hasFetched.current) {
       return;
@@ -45,7 +47,7 @@ function Payment() {
 
     const fetchData = async () => {
       if (!bookingId) {
-        setFetchError("Booking ID not provided");
+        toastError("Booking ID not provided");
         setFetchLoading(false);
         return;
       }
@@ -54,6 +56,15 @@ function Payment() {
         setFetchLoading(true);
 
         const bookingResponse = await BookingService.getBookingById(bookingId);
+
+        // Check if the booking is canceled
+        if (bookingResponse.status === 'CANCELLED') {
+          toastError("This booking has been canceled.");
+          navigate("/");
+          setFetchLoading(false);
+          return;
+        }
+
         setBooking(bookingResponse);
 
         const userId = bookingResponse.user_id;
@@ -72,24 +83,29 @@ function Payment() {
         }
 
         const showtimeDate = bookingResponse.showtime?.start_time ? new Date(bookingResponse.showtime.start_time) : null;
-        const currentDate = new Date("2025-05-23T16:44:00+07:00"); // Updated to current date and time
+        const currentDate = new Date("2025-05-24T19:54:00+07:00");
 
         if (showtimeDate && currentDate > showtimeDate) {
           setIsShowtimePast(true);
-          message.error("This showtime has already passed. Please select a different showtime.");
+          toastError("This showtime has already passed. Please select a different showtime.");
         }
 
         setFetchLoading(false);
       } catch (err) {
         console.error('Fetch error:', err);
-        setFetchError(err.message || "Failed to fetch data");
+        toastError(err.message || "Failed to fetch data");
         setFetchLoading(false);
       }
     };
 
     fetchData();
     hasFetched.current = true;
-  }, [bookingId, form]);
+
+    if (settingsError) {
+      toastError(settingsError);
+      navigate("/");
+    }
+  }, [bookingId, form, settingsError, navigate]);
 
   const orderData = booking
     ? {
@@ -173,16 +189,15 @@ function Payment() {
       }
 
       const expiryDate = new Date(couponData.expiry_date);
-      const currentDate = new Date("2025-05-23T16:44:00+07:00");
+      const currentDate = new Date("2025-05-24T19:54:00+07:00");
       if (currentDate > expiryDate) {
         throw new Error("This coupon has expired.");
       }
 
       setCoupon(couponData);
-      message.success(`Coupon applied! ${couponData.discount}% discount has been applied.`);
       return couponData;
     } catch (err) {
-      message.error(err.message || "Failed to apply coupon.");
+      toastError(err.message || "Failed to apply coupon.");
       setCoupon(null);
       throw err;
     }
@@ -194,6 +209,11 @@ function Payment() {
       setCoupon(null);
       const path = `/payment/${bookingId}`;
       updateProgress(bookingId, "Payment", { couponCode: "" }, path);
+      try {
+        await BookingService.updateCoupon(bookingId, null);
+      } catch (err) {
+        toastError(err.message || "Failed to remove coupon");
+      }
       return;
     }
 
@@ -211,12 +231,12 @@ function Payment() {
 
   const handleSubmit = async (values) => {
     if (isShowtimePast) {
-      message.error("Cannot proceed with payment for a past showtime. Please select a different showtime.");
+      toastError("Cannot proceed with payment for a past showtime. Please select a different showtime.");
       return;
     }
 
     if (sortedSeats.length === 0) {
-      message.error("No seats selected for this booking. Please go back and select seats.");
+      toastError("No seats selected for this booking. Please go back and select seats.");
       return;
     }
 
@@ -234,14 +254,34 @@ function Payment() {
       }
     }
 
+    // Update the coupon_id in the bookings table
+    try {
+      await BookingService.updateCoupon(bookingId, couponCode || null);
+    } catch (err) {
+      toastError(err.message || "Failed to update coupon in booking");
+      setLoading(false);
+      return;
+    }
+
+    // Increment coupon usage if a coupon is applied
+    if (appliedCoupon) {
+      try {
+        await CouponService.incrementCouponUsage(appliedCoupon.coupon_id);
+      } catch (couponErr) {
+        console.error('Coupon usage increment error:', couponErr);
+        toastError(couponErr.message || "Failed to increment coupon usage. Please try again.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const totalPrice = calculateTotalPrice();
 
     try {
       await BookingService.updateTotalPrice(bookingId, totalPrice);
-      message.success("Total price updated successfully!");
     } catch (updateErr) {
       console.error('Update total price error:', updateErr);
-      setError('Failed to update total price. Please try again.');
+      toastError('Failed to update total price. Please try again.');
       setLoading(false);
       return;
     }
@@ -249,10 +289,9 @@ function Payment() {
     const orderCode = Math.floor(100000 + Math.random() * 900000);
     try {
       await BookingService.updateOrderCode(bookingId, orderCode.toString());
-      message.success("Order code updated successfully!");
     } catch (updateErr) {
       console.error('Update order code error:', updateErr);
-      setError('Failed to update order code. Please try again.');
+      toastError('Failed to update order code. Please try again.');
       setLoading(false);
       return;
     }
@@ -284,23 +323,14 @@ function Payment() {
       const response = await PaymentService.proxyPayOS(paymentData);
 
       if (response && response.checkoutUrl) {
-        if (appliedCoupon) {
-          try {
-            await CouponService.useCoupon(appliedCoupon.coupon_id);
-            message.success("Coupon usage updated successfully!");
-          } catch (couponErr) {
-            console.error('Coupon usage update error:', couponErr);
-            message.warning("Payment successful, but failed to update coupon usage.");
-          }
-        }
-        clearTimer(bookingId); // Clear only this booking
+        clearTimer(bookingId);
         window.location.href = response.checkoutUrl;
       } else {
         throw new Error('Failed to create payment link: Invalid response structure');
       }
     } catch (err) {
       console.error('PayOS Service Error:', err.message);
-      setError('Payment initiation failed. Please try again.');
+      toastError('Payment initiation failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -351,42 +381,6 @@ function Payment() {
             </Space>
           </Col>
         </Row>
-      </div>
-    );
-  }
-
-  if (fetchError) {
-    return (
-      <div className={styles.payment}>
-        <Title level={3}>Error</Title>
-        <Text>{fetchError}</Text>
-        <Link to="/">
-          <Button type="primary">Go Back</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  if (settingsError) {
-    return (
-      <div className={styles.payment}>
-        <Title level={3}>Error</Title>
-        <Text>{settingsError}</Text>
-        <Link to="/">
-          <Button type="primary">Go Back</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  if (isShowtimePast) {
-    return (
-      <div className={styles.payment}>
-        <Title level={3}>Showtime Expired</Title>
-        <Text>This showtime has already passed. Please select a different showtime.</Text>
-        <Link to="/movies">
-          <Button type="primary">Select a Different Movie</Button>
-        </Link>
       </div>
     );
   }
@@ -511,15 +505,6 @@ function Payment() {
         <Col xs={24} lg={16}>
           <Title level={3}>Checkout with PayOS</Title>
           <Card className={styles.methodCard}>
-            {error && (
-              <Alert
-                message={error}
-                type="error"
-                showIcon
-                className={styles.alert}
-                style={{ marginBottom: 16 }}
-              />
-            )}
             <Text>If everything looks good, click 'Proceed to Payment' to finalize your order.</Text>
           </Card>
           <Space className={styles.navButtons}>

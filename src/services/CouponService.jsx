@@ -159,6 +159,57 @@ const CouponService = {
       throw new Error(message);
     }
   },
+
+  // Increment or decrement coupon usage
+  updateCouponUsage: async (couponId, action) => {
+    try {
+      const response = await api.post(`/coupons/${couponId}/usage`, { action });
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || `Failed to ${action} coupon usage`);
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? `Server error: Unable to ${action} coupon usage. Please try again later.`
+          : error.response?.data?.message || `Failed to ${action} coupon usage`;
+      throw new Error(message);
+    }
+  },
+
+  // Decrement coupon usage (specific method for cancellation)
+  decrementCouponUsage: async (couponId) => {
+    try {
+      const response = await api.post(`/coupons/${couponId}/usage`, { action: "decrement" });
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || "Failed to decrement coupon usage");
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to decrement coupon usage. Please try again later."
+          : error.response?.data?.message || "Failed to decrement coupon usage";
+      throw new Error(message);
+    }
+  },
+
+  // Increment coupon usage (for completeness)
+  incrementCouponUsage: async (couponId) => {
+    try {
+      const response = await api.post(`/coupons/${couponId}/usage`, { action: "increment" });
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || "Failed to increment coupon usage");
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to increment coupon usage. Please try again later."
+          : error.response?.data?.message || "Failed to increment coupon usage";
+      throw new Error(message);
+    }
+  },
 };
 
 export default CouponService;

@@ -5,13 +5,21 @@ const AuthService = {
   register: async (userData) => {
     try {
       const response = await api.post("/auth/register", userData);
-      if (response.data.success === true) {
-        return response.data.data;
+      console.log("Register Response:", response); // Debug log
+      if (response.status >= 200 && response.status < 300) {
+        if (response.data.success === true) {
+          return response.data.data;
+        } else {
+          throw new Error(response.data.message || "Failed to register user");
+        }
+      } else if (response.status === 302) {
+        throw new Error("Unexpected redirect during registration");
       } else {
-        throw new Error(response.data.message || "Failed to register user");
+        throw new Error(response.data?.message || "Failed to register user");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to register user");
+      console.error("Register Error:", error); // Debug log
+      throw new Error(error.response?.data?.message || error.message || "Failed to register user");
     }
   },
 
@@ -19,16 +27,24 @@ const AuthService = {
   login: async (credentials) => {
     try {
       const response = await api.post("/auth/login", credentials);
-      if (response.data.success === true) {
-        return {
-          token: response.data.token,
-          user: response.data.user,
-        };
+      console.log("Login Response:", response); // Debug log
+      if (response.status >= 200 && response.status < 300) {
+        if (response.data.success === true) {
+          return {
+            token: response.data.token,
+            user: response.data.user,
+          };
+        } else {
+          throw new Error(response.data.message || "Failed to login");
+        }
+      } else if (response.status === 302) {
+        throw new Error("Unexpected redirect during login");
       } else {
-        throw new Error(response.data.message || "Failed to login");
+        throw new Error(response.data?.message || "Failed to login");
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to login");
+      console.error("Login Error:", error); // Debug log
+      throw new Error(error.response?.data?.message || error.message || "Failed to login");
     }
   },
 };

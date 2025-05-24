@@ -154,6 +154,24 @@ const BookingService = {
     }
   },
 
+  updateCoupon: async (bookingId, couponCode) => {
+    try {
+      const response = await api.put(`/bookings/${bookingId}/coupon`, {
+        coupon_code: couponCode,
+      });
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || "Failed to update coupon for booking");
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to update coupon for booking. Please try again later."
+          : error.response?.data?.message || "Failed to update coupon for booking";
+      throw new Error(message);
+    }
+  },
+
   // Soft delete a booking
   deleteBooking: async (bookingId) => {
     try {

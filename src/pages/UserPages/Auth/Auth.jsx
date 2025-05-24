@@ -1,96 +1,152 @@
 import React, { useState } from "react";
-import { Tabs, Form, Row, Col, Input, Button, Alert, Modal, message } from "antd";
+import { Tabs, Row, Col, Input, Button, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import LeftContainer from "../../../components/UserPages/AuthPage/LeftContainer/LeftContainer";
 import AuthService from "../../../services/AuthService";
 import styles from "./Auth.module.scss";
+import { toastSuccess, toastError } from "../../../utils/toastNotifier";
 
 const { TabPane } = Tabs;
 
 const Auth = () => {
-  const [form] = Form.useForm();
-  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
+  // State for Sign In inputs
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+
+  // State for Sign Up inputs
+  const [signUpUsername, setSignUpUsername] = useState("");
+  const [signUpEmail, setSignUpEmail] = useState("");
+  const [signUpPassword, setSignUpPassword] = useState("");
+  const [signUpFullName, setSignUpFullName] = useState("");
+  const [signUpDob, setSignUpDob] = useState("");
+  const [signUpPhone, setSignUpPhone] = useState("");
+
+  // State for Forgot Password input
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+
   // Handle Sign Up submission
-  const handleSignUpSubmit = async (values) => {
+  const handleSignUpSubmit = async () => {
     setIsLoading(true);
     try {
+      // Basic validation
+      if (!signUpUsername || !signUpEmail || !signUpPassword || !signUpFullName || !signUpDob || !signUpPhone) {
+        throw new Error("Please fill in all fields");
+      }
+      if (!/\S+@\S+\.\S+/.test(signUpEmail)) {
+        throw new Error("Please enter a valid email");
+      }
+      if (signUpPassword.length < 6) {
+        throw new Error("Password must be at least 6 characters");
+      }
+
+      const values = {
+        username: signUpUsername,
+        email: signUpEmail,
+        password: signUpPassword,
+        full_name: signUpFullName,
+        dob: signUpDob,
+        phone: signUpPhone,
+      };
+
+      console.log("Attempting registration with values:", values); // Debug log
       const user = await AuthService.register(values);
-      setAlert({
-        show: true,
-        type: "success",
-        message: "Registration successful! You can now log in.",
-      });
-      form.resetFields();
-      message.success("Registration successful! Please sign in.");
+      console.log("Registration successful:", user); // Debug log
+      toastSuccess("Registration successful! Please sign in.");
+
+      // Reset Sign Up fields
+      setSignUpUsername("");
+      setSignUpEmail("");
+      setSignUpPassword("");
+      setSignUpFullName("");
+      setSignUpDob("");
+      setSignUpPhone("");
+
       // Switch to Sign In tab
       navigate('/auth', { state: { activeTab: "signin" } });
     } catch (error) {
-      setAlert({
-        show: true,
-        type: "error",
-        message: error.message || "Registration failed",
-      });
+      console.error("Sign Up Error:", error);
+      toastError(error.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Handle Sign In submission
-  const handleSignInSubmit = async (values) => {
+  const handleSignInSubmit = async (event) => {
+    event.preventDefault(); // Ngăn hành vi mặc định nếu có
     setIsLoading(true);
     try {
+      if (!signInEmail || !signInPassword) {
+        throw new Error("Please fill in all fields");
+      }
+      if (!/\S+@\S+\.\S+/.test(signInEmail)) {
+        throw new Error("Please enter a valid email");
+      }
+  
+      const values = {
+        email: signInEmail,
+        password: signInPassword,
+      };
+  
+      console.log("Attempting login with values:", values);
       const { token, user } = await AuthService.login(values);
+      console.log("Login successful:", { token, user });
       localStorage.setItem('access_token', token);
       localStorage.setItem('user_id', user.user_id);
-      setAlert({
-        show: true,
-        type: "success",
-        message: "Login successful!",
-      });
+      toastSuccess("Login successful!");
       navigate('/');
     } catch (error) {
-      setAlert({
-        show: true,
-        type: "error",
-        message: error.message || "Login failed",
-      });
+      console.error("Sign In Error:", error);
+      toastError(error.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle Forgot Password submission (placeholder for now)
-  const handleForgotPasswordSubmit = async (values) => {
+  // Handle Forgot Password submission
+  const handleForgotPasswordSubmit = async () => {
     setIsLoading(true);
     try {
+      // Basic validation
+      if (!forgotPasswordEmail) {
+        throw new Error("Please enter your email");
+      }
+      if (!/\S+@\S+\.\S+/.test(forgotPasswordEmail)) {
+        throw new Error("Please enter a valid email");
+      }
+
+      console.log("Attempting forgot password with email:", forgotPasswordEmail); // Debug log
       // Placeholder: Replace with actual AuthService.forgotPassword when implemented
-      setTimeout(() => {
-        setAlert({
-          show: true,
-          type: "success",
-          message: "A reset link has been sent to your email.",
-        });
-        setForgotPasswordVisible(false);
-      }, 1000);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate async call
+      toastSuccess("A reset link has been sent to your email.");
+      setForgotPasswordVisible(false);
+      setForgotPasswordEmail("");
     } catch (error) {
-      setAlert({
-        show: true,
-        type: "error",
-        message: error.message || "Failed to send reset link",
-      });
+      console.error("Forgot Password Error:", error);
+      toastError(error.message || "Failed to send reset link");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle tab change to clear alerts
+  // Handle tab change to clear fields
   const handleTabChange = () => {
-    setAlert({ show: false, type: "", message: "" });
-    form.resetFields();
+    // Reset Sign In fields
+    setSignInEmail("");
+    setSignInPassword("");
+    // Reset Sign Up fields
+    setSignUpUsername("");
+    setSignUpEmail("");
+    setSignUpPassword("");
+    setSignUpFullName("");
+    setSignUpDob("");
+    setSignUpPhone("");
+    // Reset Forgot Password field
+    setForgotPasswordEmail("");
   };
 
   return (
@@ -103,124 +159,122 @@ const Auth = () => {
           <Tabs defaultActiveKey="signin" onChange={handleTabChange}>
             <TabPane tab="Sign In" key="signin">
               <div>
-                {alert.show && (
-                  <Alert
-                    message={alert.message}
-                    type={alert.type}
-                    showIcon
-                    closable
-                    onClose={() => setAlert({ show: false, type: "", message: "" })}
-                    style={{ marginBottom: 16 }}
+                <div className={styles.formItem}>
+                  <label>Email</label>
+                  <Input
+                    placeholder="Email"
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value)}
                   />
-                )}
-                <Form form={form} onFinish={handleSignInSubmit} layout="vertical">
-                  <Form.Item
-                    label="Email"
-                    name="email"
-                    rules={[{ required: true, type: 'email', message: 'Please enter a valid email' }]}
+                </div>
+                <div className={styles.formItem}>
+                  <label>Password</label>
+                  <Input.Password
+                    placeholder="Password"
+                    value={signInPassword}
+                    onChange={(e) => setSignInPassword(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formItem}>
+                  <Button
+                    type="primary"
+                    onClick={handleSignInSubmit}
+                    loading={isLoading}
+                    block
                   >
-                    <Input placeholder="Email" />
-                  </Form.Item>
-                  <Form.Item
-                    label="Password"
-                    name="password"
-                    rules={[{ required: true, message: 'Please enter your password' }]}
-                  >
-                    <Input.Password placeholder="Password" />
-                  </Form.Item>
-                  <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={isLoading} block>
-                      Sign In
-                    </Button>
-                  </Form.Item>
-                  <Button type="link" onClick={() => setForgotPasswordVisible(true)}>
-                    Forgot Password?
+                    Sign In
                   </Button>
-                </Form>
+                </div>
+                <Button type="link" onClick={() => setForgotPasswordVisible(true)}>
+                  Forgot Password?
+                </Button>
                 <Modal
                   title="Forgot Password"
                   open={forgotPasswordVisible}
                   onCancel={() => setForgotPasswordVisible(false)}
                   footer={null}
                 >
-                  <Form onFinish={handleForgotPasswordSubmit} layout="vertical">
-                    <Form.Item
-                      label="Email"
-                      name="email"
-                      rules={[{ required: true, type: 'email', message: 'Please enter a valid email' }]}
+                  <div className={styles.formItem}>
+                    <label>Email</label>
+                    <Input
+                      placeholder="Enter your email"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.formItem}>
+                    <Button
+                      type="primary"
+                      onClick={handleForgotPasswordSubmit}
+                      loading={isLoading}
+                      block
                     >
-                      <Input placeholder="Enter your email" />
-                    </Form.Item>
-                    <Form.Item>
-                      <Button type="primary" htmlType="submit" loading={isLoading} block>
-                        Send Reset Link
-                      </Button>
-                    </Form.Item>
-                  </Form>
+                      Send Reset Link
+                    </Button>
+                  </div>
                 </Modal>
               </div>
             </TabPane>
             <TabPane tab="Sign Up" key="signup">
               <div>
-                {alert.show && (
-                  <Alert
-                    message={alert.message}
-                    type={alert.type}
-                    showIcon
-                    closable
-                    onClose={() => setAlert({ show: false, type: "", message: "" })}
-                    style={{ marginBottom: 16 }}
+                <div className={styles.formItem}>
+                  <label>Username</label>
+                  <Input
+                    placeholder="Username"
+                    value={signUpUsername}
+                    onChange={(e) => setSignUpUsername(e.target.value)}
                   />
-                )}
-                <Form form={form} onFinish={handleSignUpSubmit} layout="vertical">
-                  <Form.Item
-                    label="Username"
-                    name="username"
-                    rules={[{ required: true, message: 'Please enter your username' }]}
+                </div>
+                <div className={styles.formItem}>
+                  <label>Email</label>
+                  <Input
+                    placeholder="Email"
+                    value={signUpEmail}
+                    onChange={(e) => setSignUpEmail(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formItem}>
+                  <label>Password</label>
+                  <Input.Password
+                    placeholder="Password"
+                    value={signUpPassword}
+                    onChange={(e) => setSignUpPassword(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formItem}>
+                  <label>Full Name</label>
+                  <Input
+                    placeholder="Full Name"
+                    value={signUpFullName}
+                    onChange={(e) => setSignUpFullName(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formItem}>
+                  <label>Date of Birth</label>
+                  <Input
+                    type="date"
+                    value={signUpDob}
+                    onChange={(e) => setSignUpDob(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formItem}>
+                  <label>Phone</label>
+                  <Input
+                    placeholder="Phone Number"
+                    value={signUpPhone}
+                    onChange={(e) => setSignUpPhone(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formItem}>
+                  <Button
+                    type="primary"
+                    onClick={handleSignUpSubmit}
+                    loading={isLoading}
+                    block
                   >
-                    <Input placeholder="Username" />
-                  </Form.Item>
-                  <Form.Item
-                    label="Email"
-                    name="email"
-                    rules={[{ required: true, type: 'email', message: 'Please enter a valid email' }]}
-                  >
-                    <Input placeholder="Email" />
-                  </Form.Item>
-                  <Form.Item
-                    label="Password"
-                    name="password"
-                    rules={[{ required: true, min: 6, message: 'Password must be at least 6 characters' }]}
-                  >
-                    <Input.Password placeholder="Password" />
-                  </Form.Item>
-                  <Form.Item
-                    label="Full Name"
-                    name="full_name"
-                    rules={[{ required: true, message: 'Please enter your full name' }]}
-                  >
-                    <Input placeholder="Full Name" />
-                  </Form.Item>
-                  <Form.Item
-                    label="Date of Birth"
-                    name="dob"
-                    rules={[{ required: true, message: 'Please enter your date of birth' }]}
-                  >
-                    <Input type="date" />
-                  </Form.Item>
-                  <Form.Item
-                    label="Phone"
-                    name="phone"
-                    rules={[{ required: true, message: 'Please enter your phone number' }]}
-                  >
-                    <Input placeholder="Phone Number" />
-                  </Form.Item>
-                  <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={isLoading} block>
-                      Sign Up
-                    </Button>
-                  </Form.Item>
-                </Form>
+                    Sign Up
+                  </Button>
+                </div>
               </div>
             </TabPane>
           </Tabs>

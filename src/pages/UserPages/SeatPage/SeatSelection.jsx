@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton, message } from "antd";
+import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton } from "antd";
 import styles from "./SeatSelection.module.scss";
 import SeatService from "../../../services/SeatService";
 import BookingService from "../../../services/BookingService";
 import BookingSeatService from "../../../services/BookingSeatService";
 import { useSettings } from "../../../Context/SettingContext";
 import { useBookingTimer } from "../../../Context/BookingTimerContext";
+import { toastSuccess, toastError } from "../../../utils/toastNotifier";
 
 const { Title, Paragraph } = Typography;
 
@@ -41,7 +42,7 @@ function SeatSelection() {
 
     const fetchData = async () => {
       if (!roomId || !bookingId) {
-        setError("Room ID or Booking ID not provided");
+        toastError("Room ID or Booking ID not provided");
         setLoading(false);
         return;
       }
@@ -49,11 +50,20 @@ function SeatSelection() {
       try {
         setLoading(true);
 
+        const bookingResponse = await BookingService.getBookingById(bookingId);
+
+        // Check if the booking is canceled
+        if (bookingResponse.status === 'CANCELLED') {
+          toastError("This booking has been canceled.");
+          navigate("/");
+          setLoading(false);
+          return;
+        }
+
+        setBooking(bookingResponse);
+
         const seatsResponse = await SeatService.getSeatByRoomId(roomId);
         setSeats(seatsResponse.data);
-
-        const bookingResponse = await BookingService.getBookingById(bookingId);
-        setBooking(bookingResponse);
 
         const showtimeId = bookingResponse.showtime?.showtime_id;
         if (showtimeId) {
@@ -67,14 +77,20 @@ function SeatSelection() {
         setLoading(false);
       } catch (err) {
         console.error('Fetch error:', err);
-        setError(err.message || "Failed to fetch data");
+        toastError(err.message || "Failed to fetch data");
         setLoading(false);
       }
     };
 
     fetchData();
     hasFetched.current = true;
-  }, [roomId, bookingId]);
+
+    // Navigate back if settingsError exists
+    if (settingsError) {
+      toastError(settingsError);
+      navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`);
+    }
+  }, [roomId, bookingId, settingsError, navigate, booking]);
 
   const parseSeatLayout = () => {
     const rows = new Set();
@@ -166,7 +182,7 @@ function SeatSelection() {
 
   const handleCheckout = async () => {
     if (selectedSeats.length === 0) {
-      message.error("Please select at least one seat to proceed.");
+      toastError("Please select at least one seat to proceed.");
       return;
     }
 
@@ -188,14 +204,14 @@ function SeatSelection() {
       });
 
       await Promise.all(bookingSeatPromises);
-      message.success("Seats booked successfully!");
+      toastSuccess("Seats booked successfully!");
 
       const path = `/payment/${bookingId}`;
       updateProgress(bookingId, "Payment", { selectedSeats }, path);
       navigate(path);
     } catch (err) {
       console.error('Checkout error:', err);
-      message.error(err.message || "Failed to complete checkout. Please try again.");
+      toastError(err.message || "Failed to complete checkout. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -293,30 +309,6 @@ function SeatSelection() {
             </Card>
           </Col>
         </Row>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={styles.seatSelection}>
-        <Title level={3}>Error</Title>
-        <Paragraph>{error}</Paragraph>
-        <Button type="primary" onClick={() => navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`)}>
-          Go Back
-        </Button>
-      </div>
-    );
-  }
-
-  if (settingsError) {
-    return (
-      <div className={styles.seatSelection}>
-        <Title level={3}>Error</Title>
-        <Paragraph>{settingsError}</Paragraph>
-        <Button type="primary" onClick={() => navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`)}>
-          Go Back
-        </Button>
       </div>
     );
   }

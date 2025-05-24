@@ -23,7 +23,7 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
   const safeCinema = cinema || "Unknown Cinema";
   const safeAddress = address || "Unknown Address";
   const safeShowtimes = Array.isArray(showtimes) && showtimes.length > 0 ? showtimes : [];
-  const safePrice = price && price !== "N/A" ? `$${price}/seat` : "Price N/A";
+  const safePrice = price && price !== "N/A" ? `${price}đ / seat` : "Price N/A";
 
   const getUniqueDates = () => {
     const dates = new Set();
