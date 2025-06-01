@@ -6,7 +6,7 @@
   --text-dark: #1f2a44;
   --text-gray: #2d3748;
   --text-muted: #718096;
-  --bg-light: #f7f9fc;
+  --bg-light: #F5F5F5;
   --bg-white: #ffffff;
   --bg-table-header: #f0f5ff;
   --border-light: #e2e8f0;
@@ -75,7 +75,7 @@
 
 .refreshButton,
 .searchButton,
-.editButton {
+.viewButton {
   background: var(--primary-color);
   color: var(--bg-white);
   border-color: var(--primary-color);
@@ -83,15 +83,15 @@
 
 .refreshButton:hover,
 .searchButton:hover,
-.editButton:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
+.viewButton:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
   transform: translateY(-1px);
 }
 
 .refreshButton:active,
 .searchButton:active,
-.editButton:active {
+.viewButton:active {
   transform: translateY(0);
 }
 

@@ -1,6 +1,6 @@
 .container {
   padding: 32px 24px;
-  background-color: #f7f9fc;
+  background-color: #F5F5F5;
   min-height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
@@ -99,8 +99,8 @@
   color: #ffffff;
 
   &:hover {
-    background-color: #553c9a;
-    border-color: #553c9a;
+    background-color: #553c9a !important;
+    border-color: #553c9a  !important;
     transform: translateY(-1px);
   }
 
@@ -227,12 +227,6 @@
     border-bottom: none;
   }
 
-  /* Center Actions column content */
-  :global(.ant-table-tbody > tr > td:last-child, .ant-space) {
-    display: flex;
-    justify-content: space-between !important;
-    align-items: center;
-  }
 }
 
 .tableRow {

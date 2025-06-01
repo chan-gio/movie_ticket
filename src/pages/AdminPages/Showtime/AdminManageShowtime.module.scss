@@ -1,6 +1,6 @@
 .container {
   padding: 32px 24px;
-  background-color: #f7f9fc;
+  background-color: #F5F5F5;
   min-height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
@@ -149,12 +149,6 @@
     border-bottom: none;
   }
 
-  /* Center Actions column content */
-  :global(.ant-table-tbody > tr > td:last-child) {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
 }
 
 .tableRow {
@@ -165,7 +159,7 @@
   }
 }
 
-.viewButton {
+.editButton {
   border-radius: 6px;
   background-color: #6b46c1;
   border-color: #6b46c1;
@@ -175,8 +169,8 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: #553c9a;
-    border-color: #553c9a;
+    background-color: #553c9a !important;
+    border-color: #553c9a !important;
     transform: translateY(-1px);
   }
 

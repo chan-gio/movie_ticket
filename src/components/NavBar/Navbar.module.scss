@@ -20,6 +20,8 @@
 }
 
 .navbarLogo {
+  display: flex;
+  align-items: center;
   img {
     height: 40px;
   }
@@ -99,9 +101,14 @@
 :global(.ant-input-affix-wrapper) {
   border: none;
   background: transparent;
+  height: 100%;
   &:hover {
-    border: none;
-    background: transparent;
+    border: none !important;
+    background: transparent !important;
+  }
+  &:focus {
+    border: none !important;
+    box-shadow: none !important;  
   }
 }
 
@@ -114,7 +121,7 @@
     height: 42.5px;
     border: none !important;
     border-radius: 20px !important;
-    padding: 0 40px 0 20px !important;
+    padding: 0 40px 0px 20px !important;
     display: none;
   }
 
@@ -126,7 +133,7 @@
 
   :global(.ant-input-suffix) {
     position: absolute;
-    top: 70%;
+    top: 50%;
     right: 10px;
     transform: translateY(-50%);
   }

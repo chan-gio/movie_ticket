@@ -18,6 +18,7 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   SearchOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import UserService from "../../../services/UserService";
 import styles from "./AdminManageUser.module.scss";
@@ -98,6 +99,13 @@ function AdminManageUser() {
 
   const userColumns = [
     {
+      title: "No.",
+      key: "serial",
+      width: 60,
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
+    {
       title: "Username",
       dataIndex: "username",
       key: "username",
@@ -154,11 +162,11 @@ function AdminManageUser() {
         <Space>
           <Button
             type="primary"
-            icon={<EditOutlined />}
+            icon={<EyeOutlined />}
             onClick={() =>
               navigate(`/admin/manage_user/details/${record.user_id}`)
             }
-            className={styles.editButton}
+            className={styles.viewButton}
           >
             View
           </Button>

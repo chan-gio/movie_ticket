@@ -160,6 +160,13 @@ function AdminManageCoupon() {
 
   const couponColumns = [
     {
+      title: "STT",
+      key: "stt",
+      width: 70,
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
+    {
       title: "Code",
       dataIndex: "code",
       key: "code",
@@ -397,6 +404,7 @@ function AdminManageCoupon() {
                 onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
+                scroll={{ x: "max-content" }} // Thêm thanh cuộn ngang
               />
             )}
           </Card>

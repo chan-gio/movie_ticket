@@ -36,8 +36,8 @@ function AdminManageBooking() {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState(""); // State for keyword search
-  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     loadData(pagination.current, pagination.pageSize);
@@ -48,11 +48,9 @@ function AdminManageBooking() {
     try {
       let response;
       if (keyword) {
-        // Search by keyword (phone number or username)
         response = await BookingService.searchBooking(keyword, page, pageSize);
         setIsSearching(true);
       } else {
-        // Load all bookings
         response = await BookingService.getAllBookings(page, pageSize);
         setIsSearching(false);
       }
@@ -73,7 +71,7 @@ function AdminManageBooking() {
     try {
       await BookingService.deleteBooking(id);
       message.success("Booking deleted successfully");
-      loadData(pagination.current, pagination.pageSize); // Reload to update pagination
+      loadData(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error(error.message || "Failed to delete booking");
     }
@@ -88,13 +86,13 @@ function AdminManageBooking() {
       message.warning("Please enter a phone number or username to search");
       return;
     }
-    loadData(1, pagination.pageSize, searchKeyword); // Reset to page 1 on new search
+    loadData(1, pagination.pageSize, searchKeyword);
   };
 
   const handleClearSearch = () => {
     setSearchKeyword("");
     setIsSearching(false);
-    loadData(1, pagination.pageSize, ""); // Reset to full list
+    loadData(1, pagination.pageSize, "");
   };
 
   const formatDateTime = (dateTime) => {
@@ -107,6 +105,14 @@ function AdminManageBooking() {
   };
 
   const bookingColumns = [
+    {
+      title: "No.",
+      key: "index",
+      width: 70,
+      fixed: "left",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
     {
       title: "User",
       dataIndex: ["user", "full_name"],

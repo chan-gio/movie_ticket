@@ -36,8 +36,8 @@ function AdminManageShowtime() {
     pageSize: 10,
     total: 0,
   });
-  const [searchKeyword, setSearchKeyword] = useState(""); // State for keyword search
-  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
     setLoading(true);
@@ -63,7 +63,7 @@ function AdminManageShowtime() {
     } catch (error) {
       console.error("Error loading showtimes:", error.message);
       message.error(error.message || "Failed to load showtimes");
-      setIsSearching(true); // Ensure clearButton is visible even if search fails
+      setIsSearching(true);
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ function AdminManageShowtime() {
     try {
       await ShowTimeService.deleteShowTime(id);
       message.success("Showtime deleted successfully");
-      loadData(pagination.current, pagination.pageSize); // Reload current page
+      loadData(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error(error.message || "Failed to delete showtime");
     }
@@ -92,13 +92,13 @@ function AdminManageShowtime() {
       message.warning("Please enter a keyword to search");
       return;
     }
-    loadData(1, pagination.pageSize, searchKeyword); // Reset to page 1 on new search
+    loadData(1, pagination.pageSize, searchKeyword);
   };
 
   const handleClearSearch = () => {
     setSearchKeyword("");
     setIsSearching(false);
-    loadData(1, pagination.pageSize, ""); // Reset to full list
+    loadData(1, pagination.pageSize, "");
   };
 
   const formatDateTime = (dateTime) => {
@@ -109,6 +109,14 @@ function AdminManageShowtime() {
   };
 
   const showtimeColumns = [
+    {
+      title: "No.",
+      key: "index",
+      width: 70,
+      fixed: "left",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
     {
       title: "Movie",
       dataIndex: ["movie", "title"],
@@ -208,7 +216,6 @@ function AdminManageShowtime() {
             >
               Search
             </Button>
-            {console.log("isSearching:", isSearching)}
             {isSearching && (
               <Button
                 type="default"
