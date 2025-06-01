@@ -15,8 +15,7 @@ import {
   InputNumber,
 } from "antd";
 import styles from "./AdminManageCouponForm.module.scss";
-import "../GlobalStyles.module.scss";
-import moment from "moment";
+import dayjs from "dayjs";
 import CouponService from "../../../services/CouponService";
 
 const { Title, Text } = Typography;
@@ -40,10 +39,10 @@ function AdminManageCouponForm({ isEditMode }) {
     if (isEditMode) {
       loadCouponData();
     } else {
-      couponForm.setFieldsValue({ 
-        is_active: true, // Default for new coupons
-        is_used: 0, // Default for new coupons
-        quantity: 1, // Default for new coupons
+      couponForm.setFieldsValue({
+        is_active: true,
+        is_used: 0,
+        quantity: 1,
       });
     }
   }, [id, isEditMode, couponForm]);
@@ -53,9 +52,20 @@ function AdminManageCouponForm({ isEditMode }) {
     try {
       const coupon = await CouponService.getCouponById(id);
       if (coupon) {
+        // Parse expiry_date with dayjs
+        const expiryDateDayjs = coupon.expiry_date
+          ? dayjs(coupon.expiry_date)
+          : null;
+        console.log(
+          "Loaded expiry_date:",
+          coupon.expiry_date,
+          "Parsed:",
+          expiryDateDayjs?.format("YYYY-MM-DD")
+        );
+
         couponForm.setFieldsValue({
           ...coupon,
-          expiry_date: coupon.expiry_date ? moment(coupon.expiry_date) : null,
+          expiry_date: expiryDateDayjs,
         });
       }
     } catch (error) {
@@ -69,8 +79,11 @@ function AdminManageCouponForm({ isEditMode }) {
     try {
       const couponData = {
         ...values,
-        expiry_date: values.expiry_date.format("YYYY-MM-DD"),
+        expiry_date: values.expiry_date
+          ? values.expiry_date.format("YYYY-MM-DD")
+          : null,
       };
+      console.log("Submitting couponData:", couponData);
       await CouponService.createCoupon(couponData);
       couponForm.resetFields();
       navigate("/admin/manage_coupon");
@@ -84,8 +97,11 @@ function AdminManageCouponForm({ isEditMode }) {
     try {
       const couponData = {
         ...values,
-        expiry_date: values.expiry_date.format("YYYY-MM-DD"),
+        expiry_date: values.expiry_date
+          ? values.expiry_date.format("YYYY-MM-DD")
+          : null,
       };
+      console.log("Submitting couponData:", couponData);
       await CouponService.updateCoupon(id, couponData);
       couponForm.resetFields();
       navigate("/admin/manage_coupon");
@@ -93,6 +109,11 @@ function AdminManageCouponForm({ isEditMode }) {
     } catch (error) {
       message.error(error.message || "Failed to update coupon");
     }
+  };
+
+  const disabledDate = (current) => {
+    // Disable dates before today (June 1, 2025)
+    return current && current < dayjs().startOf("day");
   };
 
   return (
@@ -114,7 +135,7 @@ function AdminManageCouponForm({ isEditMode }) {
                 <Form.Item
                   label="Code"
                   name="code"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[{ required: true, message: "Please enter the coupon code" }]}
                 >
                   <Input placeholder="Enter coupon code" />
                 </Form.Item>
@@ -128,12 +149,12 @@ function AdminManageCouponForm({ isEditMode }) {
                   label="Discount (%)"
                   name="discount"
                   rules={[
-                    { required: true, message: "Required" },
+                    { required: true, message: "Please enter the discount percentage" },
                     {
                       type: "number",
                       min: 0,
                       max: 100,
-                      message: "Must be between 0 and 100",
+                      message: "Discount must be between 0 and 100",
                     },
                   ]}
                   normalize={(value) => (value ? Number(value) : value)}
@@ -148,9 +169,19 @@ function AdminManageCouponForm({ isEditMode }) {
                 <Form.Item
                   label="Expiry Date"
                   name="expiry_date"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[{ required: true, message: "Please select an expiry date" }]}
                 >
-                  <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
+                  <DatePicker
+                    format="YYYY-MM-DD"
+                    disabledDate={disabledDate}
+                    style={{ width: "100%" }}
+                    onChange={(value) => {
+                      console.log(
+                        "DatePicker changed:",
+                        value ? value.format("YYYY-MM-DD") : null
+                      );
+                    }}
+                  />
                 </Form.Item>
                 <Form.Item
                   label="Active"
@@ -163,11 +194,11 @@ function AdminManageCouponForm({ isEditMode }) {
                   label="Usage Count"
                   name="is_used"
                   rules={[
-                    { required: true, message: "Required" },
+                    { required: true, message: "Please enter the usage count" },
                     {
                       type: "number",
                       min: 0,
-                      message: "Must be 0 or greater",
+                      message: "Usage count must be 0 or greater",
                     },
                   ]}
                   normalize={(value) => (value ? Number(value) : value)}
@@ -182,11 +213,11 @@ function AdminManageCouponForm({ isEditMode }) {
                   label="Quantity (Max Uses)"
                   name="quantity"
                   rules={[
-                    { required: true, message: "Required" },
+                    { required: true, message: "Please enter the maximum uses" },
                     {
                       type: "number",
                       min: 1,
-                      message: "Must be 1 or greater",
+                      message: "Quantity must be 1 or greater",
                     },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
@@ -194,7 +225,9 @@ function AdminManageCouponForm({ isEditMode }) {
                         if (value >= isUsedValue) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(new Error("Quantity must be greater than or equal to Usage Count"));
+                        return Promise.reject(
+                          new Error("Quantity must be greater than or equal to Usage Count")
+                        );
                       },
                     }),
                   ]}
@@ -233,12 +266,12 @@ function AdminManageCouponForm({ isEditMode }) {
               <br />
               <Text>
                 <strong>Discount:</strong>{" "}
-                {discount ? `${discount}%` : "Not Set"}
+                {discount !== undefined ? `${discount}%` : "Not Set"}
               </Text>
               <br />
               <Text>
                 <strong>Expiry Date:</strong>{" "}
-                {expiryDate?.format("YYYY-MM-DD") || "Not Set"}
+                {expiryDate ? expiryDate.format("YYYY-MM-DD") : "Not Set"}
               </Text>
               <br />
               <Text>

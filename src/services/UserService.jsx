@@ -126,6 +126,42 @@ const UserService = {
       throw new Error(message);
     }
   },
+
+  // Change user password
+  changePassword: async (userId, passwordData) => {
+    try {
+      const response = await api.post(`/users/${userId}/change-password`, passwordData);
+      if (response.data) {
+        return true;
+      } else {
+        throw new Error(response.data.message || "Failed to change password");
+      }
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to change password. Please try again later."
+          : error.response?.data?.message || "Failed to change password";
+      throw new Error(message);
+    }
+  },
+
+  // Forgot password
+  forgotPassword: async (email) => {
+    try {
+      const response = await api.post("/users/forgot-password", { email });
+      if (response.data) {
+        return true;
+      } else {
+        throw new Error(response.data.message || "Failed to process forgot password request");
+      }
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to process forgot password request. Please try again later."
+          : error.response?.data?.message || "Failed to process forgot password request";
+      throw new Error(message);
+    }
+  },
 };
 
 export default UserService;

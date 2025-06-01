@@ -44,7 +44,6 @@ function AdminSettings() {
       setLoading(true);
       try {
         const settings = await SettingService.getSetting();
-        console.log("Loaded settings:", settings);
         form.setFieldsValue({
           name: settings.name,
           vip: settings.vip,

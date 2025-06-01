@@ -7,6 +7,7 @@ import SelectCinemaModal from "../Modal/SelectCinemaModal";
 import { useSettings } from "../../Context/SettingContext";
 import MovieService from "../../services/MovieService";
 import { toastError } from "../../utils/toastNotifier"; // Import toastError
+import useAuth from "../../utils/auth";
 
 const { Option } = Select;
 
@@ -16,6 +17,7 @@ function Navbar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
   const navigate = useNavigate();
+  const { profile_picture_url} = useAuth();
 
   // Update search query in URL
   const handleSearchInputChange = (e) => {
@@ -103,9 +105,9 @@ function Navbar() {
             />
           </div>
           <Avatar
-            size={35}
+            size={50}
             src={
-              "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
+              profile_picture_url || "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
             }
             icon={<UserOutlined />}
             className={styles.userAvatar}

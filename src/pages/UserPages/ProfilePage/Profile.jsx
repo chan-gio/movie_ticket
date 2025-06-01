@@ -24,9 +24,9 @@ const Profile = () => {
   });
 
   const handleSignOut = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_id');
-    navigate('/auth');
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_id");
+    navigate("/auth");
   };
 
   const fetchData = async (page = 1, pageSize = 10) => {
@@ -40,13 +40,13 @@ const Profile = () => {
 
       // Fetch user data
       const userResponse = await UserService.getUserById(userId);
-      const [firstName, ...lastNameParts] = userResponse.full_name.split(" ");
+      const [firstName, ...lastNameParts] = (userResponse.full_name || "").trim().split(/\s+/);
       const user = {
-        firstName,
-        lastName: lastNameParts.join(" "),
-        email: userResponse.email,
-        phoneNumber: userResponse.phone,
-        picture: userResponse.profile_picture_url,
+        firstName: firstName || "",
+        lastName: lastNameParts.join(" ") || "",
+        email: userResponse.email || "",
+        phone: userResponse.phone || "",
+        profile_picture_url: userResponse.profile_picture_url || "",
       };
       setUserData(user);
 
@@ -54,24 +54,24 @@ const Profile = () => {
       const bookingResponse = await BookingService.getBookingsByUserId(userId, { page, per_page: pageSize });
       const transformedOrders = bookingResponse.data.map((booking) => ({
         id: booking.booking_id,
-        date: new Date(booking.showtime.start_time).toLocaleString('en-US', {
-          weekday: 'long',
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+        date: new Date(booking.showtime.start_time).toLocaleString("en-US", {
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
           hour12: true,
         }),
         movie: booking.showtime.movie.title,
         orderCode: booking.order_code,
         status: booking.status === "CONFIRMED" ? "active" : booking.status === "PENDING" ? "pending" : booking.status === "CANCELLED" ? "cancelled" : booking.status,
-        createdAt: new Date(booking.created_at).toLocaleString('en-US', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+        createdAt: new Date(booking.created_at).toLocaleString("en-US", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
           hour12: true,
         }),
       }));
@@ -92,6 +92,10 @@ const Profile = () => {
   useEffect(() => {
     fetchData(pagination.current, pagination.pageSize);
   }, [userId, navigate]);
+
+  const handleProfileUpdate = () => {
+    fetchData(pagination.current, pagination.pageSize); // Refresh userData
+  };
 
   const handlePaginationChange = (page, pageSize) => {
     setPagination((prev) => ({
@@ -120,7 +124,7 @@ const Profile = () => {
           <Card className={styles.accountCard}>
             <Tabs defaultActiveKey="settings" className={styles.tabs}>
               <TabPane tab="Account Settings" key="settings">
-                <AccountTab userData={userData} loading={loading} />
+                <AccountTab userData={userData} loading={loading} onProfileUpdate={handleProfileUpdate} />
               </TabPane>
               <TabPane tab="Order History" key="history">
                 <OrderHistory

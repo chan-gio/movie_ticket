@@ -3,6 +3,7 @@ import { Tabs, Row, Col, Input, Button, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import LeftContainer from "../../../components/UserPages/AuthPage/LeftContainer/LeftContainer";
 import AuthService from "../../../services/AuthService";
+import UserService from "../../../services/UserService"; // Import UserService
 import styles from "./Auth.module.scss";
 import { toastSuccess, toastError } from "../../../utils/toastNotifier";
 
@@ -97,6 +98,7 @@ const Auth = () => {
       console.log("Login successful:", { token, user });
       localStorage.setItem('access_token', token);
       localStorage.setItem('user_id', user.user_id);
+      localStorage.setItem('profile_picture_url', user.profile_picture_url);
       toastSuccess("Login successful!");
       navigate('/');
     } catch (error) {
@@ -119,15 +121,13 @@ const Auth = () => {
         throw new Error("Please enter a valid email");
       }
 
-      console.log("Attempting forgot password with email:", forgotPasswordEmail); // Debug log
-      // Placeholder: Replace with actual AuthService.forgotPassword when implemented
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate async call
-      toastSuccess("A reset link has been sent to your email.");
+      await UserService.forgotPassword(forgotPasswordEmail);
+      toastSuccess("A new password has been sent to your email.");
       setForgotPasswordVisible(false);
       setForgotPasswordEmail("");
     } catch (error) {
       console.error("Forgot Password Error:", error);
-      toastError(error.message || "Failed to send reset link");
+      toastError(error.message || "Failed to reset password");
     } finally {
       setIsLoading(false);
     }
@@ -209,7 +209,7 @@ const Auth = () => {
                       loading={isLoading}
                       block
                     >
-                      Send Reset Link
+                      Reset Password
                     </Button>
                   </div>
                 </Modal>

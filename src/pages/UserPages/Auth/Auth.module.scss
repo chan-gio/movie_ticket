@@ -9,6 +9,10 @@
   padding: 40px 20px;
 }
 
+.formItem {
+  margin-bottom: 24px;
+}
+
 :global {
   .ant-form-item-label > label {
     font-weight: 600;
@@ -18,9 +22,55 @@
   .ant-input-password {
     min-height: 56px;
     border-radius: 14px;
+    font-size: 16px;
+    padding: 12px 16px;
   }
 
   .ant-tabs-nav {
     margin-bottom: 20px;
+  }
+
+  .ant-btn-primary {
+    min-height: 56px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* Modal-specific styles */
+  .ant-modal {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .ant-modal-content {
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .ant-modal-header {
+    border-bottom: none;
+    padding: 16px 24px;
+  }
+
+  .ant-modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .ant-modal-body {
+    padding: 24px;
+  }
+
+  .ant-modal-close-x {
+    color: #666;
+    font-size: 16px;
+  }
+
+  .ant-modal-footer {
+    border-top: none;
+    padding: 0 24px 24px;
   }
 }

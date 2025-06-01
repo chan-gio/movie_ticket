@@ -14,8 +14,7 @@ import {
   Spin,
 } from "antd";
 import styles from "./AdminManageShowtimeForm.module.scss";
-import "../GlobalStyles.module.scss";
-import moment from "moment";
+import dayjs from "dayjs";
 import ShowTimeService from "../../../services/ShowtimeService";
 import MovieService from "../../../services/MovieService";
 import RoomService from "../../../services/RoomService";
@@ -34,7 +33,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
   const [selectedCinema, setSelectedCinema] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Watch form field values for real-time preview updates
+  // Watch form field values for preview
   const movieId = Form.useWatch("movie_id", showtimeForm);
   const cinemaId = Form.useWatch("cinema_id", showtimeForm);
   const roomId = Form.useWatch("room_id", showtimeForm);
@@ -45,17 +44,15 @@ function AdminManageShowtimeForm({ isEditMode }) {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Fetch movies with pagination (fetch all pages if needed)
-        const movieResponse = await MovieService.getAllMovies({
-          perPage: 100, // Adjust as needed
-        });
+        // Fetch movies
+        const movieResponse = await MovieService.getAllMovies({ perPage: 100 });
         setMovies(movieResponse.data.filter((movie) => !movie.is_deleted));
 
         // Fetch rooms
         const roomData = await RoomService.getAllRooms();
         setRooms(roomData.filter((room) => !room.is_deleted));
 
-        // Extract unique cinemas from rooms
+        // Extract unique cinemas
         const uniqueCinemas = Array.from(
           new Map(
             roomData
@@ -69,13 +66,22 @@ function AdminManageShowtimeForm({ isEditMode }) {
         if (isEditMode && id) {
           const showtime = await ShowTimeService.getShowTimeById(id);
           if (showtime) {
+            // Parse start_time with dayjs
+            const startTimeDayjs = showtime.start_time
+              ? dayjs(showtime.start_time)
+              : null;
+            console.log(
+              "Loaded start_time:",
+              showtime.start_time,
+              "Parsed:",
+              startTimeDayjs?.format("YYYY-MM-DD HH:mm:ss")
+            );
+
             showtimeForm.setFieldsValue({
               movie_id: showtime.movie_id,
               cinema_id: showtime.room?.cinema?.cinema_id,
               room_id: showtime.room_id,
-              start_time: showtime.start_time
-                ? moment(showtime.start_time)
-                : null,
+              start_time: startTimeDayjs,
               price: showtime.price,
             });
             setSelectedCinema(showtime.room?.cinema?.cinema_id);
@@ -92,7 +98,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
 
   const handleCinemaChange = (cinemaId) => {
     setSelectedCinema(cinemaId);
-    showtimeForm.setFieldsValue({ room_id: undefined }); // Reset room selection
+    showtimeForm.setFieldsValue({ room_id: undefined });
   };
 
   const filteredRooms = rooms.filter(
@@ -105,9 +111,13 @@ function AdminManageShowtimeForm({ isEditMode }) {
       const showtimeData = {
         movie_id: values.movie_id,
         room_id: values.room_id,
-        start_time: values.start_time.format("YYYY-MM-DD HH:mm:ss"),
+        start_time: values.start_time
+          ? values.start_time.format("YYYY-MM-DD HH:mm:ss")
+          : null,
         price: Number(values.price),
       };
+
+      console.log("Submitting showtimeData:", showtimeData);
 
       if (isEditMode) {
         await ShowTimeService.updateShowTime(id, showtimeData);
@@ -126,6 +136,11 @@ function AdminManageShowtimeForm({ isEditMode }) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const disabledDate = (current) => {
+    // Disable dates before today (June 1, 2025, 23:03 +07)
+    return current && current < dayjs().startOf("day");
   };
 
   return (
@@ -166,9 +181,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
                 <Form.Item
                   label="Cinema"
                   name="cinema_id"
-                  rules={[
-                    { required: true, message: "Please select a cinema" },
-                  ]}
+                  rules={[{ required: true, message: "Please select a cinema" }]}
                 >
                   <Select
                     placeholder="Select a cinema"
@@ -204,17 +217,19 @@ function AdminManageShowtimeForm({ isEditMode }) {
                 <Form.Item
                   label="Start Time"
                   name="start_time"
-                  rules={[
-                    { required: true, message: "Please select a start time" },
-                  ]}
+                  rules={[{ required: true, message: "Please select a start time" }]}
                 >
                   <DatePicker
-                    showTime
+                    showTime={{ format: "HH:mm" }}
+                    format="YYYY-MM-DD HH:mm"
+                    disabledDate={disabledDate}
                     style={{ width: "100%" }}
-                    format="YYYY-MM-DD HH:mm:ss"
-                    disabledDate={(current) =>
-                      current && current < moment().startOf("day")
-                    }
+                    onChange={(value) => {
+                      console.log(
+                        "DatePicker changed:",
+                        value ? value.format("YYYY-MM-DD HH:mm:ss") : null
+                      );
+                    }}
                   />
                 </Form.Item>
                 <Form.Item
@@ -259,8 +274,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
               <Text>
                 <strong>Cinema:</strong>{" "}
                 {cinemaId
-                  ? cinemas.find((cinema) => cinema.cinema_id === cinemaId)
-                      ?.name
+                  ? cinemas.find((cinema) => cinema.cinema_id === cinemaId)?.name
                   : "Not Set"}
               </Text>
               <br />
@@ -273,7 +287,7 @@ function AdminManageShowtimeForm({ isEditMode }) {
               <br />
               <Text>
                 <strong>Start Time:</strong>{" "}
-                {startTime?.format("YYYY-MM-DD HH:mm:ss") || "Not Set"}
+                {startTime ? startTime.format("YYYY-MM-DD HH:mm:ss") : "Not Set"}
               </Text>
               <br />
               <Text>
