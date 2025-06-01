@@ -1,17 +1,71 @@
-import { Card, Row, Col, Typography, Tag, Button, Skeleton, Pagination } from "antd";
+import { Card, Row, Col, Typography, Tag, Button, Skeleton, Pagination, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import styles from "./OrderHistory.module.scss";
 import { useSettings } from "../../../../Context/SettingContext";
+import { useState } from "react";
+import moment from "moment";
 
 const { Title, Paragraph } = Typography;
 
 const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange }) => {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const handleShowDetails = (order) => {
     const orderCode = order.orderCode || "";
     navigate(`/confirmation/${order.id}?orderCode=${encodeURIComponent(orderCode)}`);
+  };
+
+  const handleCancelClick = (order) => {
+    setSelectedOrder(order);
+    setCancelModalVisible(true);
+  };
+
+  const handleCancelModalOk = () => {
+    setCancelModalVisible(false);
+    setSelectedOrder(null);
+  };
+
+  const handleCancelModalCancel = () => {
+    setCancelModalVisible(false);
+    setSelectedOrder(null);
+  };
+
+  // Check if cancellation is allowed (active and ≥ 2 hours before showtime)
+  const canCancel = (order) => {
+    if (order.status !== "active") return false;
+
+    if (!order.date || typeof order.date !== "string") {
+      console.error("Invalid or missing order.date:", order.date);
+      return false;
+    }
+
+    const showTime = moment(order.date, [
+      "dddd, MMMM DD, YYYY [at] hh:mm A", 
+      "dddd, MMMM D, YYYY [at] h:mm A",   
+      "dddd, MMMM DD, YYYY [at] HH:mm",   
+      "dddd, DD MMMM YYYY, hh:mm A",      
+      "dddd, D MMMM YYYY, h:mm A",        
+      "dddd, DD MMM YYYY, hh:mm A",       
+      "dddd, D MMM YYYY, h:mm A",        
+    ], false); // Lenient parsing
+
+    if (!showTime.isValid()) {
+      // Fallback to general parsing
+      const fallbackShowTime = moment(order.date);
+      if (!fallbackShowTime.isValid()) {
+        console.error("Invalid showtime date after fallback:", order.date);
+        return false;
+      }
+      console.warn("Using fallback parsing for:", order.date);
+      showTime.set(fallbackShowTime.toObject());
+    }
+
+    const currentTime = moment();
+    const hoursDiff = showTime.diff(currentTime, "hours");
+    return hoursDiff >= 2;
   };
 
   if (loading) {
@@ -77,15 +131,25 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
                   </Col>
                   <Col xs={12} md={20} style={{ textAlign: "right" }}>
                     {order.status === "active" && (
-                      <Button onClick={() => handleShowDetails(order)}>
-                        Show Details
-                      </Button>
+                      <>
+                        <Button onClick={() => handleShowDetails(order)} style={{ marginRight: 8 }}>
+                          Show Details
+                        </Button>
+                        {canCancel(order) && (
+                          <Button
+                            type="default"
+                            danger
+                            onClick={() => handleCancelClick(order)}
+                          >
+                            Cancel Ticket
+                          </Button>
+                        )}
+                      </>
                     )}
                   </Col>
                 </Row>
               </Card>
             ))}
-            {/* Pagination */}
             <div className={styles.pagination}>
               <Pagination
                 current={pagination.current}
@@ -100,6 +164,23 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
           </>
         )}
       </Card>
+      <Modal
+        title="Cancel Ticket"
+        open={cancelModalVisible}
+        onOk={handleCancelModalOk}
+        onCancel={handleCancelModalCancel}
+        footer={[
+          <Button key="ok" type="primary" onClick={handleCancelModalOk}>
+            OK
+          </Button>,
+        ]}
+      >
+        <p>
+          To cancel your ticket for <strong>{selectedOrder?.movie}</strong> on{" "}
+          <strong>{selectedOrder?.date}</strong>, please contact our support team at{" "}
+          <strong>0971665475</strong> for assistance.
+        </p>
+      </Modal>
     </div>
   );
 };
