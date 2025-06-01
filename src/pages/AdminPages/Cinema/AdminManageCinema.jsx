@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -13,6 +13,8 @@ import {
   Typography,
   Select,
   Spin,
+  Input,
+  Statistic,
 } from "antd";
 import {
   EditOutlined,
@@ -21,6 +23,7 @@ import {
   PlusOutlined,
   EyeOutlined,
   ApartmentOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import styles from "./AdminManageCinema.module.scss";
@@ -28,43 +31,120 @@ import CinemaService from "../../../services/CinemaService";
 
 const { Title, Text: TypographyText } = Typography;
 const { Option } = Select;
+const { Search } = Input;
 
 function AdminManageCinema() {
   const navigate = useNavigate();
   const [cinemas, setCinemas] = useState([]);
+  const [totalCinemas, setTotalCinemas] = useState(0); // New state for total cinemas
   const [selectedCinemaId, setSelectedCinemaId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [inputValue, setInputValue] = useState(""); // For search input while typing
+  const [searchTerm, setSearchTerm] = useState(""); // For confirmed search term
+  const [searchType, setSearchType] = useState("name"); // name or address
+  const [searchTrigger, setSearchTrigger] = useState(0); // Trigger search on button click
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
 
+  // Fetch total cinemas count on mount
   useEffect(() => {
-    loadData();
-  }, [pagination.current, pagination.pageSize]);
+    const fetchTotalCinemas = async () => {
+      try {
+        const response = await CinemaService.getAllCinemas({
+          per_page: 1, // Minimal data to get total
+          page: 1,
+        });
+        setTotalCinemas(response.total || 0);
+      } catch (error) {
+        console.error("Fetch total cinemas error:", error.message);
+        setTotalCinemas(0);
+        toast.error("Không thể lấy tổng số rạp", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      }
+    };
+    fetchTotalCinemas();
+  }, []);
 
-  const loadData = async () => {
+  // Debounced loadData function
+  const loadData = useCallback(async () => {
+    if (loading) return; // Prevent concurrent calls
     setLoading(true);
     try {
-      const response = await CinemaService.getAllCinemas({
-        per_pages: pagination.pageSize,
-        pages: pagination.current,
-      });
-      // Extract cinema data and pagination from the new response structure
-      const cinemaData = response; 
+      let response;
+      if (searchTerm) {
+        // Search by name or address
+        if (searchType === "name") {
+          response = await CinemaService.searchCinemaByName(searchTerm, pagination.current, {
+            per_page: pagination.pageSize,
+          });
+        } else {
+          response = await CinemaService.searchCinemaByAddress(searchTerm, pagination.current, {
+            per_page: pagination.pageSize,
+          });
+        }
+      } else {
+        // Get all cinemas
+        response = await CinemaService.getAllCinemas({
+          per_page: pagination.pageSize,
+          page: pagination.current,
+        });
+      }
+
+      // Log response for debugging
+      console.log("API Response:", response);
+
+      // Extract cinema data and pagination info
+      const cinemaData = response.data || [];
       setCinemas(cinemaData);
-      setPagination({
-        ...pagination,
-        total: response.total, // response.data.data.total
-        current: response.current_page, // response.data.data.current_page
-      });
+
+      // Update pagination if values have changed
+      if (
+        response.total !== pagination.total ||
+        response.current_page !== pagination.current
+      ) {
+        setPagination((prev) => ({
+          ...prev,
+          total: response.total || 0,
+          current: response.current_page || 1,
+        }));
+      }
+
+      // Set selected cinema ID if data exists
       if (cinemaData.length > 0 && !selectedCinemaId) {
         setSelectedCinemaId(cinemaData[0].cinema_id);
+      } else if (cinemaData.length === 0) {
+        setSelectedCinemaId(null);
+      }
+
+      // Show toast for no results if search was performed
+      if (searchTerm && cinemaData.length === 0) {
+        toast.info("Không tìm thấy rạp chiếu phim phù hợp", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
       }
     } catch (error) {
-      toast.error(error.message || "Failed to load cinemas", {
+      console.error("Load data error:", error.message);
+      setCinemas([]); // Ensure empty array on error
+      setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
+      setSelectedCinemaId(null);
+      toast.error(error.message || "Không thể tải dữ liệu rạp", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -75,11 +155,38 @@ function AdminManageCinema() {
       });
     } finally {
       setLoading(false);
+      console.log("Cinemas state:", cinemas);
     }
+  }, [searchTerm, searchType, pagination.current, pagination.pageSize]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData, searchTrigger]);
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setSearchTrigger((prev) => prev + 1); // Trigger search
+    setPagination((prev) => ({ ...prev, current: 1 })); // Reset to first page
   };
 
-  const handleCinemaChange = (cinemaId) => {
-    setSelectedCinemaId(cinemaId);
+  const handleSearchChange = (e) => {
+    setInputValue(e.target.value); // Update input value while typing
+  };
+
+  const handleSearchTypeChange = (value) => {
+    setSearchType(value);
+    setSearchTerm(""); // Clear confirmed search term
+    setInputValue(""); // Clear input field
+    setSearchTrigger((prev) => prev + 1); // Trigger reload
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
+  const handleRefresh = () => {
+    setSearchTerm(""); // Clear confirmed search term
+    setInputValue(""); // Clear input field
+    setSearchType("name"); // Reset search type
+    setSearchTrigger((prev) => prev + 1); // Trigger reload
+    setPagination({ current: 1, pageSize: 10, total: 0 }); // Reset pagination
   };
 
   const handleDeleteCinema = async (id) => {
@@ -87,6 +194,7 @@ function AdminManageCinema() {
     try {
       await CinemaService.softDeleteCinema(id);
       setCinemas(cinemas.filter((cinema) => cinema.cinema_id !== id));
+      setTotalCinemas((prev) => Math.max(0, prev - 1)); // Decrement total
       if (selectedCinemaId === id) {
         const remainingCinemas = cinemas.filter(
           (cinema) => cinema.cinema_id !== id
@@ -95,7 +203,7 @@ function AdminManageCinema() {
           remainingCinemas.length > 0 ? remainingCinemas[0].cinema_id : null
         );
       }
-      toast.success("Cinema deleted successfully", {
+      toast.success("Xóa rạp thành công", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -105,7 +213,7 @@ function AdminManageCinema() {
         progressStyle: { background: "#5f2eea" },
       });
     } catch (error) {
-      toast.error(error.message || "Failed to delete cinema", {
+      toast.error(error.message || "Xóa rạp thất bại", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -120,11 +228,11 @@ function AdminManageCinema() {
   };
 
   const handleTableChange = (paginationConfig) => {
-    setPagination({
-      ...pagination,
+    setPagination((prev) => ({
+      ...prev,
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize,
-    });
+    }));
   };
 
   const cinemaColumns = [
@@ -136,19 +244,19 @@ function AdminManageCinema() {
       render: (text) => <TypographyText strong>{text}</TypographyText>,
     },
     {
-      title: "Name",
+      title: "Tên Rạp",
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: "Address",
+      title: "Địa Chỉ",
       dataIndex: "address",
       key: "address",
       sorter: (a, b) => a.address.localeCompare(b.address),
     },
     {
-      title: "Actions",
+      title: "Hành Động",
       key: "actions",
       render: (_, record) => (
         <Space>
@@ -161,7 +269,7 @@ function AdminManageCinema() {
             className={styles.editButton}
             disabled={deleting}
           >
-            Edit
+            Sửa
           </Button>
           <Button
             type="primary"
@@ -170,10 +278,10 @@ function AdminManageCinema() {
             className={styles.roomsButton}
             disabled={deleting}
           >
-            Manage Rooms
+            Quản Lý Phòng
           </Button>
           <Popconfirm
-            title="Are you sure to delete this cinema? This will also delete all associated rooms."
+            title="Bạn có chắc muốn xóa rạp này? Tất cả phòng liên quan cũng sẽ bị xóa."
             onConfirm={() => handleDeleteCinema(record.cinema_id)}
             disabled={deleting}
           >
@@ -183,7 +291,7 @@ function AdminManageCinema() {
               className={styles.deleteButton}
               disabled={deleting}
             >
-              Delete
+              Xóa
             </Button>
           </Popconfirm>
         </Space>
@@ -196,7 +304,7 @@ function AdminManageCinema() {
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Manage Cinemas
+            Quản Lý Rạp Chiếu Phim
           </Title>
         </Col>
         <Col>
@@ -208,7 +316,7 @@ function AdminManageCinema() {
               className={styles.addButton}
               disabled={deleting}
             >
-              Add Cinema
+              Thêm Rạp
             </Button>
             <Button
               type="primary"
@@ -217,18 +325,54 @@ function AdminManageCinema() {
               className={styles.viewDeletedButton}
               disabled={deleting}
             >
-              View Deleted Cinemas
+              Xem Rạp Đã Xóa
             </Button>
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={loadData}
+              onClick={handleRefresh}
               loading={loading}
               className={styles.refreshButton}
               disabled={deleting}
             >
-              Refresh
+              Làm Mới
             </Button>
+          </Space>
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]} className={styles.mainContent}>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statisticCard} hoverable>
+            <Statistic
+              title={<span className={styles.statisticTitle}>Tổng Số Rạp</span>}
+              value={totalCinemas}
+              valueStyle={{ color: "#5f2eea" }}
+            />
+          </Card>
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]} className={styles.mainContent}>
+        <Col xs={24} md={12}>
+          <Space style={{ marginBottom: 16, width: "100%" }}>
+            <Select
+              value={searchType}
+              onChange={handleSearchTypeChange}
+              style={{ width: 150 }}
+              className={styles.select}
+            >
+              <Option value="name">Tìm Theo Tên</Option>
+              <Option value="address">Tìm Theo Địa Chỉ</Option>
+            </Select>
+            <Search
+              placeholder={`Nhập ${searchType === "name" ? "tên rạp" : "địa chỉ"}`}
+              value={inputValue}
+              onChange={handleSearchChange}
+              onSearch={handleSearch}
+              enterButton={<SearchOutlined />}
+              allowClear
+              className={styles.search}
+              disabled={deleting}
+            />
           </Space>
         </Col>
       </Row>
@@ -240,26 +384,28 @@ function AdminManageCinema() {
         <Row gutter={[16, 16]} className={styles.mainContent}>
           <Col xs={24}>
             <Card className={styles.tableCard}>
-              {cinemas.length === 0 ? (
-                <div className={styles.empty}>
-                  <TypographyText>No cinemas found</TypographyText>
-                </div>
-              ) : (
-                <Table
-                  columns={cinemaColumns}
-                  dataSource={cinemas}
-                  rowKey="cinema_id"
-                  pagination={{
-                    ...pagination,
-                    showSizeChanger: true,
-                    pageSizeOptions: ["10", "20", "50"],
-                    onChange: (page, pageSize) =>
-                      handleTableChange({ current: page, pageSize }),
-                  }}
-                  rowClassName={styles.tableRow}
-                  className={styles.table}
-                />
-              )}
+              <Table
+                columns={cinemaColumns}
+                dataSource={cinemas}
+                rowKey="cinema_id"
+                pagination={{
+                  ...pagination,
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "50"],
+                  showTotal: (total) => `Tổng ${total} rạp`,
+                  onChange: (page, pageSize) =>
+                    handleTableChange({ current: page, pageSize }),
+                }}
+                rowClassName={styles.tableRow}
+                className={styles.table}
+                locale={{
+                  emptyText: (
+                    <TypographyText className={styles.emptyText}>
+                      Không tìm thấy rạp
+                    </TypographyText>
+                  ),
+                }}
+              />
             </Card>
           </Col>
         </Row>

@@ -105,9 +105,34 @@
   }
 }
 
-.loading, .empty {
+.loading, .emptyText {
   text-align: center;
   padding: 40px 0;
   font-size: 18px;
   color: #6b7280;
+}
+
+.search {
+  .ant-input-search-button {
+    background-color: #5f2eea;
+    border-color: #5f2eea;
+    color: #ffffff;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: #3f1dc7;
+      border-color: #3f1dc7;
+    }
+  }
+
+  .ant-input {
+    border-radius: 8px;
+    border-color: #e5e7eb;
+    background-color: #f9f5ff;
+    height: 40px;
+  }
+
+  &:hover .ant-input {
+    border-color: #5f2eea;
+  }
 }

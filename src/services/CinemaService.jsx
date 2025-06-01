@@ -7,7 +7,7 @@ const CinemaService = {
     try {
       const response = await api.get("/cinemas/", { params });
       if (response.data.code === 200) {
-        return response.data.data.data; // Trả về mảng rạp
+        return response.data.data; // Return paginator object
       } else {
         throw new Error(response.data.message || "Failed to fetch cinemas");
       }
@@ -19,50 +19,44 @@ const CinemaService = {
   },
 
   // Search cinemas by address
-  searchCinemaByAddress: async (searchTerm, page = 1) => {
+  searchCinemaByAddress: async (searchTerm, page = 1, params = {}) => {
     try {
       const response = await api.get("/cinemas/search-by-address", {
         params: {
           address: searchTerm,
-          per_pages: 20,
-          pages: page,
+          per_page: params.per_page || 10,
+          page,
         },
       });
       if (response.data.success) {
-        return response.data.data.data; // Trả về mảng rạp
+        return response.data.data; // Return paginator object
       } else {
-        throw new Error(
-          response.data.message || "Failed to search cinemas by address"
-        );
+        return { data: [], total: 0, current_page: 1 }; // Empty response for no results
       }
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to search cinemas by address"
-      );
+      console.error("Search by address error:", error.message);
+      return { data: [], total: 0, current_page: 1 };
     }
   },
 
   // Search cinemas by name
-  searchCinemaByName: async (searchTerm, page = 1) => {
+  searchCinemaByName: async (searchTerm, page = 1, params = {}) => {
     try {
       const response = await api.get("/cinemas/search-by-name", {
         params: {
           name: searchTerm,
-          per_pages: 20,
-          pages: page,
+          per_page: params.per_page || 10,
+          page,
         },
       });
       if (response.data.success) {
-        return response.data.data.data; // Trả về mảng rạp
+        return response.data.data; // Return paginator object
       } else {
-        throw new Error(
-          response.data.message || "Failed to search cinemas by name"
-        );
+        return { data: [], total: 0, current_page: 1 }; // Empty response for no results
       }
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to search cinemas by name"
-      );
+      console.error("Search by name error:", error.message);
+      return { data: [], total: 0, current_page: 1 };
     }
   },
 
@@ -71,7 +65,7 @@ const CinemaService = {
     try {
       const response = await api.get(`/showtimes/cinema/${cinemaId}/date/${date}`, { params });
       if (response.data.code === 200) {
-        return response.data.data.data; // Trả về mảng suất chiếu
+        return response.data.data.data; // Return array of showtimes
       } else {
         throw new Error(response.data.message || "Failed to fetch showtimes");
       }
@@ -82,7 +76,66 @@ const CinemaService = {
     }
   },
 
-  // Các phương thức khác
+  // Fetch deleted cinemas with pagination
+  getDeletedCinemas: async (params = {}) => {
+    try {
+      const response = await api.get("/cinemas/deleted", { params });
+      if (response.data.code === 200) {
+        return response.data.data; // Return paginator object
+      } else {
+        throw new Error(response.data.message || "Failed to fetch deleted cinemas");
+      }
+    } catch (error) {
+      console.error("Get deleted cinemas error:", error.message);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch deleted cinemas"
+      );
+    }
+  },
+
+  // Search deleted cinemas by name
+  searchDeletedCinemaByName: async (searchTerm, page = 1, params = {}) => {
+    try {
+      const response = await api.get("/cinemas/deleted/search-by-name", {
+        params: {
+          name: searchTerm,
+          per_page: params.per_page || 10,
+          page,
+        },
+      });
+      if (response.data.success) {
+        return response.data.data; // Return paginator object
+      } else {
+        return { data: [], total: 0, current_page: 1 }; // Empty response for no results
+      }
+    } catch (error) {
+      console.error("Search deleted by name error:", error.message);
+      return { data: [], total: 0, current_page: 1 };
+    }
+  },
+
+  // Search deleted cinemas by address
+  searchDeletedCinemaByAddress: async (searchTerm, page = 1, params = {}) => {
+    try {
+      const response = await api.get("/cinemas/deleted/search-by-address", {
+        params: {
+          address: searchTerm,
+          per_page: params.per_page || 10,
+          page,
+        },
+      });
+      if (response.data.success) {
+        return response.data.data; // Return paginator object
+      } else {
+        return { data: [], total: 0, current_page: 1 }; // Empty response for no results
+      }
+    } catch (error) {
+      console.error("Search deleted by address error:", error.message);
+      return { data: [], total: 0, current_page: 1 };
+    }
+  },
+
+  // Other methods
   createCinema: async (cinemaData) => {
     try {
       const response = await api.post("/cinemas", cinemaData);
@@ -154,23 +207,6 @@ const CinemaService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to restore cinema"
-      );
-    }
-  },
-
-  getDeletedCinemas: async () => {
-    try {
-      const response = await api.get("/cinemas/deleted");
-      if (response.data.code === 200) {
-        return response.data.data;
-      } else {
-        throw new Error(
-          response.data.message || "Failed to fetch deleted cinemas"
-        );
-      }
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch deleted cinemas"
       );
     }
   },

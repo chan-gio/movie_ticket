@@ -14,10 +14,8 @@
 }
 
 .refreshButton, .addButton, .viewDeletedButton, .roomsButton {
-  border-radius: 12px;
   background-color: #5f2eea;
   border-color: #5f2eea;
-  height: 48px;
   font-size: 16px;
   padding: 0 24px;
 
@@ -40,6 +38,31 @@
   margin-bottom: 16px;
 }
 
+.statisticCard {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 24px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .statisticTitle {
+    color: #6b7280;
+    font-size: 16px;
+  }
+
+  .ant-statistic-content {
+    font-size: 32px;
+    font-weight: 600;
+  }
+}
+
 .label {
   font-weight: 600;
   color: #6b7280;
@@ -47,9 +70,8 @@
 }
 
 .select {
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 16px;
+  width: 150px !important;
+  margin-right: 8px;
 
   .ant-select-selector {
     border-radius: 8px !important;
@@ -68,6 +90,31 @@
   &.ant-select-disabled .ant-select-selector {
     background-color: #f0f0f0 !important;
     color: #a0a0a0 !important;
+  }
+}
+
+.search {
+  .ant-input-search-button {
+    background-color: #5f2eea;
+    border-color: #5f2eea;
+    color: #ffffff;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: #3f1dc7;
+      border-color: #3f1dc7;
+    }
+  }
+
+  .ant-input {
+    border-radius: 8px;
+    border-color: #e5e7eb;
+    background-color: #f9f5ff;
+    height: 40px;
+  }
+
+  &:hover .ant-input {
+    border-color: #5f2eea;
   }
 }
 
@@ -118,7 +165,14 @@
   }
 }
 
-.loading, .empty {
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.emptyText {
   text-align: center;
   padding: 40px 0;
   font-size: 18px;

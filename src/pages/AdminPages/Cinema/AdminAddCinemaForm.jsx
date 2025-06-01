@@ -4,7 +4,7 @@ import { Form, Input, Button, Row, Col, Typography, Select } from 'antd';
 import { toastSuccess, toastError } from '../../../utils/toastNotifier';
 import CinemaService from '../../../services/CinemaService';
 import styles from './AdminAddCinemaForm.module.scss';
-import { VietnamCities } from '../../../assets/VietnamCities';
+import { VietnamCities } from '../../../../public/assets/VietnamCities'
 
 const { Title } = Typography;
 const { Option } = Select;

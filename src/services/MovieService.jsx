@@ -1,6 +1,6 @@
-import api from "./api"; // Import the configured Axios instance
+import api from "./api";
 import { uploadMoviePosterToCloudinary } from "../utils/cloudinaryConfig";
-// Service methods for MovieController endpoints
+
 const MovieService = {
   // Fetch all movies that are not deleted with pagination
   getAllMovies: async ({ perPage, page } = {}) => {
@@ -150,7 +150,7 @@ const MovieService = {
   // Fetch all soft-deleted movies
   getDeletedMovies: async () => {
     try {
-      const response = await api.get("/movies/movies/deleted");
+      const response = await api.get("/movies/deleted");
       if (response.data.code === 200) {
         return response.data.data;
       } else {
@@ -177,6 +177,27 @@ const MovieService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to search movies"
+      );
+    }
+  },
+
+  // Search deleted movies by title with pagination
+  searchDeletedMovies: async ({ title, perPage, page } = {}) => {
+    try {
+      const params = { title };
+      if (perPage) params.per_page = perPage;
+      if (page) params.page = page;
+
+      const response = await api.get("/movies/deleted/search", { params });
+
+      if (response.data.code === 200) {
+        return response.data.data; // response.data.data sẽ là object của Laravel paginator
+      } else {
+        throw new Error(response.data.message || "Failed to search deleted movies");
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search deleted movies"
       );
     }
   },
@@ -252,7 +273,7 @@ const MovieService = {
       });
 
       if (response.data.code === 200) {
-        return response.data.data; // response.data.data sẽ là object của Laravel paginator
+        return response.data.data; 
       } else {
         throw new Error(response.data.message || "Failed to search movies");
       }

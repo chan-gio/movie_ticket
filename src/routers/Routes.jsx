@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import ShowMoviesPage from '../pages/UserPages/ShowMoviesPage/ShowMoviesPage';
 import CinemaPage from '../pages/UserPages/CinemaPage/CinemaPage';
 
@@ -10,6 +11,7 @@ const SeatSelection = lazy(() => import('../pages/UserPages/SeatPage/SeatSelecti
 const Payment = lazy(() => import('../pages/UserPages/PaymentPage/Payment'));
 const Confirmation = lazy(() => import('../pages/UserPages/ConfirmationPage/Confirmation'));
 const Admin = lazy(() => import('../pages/AdminPages/Admin'));
+const AdminLogin = lazy(() => import('../pages/AdminPages/AdminLogin/AdminLogin'));
 const AdminDashboard = lazy(() => import('../pages/AdminPages/Dashboard/AdminDashboard'));
 const AdminProfile = lazy(() => import('../pages/AdminPages/Profile/AdminProfile'));
 const AdminSettings = lazy(() => import('../pages/AdminPages/Setting/AdminSettings'));
@@ -33,6 +35,12 @@ const AdminManageBookingDetails = lazy(() => import('../pages/AdminPages/Booking
 const AdminManageCoupon = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCoupon'));
 const AdminManageCouponForm = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCouponForm'));
 
+// Protected route wrapper
+const ProtectedAdminRoute = ({ children }) => {
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  return isAdmin ? children : <Navigate to="/admin/login" replace />;
+};
+
 const Routes = [
   // User routes
   { path: '/', component: <Home /> },
@@ -46,31 +54,32 @@ const Routes = [
   { path: '/confirmation/:bookingId', component: <Confirmation /> },
 
   // Admin routes
-  { path: '/admin', component: <Admin><AdminDashboard /></Admin> },
-  { path: '/admin/profile', component: <Admin><AdminProfile /></Admin> },
-  { path: '/admin/settings', component: <Admin><AdminSettings /></Admin> },
-  { path: '/admin/manage_user', component: <Admin><AdminManageUser /></Admin> },
-  { path: '/admin/manage_user/details/:id', component: <Admin><AdminManageUserDetails /></Admin> },
-  { path: '/admin/manage_movie', component: <Admin><AdminManageMovie /></Admin> },
-  { path: '/admin/manage_movie/add', component: <Admin><AdminAddMovieForm /></Admin> },
-  { path: '/admin/manage_movie/edit/:id', component: <Admin><AdminEditMovieForm /></Admin> },
-  { path: '/admin/deleted_movies', component: <Admin><DeletedMovies /></Admin> },
-  { path: '/admin/manage_cinema', component: <Admin><AdminManageCinema /></Admin> },
-  { path: '/admin/manage_cinema/add_cinema', component: <Admin><AdminAddCinemaForm /></Admin> },
-  { path: '/admin/manage_cinema/edit_cinema/:id', component: <Admin><AdminEditCinemaForm /></Admin> },
-  { path: '/admin/deleted_cinemas', component: <Admin><DeletedCinemas /></Admin> },
-  { path: '/admin/manage_rooms/:cinemaId', component: <Admin><AdminManageRoom /></Admin> },
-  { path: '/admin/manage_seats/edit_room/:roomId', component: <Admin><AdminManageSeats /></Admin> },
-  { path: '/admin/manage_seats/add', component: <Admin><AdminManageSeatForm isEditMode={false} /></Admin> },
-  { path: '/admin/manage_seats/edit/:id', component: <Admin><AdminManageSeatForm isEditMode={true} /></Admin> },
-  { path: '/admin/manage_showtime', component: <Admin><AdminManageShowtime /></Admin> },
-  { path: '/admin/manage_showtime/add', component: <Admin><AdminManageShowtimeForm isEditMode={false} /></Admin> },
-  { path: '/admin/manage_showtime/edit/:id', component: <Admin><AdminManageShowtimeForm isEditMode={true} /></Admin> },
-  { path: '/admin/manage_booking', component: <Admin><AdminManageBooking /></Admin> },
-  { path: '/admin/manage_booking/details/:id', component: <Admin><AdminManageBookingDetails /></Admin> },
-  { path: '/admin/manage_coupon', component: <Admin><AdminManageCoupon /></Admin> },
-  { path: '/admin/manage_coupon/add', component: <Admin><AdminManageCouponForm isEditMode={false} /></Admin> },
-  { path: '/admin/manage_coupon/edit/:id', component: <Admin><AdminManageCouponForm isEditMode={true} /></Admin> },
+  { path: '/admin/login', component: <AdminLogin /> },
+  { path: '/admin', component: <ProtectedAdminRoute><Admin><AdminDashboard /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/profile', component: <ProtectedAdminRoute><Admin><AdminProfile /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/settings', component: <ProtectedAdminRoute><Admin><AdminSettings /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_user', component: <ProtectedAdminRoute><Admin><AdminManageUser /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_user/details/:id', component: <ProtectedAdminRoute><Admin><AdminManageUserDetails /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_movie', component: <ProtectedAdminRoute><Admin><AdminManageMovie /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_movie/add', component: <ProtectedAdminRoute><Admin><AdminAddMovieForm /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_movie/edit/:id', component: <ProtectedAdminRoute><Admin><AdminEditMovieForm /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/deleted_movies', component: <ProtectedAdminRoute><Admin><DeletedMovies /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_cinema', component: <ProtectedAdminRoute><Admin><AdminManageCinema /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_cinema/add_cinema', component: <ProtectedAdminRoute><Admin><AdminAddCinemaForm /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_cinema/edit_cinema/:id', component: <ProtectedAdminRoute><Admin><AdminEditCinemaForm /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/deleted_cinemas', component: <ProtectedAdminRoute><Admin><DeletedCinemas /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_rooms/:cinemaId', component: <ProtectedAdminRoute><Admin><AdminManageRoom /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_seats/edit_room/:roomId', component: <ProtectedAdminRoute><Admin><AdminManageSeats /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_seats/add', component: <ProtectedAdminRoute><Admin><AdminManageSeatForm isEditMode={false} /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_seats/edit/:id', component: <ProtectedAdminRoute><Admin><AdminManageSeatForm isEditMode={true} /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_showtime', component: <ProtectedAdminRoute><Admin><AdminManageShowtime /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_showtime/add', component: <ProtectedAdminRoute><Admin><AdminManageShowtimeForm isEditMode={false} /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_showtime/edit/:id', component: <ProtectedAdminRoute><Admin><AdminManageShowtimeForm isEditMode={true} /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_booking', component: <ProtectedAdminRoute><Admin><AdminManageBooking /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_booking/details/:id', component: <ProtectedAdminRoute><Admin><AdminManageBookingDetails /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_coupon', component: <ProtectedAdminRoute><Admin><AdminManageCoupon /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_coupon/add', component: <ProtectedAdminRoute><Admin><AdminManageCouponForm isEditMode={false} /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_coupon/edit/:id', component: <ProtectedAdminRoute><Admin><AdminManageCouponForm isEditMode={true} /></Admin></ProtectedAdminRoute> },
 ];
 
 export { Routes };
