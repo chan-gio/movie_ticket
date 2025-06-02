@@ -138,7 +138,7 @@ function AdminManageUser() {
       dataIndex: "role",
       key: "role",
       sorter: (a, b) => a.role.localeCompare(b.role),
-      render: (role) => role || "USER", // Default to "USER" if null
+      render: (role) => role || "USER",
     },
     {
       title: "Profile Picture",
@@ -146,11 +146,15 @@ function AdminManageUser() {
       key: "profile_picture_url",
       render: (url) => (
         <img
-          src={url || "https://via.placeholder.com/50?text=User"}
+          src={
+            url ||
+            "https://st.quantrimang.com/photos/image/072015/22/avatar.jpg"
+          }
           alt="Profile"
           className={styles.profilePicture}
           onError={(e) =>
-            (e.target.src = "https://via.placeholder.com/50?text=User")
+            (e.target.src =
+              "https://st.quantrimang.com/photos/image/072015/22/avatar.jpg")
           }
         />
       ),

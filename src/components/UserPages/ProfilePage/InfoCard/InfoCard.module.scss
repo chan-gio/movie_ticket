@@ -112,10 +112,10 @@
 
 .logoutButton {
   margin-top: 16px;
-  background-color: #5F2EEA; /* Match the primary color used in the design */
-  border-color: #5F2EEA;
+  background-color: #5F2EEA !important; 
+  border-color: #5F2EEA !important;
   &:hover {
-    background-color: #4a1ed4;
-    border-color: #4a1ed4;
+    background-color: #4a1ed4 !important;
+    border-color: #4a1ed4 !important;
   }
 }
