@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { Row, Col, Card, Typography, Form, Input, Button, Space, Skeleton, Progress, List, Alert } from "antd";
 import { WarningOutlined } from "@ant-design/icons";
 import styles from "./Payment.module.scss";
@@ -18,6 +18,7 @@ const { Title, Text, Paragraph } = Typography;
 function Payment() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form] = Form.useForm();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,9 @@ function Payment() {
   const [isShowtimePast, setIsShowtimePast] = useState(false);
   const [coupon, setCoupon] = useState(null);
   const hasFetched = useRef(false);
+
+  // Retrieve totalPrice from location state
+  const { totalPrice } = location.state || {};
 
   // Find the booking from the bookings array
   const currentBooking = bookings.find((b) => b.bookingId === bookingId);
@@ -166,6 +170,24 @@ function Payment() {
   };
 
   const calculateTotalPrice = () => {
+    // Prioritize totalPrice from navigation state
+    if (totalPrice !== undefined && totalPrice !== null) {
+      if (!coupon) return totalPrice;
+
+      const discountAmount = (totalPrice * coupon.discount) / 100;
+      return Math.max(0, totalPrice - discountAmount);
+    }
+
+    // Fallback to booking data if available
+    if (booking?.total_price !== undefined && booking?.total_price !== null) {
+      const baseTotal = booking.total_price;
+      if (!coupon) return baseTotal;
+
+      const discountAmount = (totalPrice * coupon.discount) / 100;
+      return Math.max(0, totalPrice - discountAmount);
+    }
+
+    // Final fallback to existing calculation
     const baseTotal = calculateBaseTotalPrice();
     if (!coupon) return baseTotal;
 
@@ -275,10 +297,10 @@ function Payment() {
       }
     }
 
-    const totalPrice = calculateTotalPrice();
+    const finalTotalPrice = calculateTotalPrice();
 
     try {
-      await BookingService.updateTotalPrice(bookingId, totalPrice);
+      await BookingService.updateTotalPrice(bookingId, finalTotalPrice);
     } catch (updateErr) {
       console.error('Update total price error:', updateErr);
       toastError('Failed to update total price. Please try again.');
@@ -303,7 +325,7 @@ function Payment() {
 
     const paymentData = {
       orderCode,
-      amount: totalPrice,
+      amount: finalTotalPrice,
       description,
       returnUrl,
       cancelUrl,
@@ -387,7 +409,7 @@ function Payment() {
 
   const baseTotal = calculateBaseTotalPrice();
   const finalTotal = calculateTotalPrice();
-  const discountAmount = coupon ? baseTotal - finalTotal : 0;
+  const discountAmount = coupon ? totalPrice - finalTotal : 0;
 
   return (
     <div className={styles.payment}>
@@ -418,16 +440,22 @@ function Payment() {
                   {sortedSeats.map(bookingSeat => bookingSeat.seat?.seat_number || bookingSeat.seat_id).join(', ') || 'None'}
                 </Text>
               </List.Item>
-              {coupon && (
-                <List.Item>
-                  <Text className={styles.label}>Coupon Discount ({coupon.discount}%)</Text>
-                  <Text className={styles.value}>-{discountAmount.toFixed(2)}đ</Text>
-                </List.Item>
-              )}
               <List.Item>
-                <Text className={styles.label}>Total payment</Text>
-                <Text className={styles.value}>{finalTotal.toFixed(2)}đ</Text>
+                <Text className={styles.label}>Total price</Text>
+                <Text className={styles.value}>{totalPrice}đ</Text>
               </List.Item>
+              {coupon && (
+                <>
+                  <List.Item>
+                    <Text className={styles.label}>Coupon Discount ({coupon.discount}%)</Text>
+                    <Text className={styles.value}>-{discountAmount}đ</Text>
+                  </List.Item>
+                  <List.Item>
+                    <Text className={styles.label}>Total payment</Text>
+                    <Text className={styles.value}>{finalTotal}đ</Text>
+                  </List.Item>
+                </>
+              )}
             </List>
           </Card>
         </Col>

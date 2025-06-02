@@ -26,7 +26,7 @@ function Confirmation() {
   }, [location.search]);
 
   useEffect(() => {
-    const verifyPaymentAndUpdateBooking = async () => {
+    const verifyPaymentAndProcess = async () => {
       if (isProcessing.current) return;
       isProcessing.current = true;
 
@@ -36,33 +36,35 @@ function Confirmation() {
           return;
         }
 
+        // Step 1: Get payment link info
         const paymentInfo = await PaymentService.getPaymentLinkInfo(orderCode);
 
-        if (paymentInfo?.status === 'PAID') {
-          await BookingService.updateBookingStatus(bookingId, 'CONFIRMED');
-          const bookingData = await BookingService.getBookingById(bookingId);
-
-          const ticketInfo = {
-            movieTitle: bookingData?.showtime?.movie?.title || 'Unknown',
-            date: bookingData?.showtime?.start_time || new Date().toISOString(),
-            time: bookingData?.showtime?.start_time
-              ? new Date(bookingData.showtime.start_time).toLocaleTimeString('en-GB', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : 'Unknown',
-            category: bookingData?.showtime?.movie?.adult || 'Unknown',
-            seats: bookingData?.booking_seats?.map((bs) => bs.seat.seat_number) || [],
-            price: bookingData?.total_price,
-          };
-
-          setPaymentStatus('PAID');
-          setTicketInfo(ticketInfo);
-        } else {
+        if (paymentInfo?.status !== 'PAID') {
           setPaymentStatus('FAILED');
+          return;
         }
+
+        // Fetch booking data to prepare ticket info
+        const bookingData = await BookingService.getBookingById(bookingId);
+
+        const ticketInfo = {
+          movieTitle: bookingData?.showtime?.movie?.title || 'Unknown',
+          date: bookingData?.showtime?.start_time || new Date().toISOString(),
+          time: bookingData?.showtime?.start_time
+            ? new Date(bookingData.showtime.start_time).toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'Unknown',
+          category: bookingData?.showtime?.movie?.adult || 'Unknown',
+          seats: bookingData?.booking_seats?.map((bs) => bs.seat.seat_number) || [],
+          price: bookingData?.total_price,
+        };
+
+        setTicketInfo(ticketInfo);
+        setPaymentStatus('PAID');
       } catch (err) {
-        console.error('Error processing payment or booking:', err.message);
+        console.error('Error processing payment or fetching booking:', err.message);
         setPaymentStatus('FAILED');
       } finally {
         setLoading(false);
@@ -70,47 +72,56 @@ function Confirmation() {
       }
     };
 
-    verifyPaymentAndUpdateBooking();
+    verifyPaymentAndProcess();
   }, [orderCode, bookingId]);
 
   useEffect(() => {
-    if (paymentStatus === 'PAID' && bookingId && barcodeRef.current) {
-      const canvas = barcodeRef.current;
-      const context = canvas.getContext('2d');
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    if (paymentStatus !== 'PAID' || !bookingId || !barcodeRef.current) return;
 
-      JsBarcode(canvas, bookingId, {
-        format: 'CODE128',
-        width: 2,
-        height: 100,
-        displayValue: true,
-        background: '#f9f5ff',
-        lineColor: '#5f2eea',
-        margin: 10,
-      });
+    const processBarcodeAndUpdate = async () => {
+      try {
+        const canvas = barcodeRef.current;
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Upload barcode to Cloudinary and save URL
-      const uploadBarcode = async () => {
-        try {
-          const base64Image = canvas.toDataURL('image/png');
-          const cloudinaryUrl = await uploadImageToCloudinary(
-            base64Image,
-            import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET,
-          );
-          if (!cloudinaryUrl) {
-            throw new Error('Cloudinary upload returned no URL');
-          }
-          await BookingService.updateBarcode(bookingId, cloudinaryUrl);
-          setBarcodeUrl(cloudinaryUrl);
-          message.success('Barcode uploaded and saved successfully');
-        } catch (err) {
-          console.error('Error uploading barcode:', err.message);
-          message.error('Failed to upload barcode');
+        // Generate barcode
+        JsBarcode(canvas, bookingId, {
+          format: 'CODE128',
+          width: 2,
+          height: 100,
+          displayValue: true,
+          background: '#f9f5ff',
+          lineColor: '#5f2eea',
+          margin: 10,
+        });
+
+        // Step 2: Upload barcode to Cloudinary
+        const base64Image = canvas.toDataURL('image/png');
+        const cloudinaryUrl = await uploadImageToCloudinary(
+          base64Image,
+          import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET,
+        );
+
+        if (!cloudinaryUrl) {
+          throw new Error('Cloudinary upload returned no URL');
         }
-      };
 
-      uploadBarcode();
-    }
+        // Step 3: Update barcode in the database
+        await BookingService.updateBarcode(bookingId, cloudinaryUrl);
+        setBarcodeUrl(cloudinaryUrl);
+        message.success('Barcode uploaded and saved successfully');
+
+        // Step 4: Update booking status to CONFIRMED
+        await BookingService.updateBookingStatus(bookingId, 'CONFIRMED');
+        message.success('Booking status updated to CONFIRMED');
+      } catch (err) {
+        console.error('Error processing barcode or updating status:', err.message);
+        message.error('Failed to process barcode or update booking');
+        setPaymentStatus('FAILED');
+      }
+    };
+
+    processBarcodeAndUpdate();
   }, [paymentStatus, bookingId]);
 
   const formatDate = (date) => {

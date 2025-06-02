@@ -1,9 +1,11 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { Card, Avatar, Typography, Skeleton, Button, message, Upload, Progress } from "antd";
 import { UserOutlined, LogoutOutlined, UploadOutlined } from "@ant-design/icons";
 import styles from "./InfoCard.module.scss";
 import { uploadImageToCloudinary } from "../../../../utils/cloudinaryConfig";
 import UserService from "../../../../services/UserService";
+import { toastError, toastSuccess } from "../../../../utils/toastNotifier";
 
 const { Title, Paragraph } = Typography;
 
@@ -39,7 +41,7 @@ const InfoCard = ({ userData, loading, onSignOut }) => {
       try {
         const rawUrl = await uploadImageToCloudinary(
           file,
-          import.meta.env.VITE_PROFILE_PICTURE_UPLOAD_PRESET || 'profile_picture_preset',
+          import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET || 'profile_picture_preset',
           (progress) => {
             setUploadProgress(progress);
           }
@@ -61,15 +63,15 @@ const InfoCard = ({ userData, loading, onSignOut }) => {
 
         setProfileImage(imageUrl);
         setFileList([{ ...updatedFileList[0], url: imageUrl, status: "done" }]);
-        message.success("Profile picture updated successfully");
+        toastSuccess("Profile picture updated successfully");
       } catch (error) {
         console.error("Upload error:", error.message);
         if (error.message.includes("Upload preset")) {
-          message.error("Cloudinary configuration error: Invalid upload preset. Please check your Cloudinary settings.");
+          toastError("Cloudinary configuration error: Invalid upload preset. Please check your Cloudinary settings.");
         } else if (error.message.includes("User ID not found")) {
-          message.error("Session expired. Please log in again.");
+          toastError("Session expired. Please log in again.");
         } else {
-          message.error(error.message || "Failed to update profile picture");
+          toastError(error.message || "Failed to update profile picture");
         }
         setFileList([]);
         setProfileImage(cleanUrl(userData?.profile_picture_url)); // Reset with cleaned URL

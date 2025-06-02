@@ -178,10 +178,8 @@ function SeatSelection() {
         let pairSeat;
 
         if (col % 2 === 1) {
-          // Odd column, pair with the seat to the right
           pairSeat = `${row}${col + 1}`;
         } else {
-          // Even column, pair with the seat to the left
           pairSeat = `${row}${col - 1}`;
         }
 
@@ -192,7 +190,6 @@ function SeatSelection() {
         const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
 
         if (!isSelected) {
-          // Selecting a COUPLE seat
           if (pairSeatObj && !isPairBooked && pairSeatObj.seat_type.toUpperCase() === "COUPLE") {
             if (!newSeats.includes(seatNumber)) {
               newSeats.push(seatNumber);
@@ -202,14 +199,12 @@ function SeatSelection() {
             }
           } else {
             toastError("Cannot select couple seat: pair seat is unavailable or not a couple seat.");
-            return prev; // Do not update if pair seat is invalid
+            return prev;
           }
         } else {
-          // Deselecting a COUPLE seat
           newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
         }
       } else {
-        // Non-COUPLE seat
         newSeats = isSelected
           ? newSeats.filter((s) => s !== seatNumber)
           : [...newSeats, seatNumber];
@@ -217,8 +212,12 @@ function SeatSelection() {
 
       const path = `/seats/${roomId}/${bookingId}`;
       updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
+      console.log("SELECTED SEATS:", selectedSeats);
       return newSeats;
     });
+
+
+    
   };
 
   const formatDate = (date) => {
@@ -255,9 +254,14 @@ function SeatSelection() {
       await Promise.all(bookingSeatPromises);
       toastSuccess("Seats booked successfully!");
 
+      const totalPrice = calculateTotalPrice();
+
+      // Update booking with totalPrice
+      await BookingService.updateTotalPrice(bookingId, totalPrice);
+
       const path = `/payment/${bookingId}`;
       updateProgress(bookingId, "Payment", { selectedSeats }, path);
-      navigate(path);
+      navigate(path, { state: { totalPrice } });
     } catch (err) {
       console.error('Checkout error:', err);
       toastError(err.message || "Failed to complete checkout. Please try again.");
@@ -268,12 +272,9 @@ function SeatSelection() {
 
   const handleChangeMovie = async () => {
     try {
-      // Hủy booking
       await BookingService.updateBookingStatus(bookingId, "CANCELLED");
-      // Xóa booking khỏi danh sách
       clearTimer(bookingId);
       toastError(`Booking ${bookingId}: Your booking has been cancelled.`);
-      // Navigate về trang danh sách phim
       navigate("/movies");
     } catch (error) {
       toastError(`Failed to cancel booking: ${error.message}`);
@@ -281,7 +282,7 @@ function SeatSelection() {
   };
 
   const handleGoBack = () => {
-    navigate(-1); // Quay lại trang trước đó
+    navigate(-1);
   };
 
   if (loading) {
@@ -550,7 +551,7 @@ function SeatSelection() {
             <Row justify="space-between">
               <Paragraph className={styles.label}>Couple price</Paragraph>
               <Paragraph className={styles.value}>
-                {settings ? (orderInfo.basePrice + (orderInfo.basePrice * settings.couple / 100)) : orderInfo.basePrice}đ
+                {settings ? ((orderInfo.basePrice + (orderInfo.basePrice * settings.couple / 100)) * 2) : orderInfo.basePrice}đ
               </Paragraph>
             </Row>
             <Row justify="space-between">
