@@ -1,6 +1,7 @@
 .seatSelection {
-  padding: 20px;
-  width: 100%;
+  padding: 40px 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
 .secondaryNavbar {
@@ -8,6 +9,7 @@
   padding: 10px 20px;
   color: white;
   border-radius: 10px;
+  margin-bottom: 24px;
 }
 
 .movieTitle {
@@ -16,130 +18,222 @@
 }
 
 .changeButton {
-  border-radius: 20px;
-  opacity: 0.8;
-  color: #5f2eea;
-  background-color: white;
-  border: none;
+  border-radius: 12px;
+  background-color: #d9d9d9;
+  border-color: #d9d9d9;
+  color: #14142b;
+  height: 40px;
+  font-size: 14px;
+
   &:hover {
-    background-color: #f0f0f0;
+    background-color: #c0c0c0;
+    border-color: #c0c0c0;
   }
 }
 
 .mainContent {
-  background-color: #f5f5f5;
-  padding: 20px 0;
+  margin-bottom: 40px;
 }
 
 .seatCard {
-  border-radius: 24px;
+  border-radius: 16px;
   border: none;
-  padding: 40px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: auto;
-}
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 
-.screen {
-  text-align: center;
-  width: 100%; /* Ensure screen takes full width of the seat grid */
-}
-
-.screenText {
-  font-size: 14px;
-  margin: 0;
-}
-
-.screenLine {
-  height: 8px;
-  background: #9570fe;
-  border-radius: 8px;
-  margin-top: 10px;
-  width: 100%; /* Ensure screen line spans the full width */
-}
-
-.seatGrid {
-  margin: 20px 0;
-  table {
-    width: 100%;
-    td {
-      padding: 2px; /* Reduced padding to bring seats closer together */
-      text-align: center;
-    }
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   }
 }
 
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.screenText {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.screenLine {
+  width: 80%;
+  height: 4px;
+  background-color: #d9d9d9;
+  margin-top: 8px;
+  border-radius: 2px;
+}
+
+.seatGrid {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+
+  table {
+    border-collapse: separate;
+    border-spacing: 8px;
+  }
+}
+
+.rowLabel, .colLabel {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
 .seat {
-  width: 32px; /* Increased width for larger buttons */
-  height: 32px; /* Increased height for larger buttons */
-  border-radius: 8px;
-  background-color: #d6d8e7;
-  border: none;
-  font-size: 14px; /* Slightly larger font for readability */
+  width: 40px;
+  height: 40px;
   padding: 0;
+  border-radius: 8px;
+  background-color: #e5e7eb;
+  color: #14142b;
+  border: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+
   &:hover {
-    background-color: #b0b2c3;
+    background-color: #d1d5db;
+  }
+}
+
+.seatStandard {
+  background-color: #e5e7eb;
+  &:hover {
+    background-color: #d1d5db;
+  }
+}
+
+.seatVip {
+  background-color: #ffd700;
+  &:hover {
+    background-color: #e6c200;
+  }
+}
+
+.seatCouple {
+  background-color: #ff69b4;
+  &:hover {
+    background-color: #ff4f99;
   }
 }
 
 .seatSelected {
-  background-color: #5f2eea;
-  color: white;
+  background-color: #a0f0a0 !important;
+  &:hover {
+    background-color: #90e090 !important;
+  }
 }
 
-.seatGap {
-  width: 32px; /* Match the increased seat width */
+.seatNotAvailable {
+  background-color: #a4a4a4;
+  &:hover {
+    background-color: #c0c0c0;
+  }
+}
+
+.emptySeat {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
 }
 
 .seatingKeyTitle {
-  font-size: 20px;
-  margin: 20px 0 10px;
+  margin: 24px 0 16px;
+  color: #14142b;
+}
+
+.availableBox {
+  width: 30px;
+  height: 30px;
+  background-color: #e5e7eb;
+  border: none;
+  border-radius: 4px;
 }
 
 .selectBox {
-  width: 32px; /* Match the increased seat width */
-  height: 32px; /* Match the increased seat height */
-  border-radius: 8px;
-  background-color: #5f2eea;
+  width: 30px;
+  height: 30px;
+  background-color: #a0f0a0;
   border: none;
+  border-radius: 4px;
+}
+
+.vipBox {
+  width: 30px;
+  height: 30px;
+  background-color: #ffd700;
+  border: none;
+  border-radius: 4px;
 }
 
 .loveBox {
-  width: 32px; /* Match the increased seat width */
-  height: 32px; /* Match the increased seat height */
-  border-radius: 8px;
-  background-color: #f589d7;
+  width: 30px;
+  height: 30px;
+  background-color: #ff69b4;
   border: none;
+  border-radius: 4px;
 }
 
-.soldBox {
-  width: 32px; /* Match the increased seat width */
-  height: 32px; /* Match the increased seat height */
-  border-radius: 8px;
-  background-color: #6e7191;
+.notAvailableBox {
+  width: 30px;
+  height: 30px;
+  background-color: #a4a4a4;
   border: none;
+  border-radius: 4px;
 }
 
 .checkoutButtons {
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .changeMovieButton {
-  border-radius: 16px;
-  border-color: #5f2eea;
-  color: #5f2eea;
-  border-radius: 16px;
-  min-height: 56px;
+  border-radius: 12px;
+  background-color: #d9d9d9;
+  border-color: #d9d9d9;
+  color: #14142b;
+  height: 48px;
+  font-size: 16px;
+
+  &:hover {
+    background-color: #c0c0c0;
+    border-color: #c0c0c0;
+  }
 }
 
 .checkoutButton {
-  border-radius: 16px;
-  min-height: 56px;
+  border-radius: 12px;
+  background-color: #5f2eea;
+  border-color: #5f2eea;
+  height: 48px;
+  font-size: 16px;
+
+  &:hover {
+    background-color: #3f1dc7;
+    border-color: #3f1dc7;
+  }
 }
 
 .orderCard {
-  border-radius: 24px;
+  border-radius: 16px;
   border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .cinemaInfo {
@@ -153,25 +247,29 @@
 }
 
 .label {
-  font-size: 12px;
+  font-size: 14px;
   color: #6b7280;
   margin: 0;
+  font-weight: 600;
 }
 
 .value {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   text-align: right;
   margin: 0;
+  color: #14142b;
 }
 
 .divider {
   border-top: 1px solid #e5e7eb;
-  margin: 10px 0;
+  margin: 16px 0;
 }
 
 .totalLabel {
   font-size: 16px;
+  font-weight: 600;
+  color: #14142b;
   margin: 0;
 }
 
@@ -184,8 +282,27 @@
 }
 
 @media (max-width: 767px) {
-  .seatCard {
-    padding: 20px;
+  .seatSelection {
+    padding: 20px 10px;
+  }
+
+  .seatCard, .orderCard {
+    padding: 16px;
+  }
+
+  .seatGrid table {
+    border-spacing: 6px;
+  }
+
+  .seat {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .emptySeat {
+    width: 36px;
+    height: 36px;
   }
 
   .checkoutButtons {
@@ -193,39 +310,4 @@
       margin-bottom: 10px;
     }
   }
-}
-
-.seatStandard {
-  width: 32px; /* Match the increased seat width */
-  height: 32px; /* Match the increased seat height */
-  border-radius: 8px;
-  background-color: #d3d3d3; /* Light gray for STANDARD seats */
-  color: #000;
-  border: none;
-  &:hover {
-    background-color: #b0b0b0; /* Darker gray on hover */
-  }
-}
-
-.seatVIP {
-  width: 32px; /* Match the increased seat width */
-  height: 32px; /* Match the increased seat height */
-  border-radius: 8px;
-  background-color: #ffd700; /* Gold for VIP seats */
-  color: #000;
-  border: none;
-  &:hover {
-    background-color: #e6c200; /* Darker gold on hover */
-  }
-}
-
-.seatSelected {
-  background-color: #5f2eea !important; 
-  color: #fff !important;
-}
-
-.emptySeat {
-  display: inline-block;
-  width: 32px; /* Match the size of the seat buttons */
-  height: 32px;
 }

@@ -22,14 +22,14 @@ function AdminManageSeats() {
   const [initialRows, setInitialRows] = useState(0);
   const [initialCols, setInitialCols] = useState(14);
   const [seatMap, setSeatMap] = useState({});
-  const [seatIdMap, setSeatIdMap] = useState({}); // Map seat_number to seat_id
+  const [seatIdMap, setSeatIdMap] = useState({});
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [selectedType, setSelectedType] = useState('STANDARD');
   const [loading, setLoading] = useState(true);
   const [savingGrid, setSavingGrid] = useState(false);
   const [savingSeats, setSavingSeats] = useState(false);
   const [savingSeatType, setSavingSeatType] = useState(false);
-  const [firstRowIndex, setFirstRowIndex] = useState(0);
+  const [firstRowIndex, setFirstRowIndex] = useState(1);
 
   useEffect(() => {
     const loadData = async () => {
@@ -41,37 +41,47 @@ function AdminManageSeats() {
         const seatResponse = await SeatService.getSeatByRoomId(roomId);
         const fetchedSeats = seatResponse.data || [];
 
-        const initialSeatMap = {};
-        const initialSeatIdMap = {};
-        fetchedSeats.forEach(seat => {
-          initialSeatMap[seat.seat_number] = seat.seat_type;
-          initialSeatIdMap[seat.seat_number] = seat.seat_id;
-        });
+        if (fetchedSeats.length === 0) {
+          setRows(0);
+          setCols(14);
+          setInitialRows(0);
+          setInitialCols(14);
+          setSeatMap({});
+          setSeatIdMap({});
+          setFirstRowIndex(1);
+        } else {
+          const initialSeatMap = {};
+          const initialSeatIdMap = {};
+          fetchedSeats.forEach(seat => {
+            initialSeatMap[seat.seat_number] = seat.seat_type;
+            initialSeatIdMap[seat.seat_number] = seat.seat_id;
+          });
 
-        let minRow = Infinity;
-        let maxRow = 0;
-        let maxCol = 0;
-        fetchedSeats.forEach(seat => {
-          const rowChar = seat.seat_number.match(/^[A-Z]+/)[0];
-          const col = parseInt(seat.seat_number.match(/\d+$/)[0]);
-          const rowIndex = rowChar.split('').reduce((acc, char) => {
-            return acc * 26 + (char.charCodeAt(0) - 64);
-          }, 0);
-          minRow = Math.min(minRow, rowIndex);
-          maxRow = Math.max(maxRow, rowIndex);
-          maxCol = Math.max(maxCol, col);
-        });
+          let minRow = Infinity;
+          let maxRow = 0;
+          let maxCol = 0;
+          fetchedSeats.forEach(seat => {
+            const rowChar = seat.seat_number.match(/^[A-Z]+/)[0];
+            const col = parseInt(seat.seat_number.match(/\d+$/)[0]);
+            const rowIndex = rowChar.split('').reduce((acc, char) => {
+              return acc * 26 + (char.charCodeAt(0) - 64);
+            }, 0);
+            minRow = Math.min(minRow, rowIndex);
+            maxRow = Math.max(maxRow, rowIndex);
+            maxCol = Math.max(maxCol, col);
+          });
 
-        const numRows = maxRow > 0 ? maxRow - minRow + 1 : 1;
-        const numCols = maxCol || 14;
-        setFirstRowIndex(minRow === Infinity ? 1 : minRow);
-        setRows(numRows);
-        setCols(numCols);
-        setInitialRows(numRows);
-        setInitialCols(numCols);
+          const numRows = maxRow > 0 ? maxRow - minRow + 1 : 1;
+          const numCols = maxCol || 14;
+          setFirstRowIndex(minRow === Infinity ? 1 : minRow);
+          setRows(numRows);
+          setCols(numCols);
+          setInitialRows(numRows);
+          setInitialCols(numCols);
+          setSeatMap(initialSeatMap);
+          setSeatIdMap(initialSeatIdMap);
+        }
         setSeats(fetchedSeats);
-        setSeatMap(initialSeatMap);
-        setSeatIdMap(initialSeatIdMap);
       } catch (error) {
         toastError(error.message || 'Failed to load room or seats data');
       } finally {
@@ -96,6 +106,28 @@ function AdminManageSeats() {
     if (selectedSeats.length === 0) {
       toastWarning('Please select at least one seat to apply the type.');
       return;
+    }
+
+    // Kiểm tra khi áp dụng loại COUPLE
+    if (selectedType === 'COUPLE') {
+      for (const seat of selectedSeats) {
+        const row = seat.match(/^[A-Z]+/)[0];
+        const col = parseInt(seat.match(/\d+$/)[0]);
+
+        if (col % 2 === 1) { // Cột lẻ (1, 3, 5, ...)
+          const rightSeat = `${row}${col + 1}`;
+          if (!selectedSeats.includes(rightSeat) || col + 1 > cols) {
+            toastError('Vui lòng chọn hai ghế cạnh nhau để apply type couple');
+            return;
+          }
+        } else { // Cột chẵn (2, 4, 6, ...)
+          const leftSeat = `${row}${col - 1}`;
+          if (!selectedSeats.includes(leftSeat) || col - 1 < 1) {
+            toastError('Vui lòng chọn hai ghế cạnh nhau để apply type couple');
+            return;
+          }
+        }
+      }
     }
 
     setSavingSeatType(true);
@@ -134,7 +166,6 @@ function AdminManageSeats() {
       const updatedSeatIdMap = { ...seatIdMap };
       let changesMade = false;
 
-      // Handle increased rows
       if (rows > initialRows) {
         const newRowCount = rows - initialRows;
         const newRowLabels = Array.from({ length: newRowCount }, (_, i) => {
@@ -166,10 +197,9 @@ function AdminManageSeats() {
         changesMade = true;
       }
 
-      // Handle increased columns
       if (cols > initialCols) {
         const newColCount = cols - initialCols;
-        const rowLabels = Array.from({ length: initialRows }, (_, i) => {
+        const rowLabels = Array.from({ length: rows }, (_, i) => {
           let num = firstRowIndex + i;
           let label = '';
           while (num > 0) {
@@ -198,7 +228,6 @@ function AdminManageSeats() {
         changesMade = true;
       }
 
-      // Handle decreased rows
       if (rows < initialRows) {
         const rowsToDelete = Array.from({ length: initialRows - rows }, (_, i) => {
           let num = firstRowIndex + rows + i;
@@ -228,7 +257,6 @@ function AdminManageSeats() {
         changesMade = true;
       }
 
-      // Handle decreased columns
       if (cols < initialCols) {
         const rowLabels = Array.from({ length: initialRows }, (_, i) => {
           let num = firstRowIndex + i;
@@ -257,14 +285,12 @@ function AdminManageSeats() {
         changesMade = true;
       }
 
-      // If no changes were made, exit early
       if (!changesMade) {
         toastWarning('No changes to grid size were applied.');
         setSavingGrid(false);
         return;
       }
 
-      // Refresh seat data
       const response = await SeatService.getSeatByRoomId(roomId);
       const fetchedSeats = response.data || [];
       const updatedSeatMapFinal = {};
@@ -274,7 +300,6 @@ function AdminManageSeats() {
         updatedSeatIdMapFinal[seat.seat_number] = seat.seat_id;
       });
 
-      // Recalculate rows and columns
       let minRow = Infinity;
       let maxRow = 0;
       let maxCol = 0;
@@ -289,7 +314,7 @@ function AdminManageSeats() {
         maxCol = Math.max(maxCol, col);
       });
 
-      const numRows = maxRow > 0 ? maxRow - minRow + 1 : 1;
+      const numRows = maxRow > 0 ? maxRow - minRow + 1 : (rows || 1);
       const numCols = maxCol || 14;
       setFirstRowIndex(minRow === Infinity ? 1 : minRow);
       setRows(numRows);
@@ -417,7 +442,7 @@ function AdminManageSeats() {
         maxCol = Math.max(maxCol, col);
       });
 
-      const numRows = maxRow > 0 ? maxRow - minRow + 1 : 1;
+      const numRows = maxRow > 0 ? maxRow - minRow + 1 : (rows || 1);
       setFirstRowIndex(minRow === Infinity ? 1 : minRow);
       setRows(numRows);
       setCols(maxCol || 14);
@@ -481,7 +506,7 @@ function AdminManageSeats() {
               <Col>
                 <TypographyText className={styles.label}>Number of Rows:</TypographyText>
                 <InputNumber
-                  min={1}
+                  min={0}
                   value={rows}
                   onChange={value => setRows(value)}
                   className={styles.inputNumber}

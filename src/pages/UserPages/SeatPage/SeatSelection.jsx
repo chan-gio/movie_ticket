@@ -16,7 +16,7 @@ function SeatSelection() {
   const navigate = useNavigate();
   const hasFetched = useRef(false);
   const { settings, error: settingsError } = useSettings();
-  const { bookings, updateProgress } = useBookingTimer();
+  const { bookings, updateProgress, clearTimer } = useBookingTimer();
 
   // Find the booking from the bookings array
   const currentBooking = bookings.find((b) => b.bookingId === bookingId);
@@ -32,6 +32,7 @@ function SeatSelection() {
   const [seatBookingStatus, setSeatBookingStatus] = useState([]);
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState(null);
 
   // Fetch initial data
@@ -114,7 +115,7 @@ function SeatSelection() {
   const orderInfo = booking
     ? {
         movieTitle: booking.showtime?.movie?.title || "Unknown Movie",
-        cinema: "Cinema 1",
+        cinema: booking.showtime?.room?.cinema?.name || "Cinema 1",
         picture: booking.showtime?.movie?.poster_url || "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
         date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split("T")[0] : "Unknown Date",
         time: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Unknown Time",
@@ -134,14 +135,14 @@ function SeatSelection() {
     if (!seat || !settings) return orderInfo.basePrice;
 
     const basePrice = orderInfo.basePrice;
-    const seatType = seat.seat_type;
+    const seatType = seat.seat_type.toUpperCase();
 
     switch (seatType) {
       case "VIP":
         return basePrice + (basePrice * settings.vip / 100);
-      case "Couple":
+      case "COUPLE":
         return basePrice + (basePrice * settings.couple / 100);
-      case "Standard":
+      case "STANDARD":
       default:
         return basePrice;
     }
@@ -154,9 +155,12 @@ function SeatSelection() {
     }, 0);
   };
 
-  const toggleSeat = (seat) => {
+  const toggleSeat = (seatNumber) => {
+    const seat = seats.find((s) => s.seat_number === seatNumber);
+    if (!seat) return;
+
     const seatStatus = Array.isArray(seatBookingStatus)
-      ? seatBookingStatus.find((s) => s.seat_number === seat)
+      ? seatBookingStatus.find((s) => s.seat_number === seatNumber)
       : null;
     const isBooked = seatStatus ? seatStatus.is_booked : false;
 
@@ -165,7 +169,52 @@ function SeatSelection() {
     }
 
     setSelectedSeats((prev) => {
-      const newSeats = prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat];
+      let newSeats = [...prev];
+      const isSelected = prev.includes(seatNumber);
+
+      if (seat.seat_type.toUpperCase() === "COUPLE") {
+        const row = seatNumber.match(/^[A-Z]+/)[0];
+        const col = parseInt(seatNumber.match(/\d+$/)[0]);
+        let pairSeat;
+
+        if (col % 2 === 1) {
+          // Odd column, pair with the seat to the right
+          pairSeat = `${row}${col + 1}`;
+        } else {
+          // Even column, pair with the seat to the left
+          pairSeat = `${row}${col - 1}`;
+        }
+
+        const pairSeatObj = seats.find((s) => s.seat_number === pairSeat);
+        const pairSeatStatus = Array.isArray(seatBookingStatus)
+          ? seatBookingStatus.find((s) => s.seat_number === pairSeat)
+          : null;
+        const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
+
+        if (!isSelected) {
+          // Selecting a COUPLE seat
+          if (pairSeatObj && !isPairBooked && pairSeatObj.seat_type.toUpperCase() === "COUPLE") {
+            if (!newSeats.includes(seatNumber)) {
+              newSeats.push(seatNumber);
+            }
+            if (!newSeats.includes(pairSeat)) {
+              newSeats.push(pairSeat);
+            }
+          } else {
+            toastError("Cannot select couple seat: pair seat is unavailable or not a couple seat.");
+            return prev; // Do not update if pair seat is invalid
+          }
+        } else {
+          // Deselecting a COUPLE seat
+          newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
+        }
+      } else {
+        // Non-COUPLE seat
+        newSeats = isSelected
+          ? newSeats.filter((s) => s !== seatNumber)
+          : [...newSeats, seatNumber];
+      }
+
       const path = `/seats/${roomId}/${bookingId}`;
       updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
       return newSeats;
@@ -217,10 +266,22 @@ function SeatSelection() {
     }
   };
 
-  const handleChangeMovie = () => {
-    const path = `/movies`;
-    updateProgress(bookingId, "MovieSelection", { selectedSeats }, path);
-    navigate(path);
+  const handleChangeMovie = async () => {
+    try {
+      // Hủy booking
+      await BookingService.updateBookingStatus(bookingId, "CANCELLED");
+      // Xóa booking khỏi danh sách
+      clearTimer(bookingId);
+      toastError(`Booking ${bookingId}: Your booking has been cancelled.`);
+      // Navigate về trang danh sách phim
+      navigate("/movies");
+    } catch (error) {
+      toastError(`Failed to cancel booking: ${error.message}`);
+    }
+  };
+
+  const handleGoBack = () => {
+    navigate(-1); // Quay lại trang trước đó
   };
 
   if (loading) {
@@ -323,7 +384,7 @@ function SeatSelection() {
             </Title>
           </Col>
           <Col>
-            <Button className={styles.changeButton} onClick={handleChangeMovie}>
+            <Button className={styles.changeButton} onClick={handleGoBack}>
               Go back
             </Button>
           </Col>
@@ -343,7 +404,7 @@ function SeatSelection() {
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row}>
-                      <td>{row}</td>
+                      <td className={styles.rowLabel}>{row}</td>
                       {cols.map((col) => {
                         const seatNumber = `${row}${col}`;
                         const seat = seats.find(
@@ -354,13 +415,13 @@ function SeatSelection() {
                           : null;
                         const isSelected = selectedSeats.includes(seatNumber);
                         const isBooked = seatStatus ? seatStatus.is_booked : false;
-                        const seatType = seat ? seat.seat_type : null;
+                        const seatType = seat ? seat.seat_type.toUpperCase() : null;
                         const seatClass = isBooked
-                          ? styles.soldBox
+                          ? styles.seatNotAvailable
                           : seatType === "VIP"
-                          ? styles.seatVIP
-                          : seatType === "Couple"
-                          ? styles.loveBox
+                          ? styles.seatVip
+                          : seatType === "COUPLE"
+                          ? styles.seatCouple
                           : styles.seatStandard;
 
                         return (
@@ -386,43 +447,43 @@ function SeatSelection() {
                   <tr>
                     <td></td>
                     {cols.map((col) => (
-                      <td key={col}>{col}</td>
+                      <td key={col} className={styles.colLabel}>{col}</td>
                     ))}
                   </tr>
                 </tbody>
               </table>
             </div>
             <Title level={4} className={styles.seatingKeyTitle}>
-              Seating key
+              Seating Key
             </Title>
             <Row gutter={[16, 16]}>
-              <Col xs={5}>
+              <Col xs={12} sm={5}>
                 <Space>
-                  <Tag className={styles.seatStandard}></Tag>
+                  <Tag className={styles.availableBox}></Tag>
                   <Paragraph>Standard</Paragraph>
                 </Space>
               </Col>
-              <Col xs={5}>
+              <Col xs={12} sm={5}>
                 <Space>
-                  <Tag className={styles.seatVIP}></Tag>
+                  <Tag className={styles.vipBox}></Tag>
                   <Paragraph>VIP</Paragraph>
                 </Space>
               </Col>
-              <Col xs={5}>
+              <Col xs={12} sm={5}>
                 <Space>
                   <Tag className={styles.loveBox}></Tag>
                   <Paragraph>Couple</Paragraph>
                 </Space>
               </Col>
-              <Col xs={5}>
+              <Col xs={12} sm={5}>
                 <Space>
                   <Tag className={styles.selectBox}></Tag>
                   <Paragraph>Selected</Paragraph>
                 </Space>
               </Col>
-              <Col xs={4}>
+              <Col xs={12} sm={5}>
                 <Space>
-                  <Tag className={styles.soldBox}></Tag>
+                  <Tag className={styles.notAvailableBox}></Tag>
                   <Paragraph>Sold</Paragraph>
                 </Space>
               </Col>
