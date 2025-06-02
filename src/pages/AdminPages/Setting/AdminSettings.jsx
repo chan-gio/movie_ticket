@@ -55,19 +55,23 @@ function AdminSettings() {
         if (settings.banner) {
           try {
             // Try parsing as JSON if it's a string
-            banners = typeof settings.banner === "string"
-              ? JSON.parse(settings.banner)
-              : settings.banner;
+            banners =
+              typeof settings.banner === "string"
+                ? JSON.parse(settings.banner)
+                : settings.banner;
             // Ensure banners is an array of strings
             banners = Array.isArray(banners)
-              ? banners.filter((url) => typeof url === "string" && url.trim() !== "")
+              ? banners.filter(
+                  (url) => typeof url === "string" && url.trim() !== ""
+                )
               : [];
           } catch (err) {
             console.error("Error parsing banner field:", err);
             // If parsing fails, treat as a comma-separated string
-            banners = typeof settings.banner === "string"
-              ? settings.banner.split(",").filter((url) => url.trim() !== "")
-              : [];
+            banners =
+              typeof settings.banner === "string"
+                ? settings.banner.split(",").filter((url) => url.trim() !== "")
+                : [];
           }
         }
         setBannerUrls(banners);
@@ -123,23 +127,36 @@ function AdminSettings() {
       let updatedBanners = [];
       if (updatedSettings.banner) {
         try {
-          updatedBanners = typeof updatedSettings.banner === "string"
-            ? JSON.parse(updatedSettings.banner)
-            : updatedSettings.banner;
+          updatedBanners =
+            typeof updatedSettings.banner === "string"
+              ? JSON.parse(updatedSettings.banner)
+              : updatedSettings.banner;
           updatedBanners = Array.isArray(updatedBanners)
-            ? updatedBanners.filter((url) => typeof url === "string" && url.trim() !== "")
+            ? updatedBanners.filter(
+                (url) => typeof url === "string" && url.trim() !== ""
+              )
             : [];
         } catch (err) {
           console.error("Error parsing updated banner field:", err);
-          updatedBanners = typeof updatedSettings.banner === "string"
-            ? updatedSettings.banner.split(",").filter((url) => url.trim() !== "")
-            : [];
+          updatedBanners =
+            typeof updatedSettings.banner === "string"
+              ? updatedSettings.banner
+                  .split(",")
+                  .filter((url) => url.trim() !== "")
+              : [];
         }
       }
       setBannerUrls(updatedBanners);
       setFileListLogo(
         updatedSettings.name
-          ? [{ uid: "-1", name: "logo", url: updatedSettings.name, status: "done" }]
+          ? [
+              {
+                uid: "-1",
+                name: "logo",
+                url: updatedSettings.name,
+                status: "done",
+              },
+            ]
           : []
       );
       setFileListBanner(
@@ -153,7 +170,11 @@ function AdminSettings() {
       message.success("Settings saved successfully");
     } catch (error) {
       console.error("Error updating settings:", error);
-      message.error(error.response?.data?.message || error.message || "Failed to save settings");
+      message.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to save settings"
+      );
     } finally {
       setLoading(false);
     }
@@ -221,7 +242,9 @@ function AdminSettings() {
           newFile.originFileObj,
           import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET,
           (progress) => {
-            console.log(`Banner ${newFileList.length} upload progress: ${progress}%`);
+            console.log(
+              `Banner ${newFileList.length} upload progress: ${progress}%`
+            );
             setUploadProgressBanner((prev) => ({
               ...prev,
               [`banner_${newFileList.length - 1}`]: progress,
@@ -358,7 +381,7 @@ function AdminSettings() {
                 initialValues={{
                   name: "",
                   vip: 0,
-                  couple: 100,
+                  couple: 0, // Updated initial value to align with new range
                 }}
               >
                 <Title level={4} className={styles.sectionTitle}>
@@ -412,7 +435,11 @@ function AdminSettings() {
                                   src={fileListLogo[0].url}
                                   alt="Logo Preview"
                                   className={styles.previewImage}
-                                  style={{ width: "100px", height: "100px", marginTop: "8px" }}
+                                  style={{
+                                    width: "100px",
+                                    height: "100px",
+                                    marginTop: "8px",
+                                  }}
                                 />
                                 <CloseCircleOutlined
                                   className={styles.removeIcon}
@@ -574,20 +601,20 @@ function AdminSettings() {
                         },
                         {
                           type: "number",
-                          min: 100,
-                          max: 200,
-                          message: "Couple bonus must be between 100 and 200",
+                          min: 0,
+                          max: 100,
+                          message: "Couple bonus must be between 0 and 100",
                         },
                       ]}
                       extra={
                         <TypographyText type="secondary">
-                          Price increase for couple tickets (100 to 200).
+                          Price increase for couple tickets (0 to 100).
                         </TypographyText>
                       }
                     >
                       <InputNumber
-                        min={100}
-                        max={200}
+                        min={0}
+                        max={100}
                         className={styles.inputNumber}
                       />
                     </Form.Item>
