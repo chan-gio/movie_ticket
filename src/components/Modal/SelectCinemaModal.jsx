@@ -19,7 +19,7 @@ const normalizeVietnamese = (text) => {
 
 function SelectCinemaModal({ visible, onOk, onCancel }) {
   const [searchTerm, setSearchTerm] = useState("");
-const [selectedCity, setSelectedCity] = useState(null); // Mặc định null
+  const [selectedCity, setSelectedCity] = useState(null); // Mặc định null
   const [allCinemas, setAllCinemas] = useState([]); // Lưu danh sách đầy đủ từ API
   const [cinemas, setCinemas] = useState([]); // Danh sách hiển thị (lọc hoặc không)
   const [loading, setLoading] = useState(false);
@@ -97,8 +97,8 @@ const [selectedCity, setSelectedCity] = useState(null); // Mặc định null
       });
       setCinemas(filteredCinemas);
       setHasMore(false); // Không paginate khi lọc client-side
-    } else if (selectedCity && !searchTerm) {
-      setCinemas(allCinemas); // Hiển thị toàn bộ danh sách khi không có searchTerm
+    } else {
+      setCinemas(allCinemas); // Hiển thị toàn bộ danh sách khi không có searchTerm hoặc không chọn thành phố
       setHasMore(allCinemas.length === 20); // Kiểm tra pagination
     }
   }, [searchTerm, allCinemas, selectedCity]);
@@ -107,24 +107,28 @@ const [selectedCity, setSelectedCity] = useState(null); // Mặc định null
   const fetchCinemas = async (pageNum, term) => {
     setLoading(true);
     try {
-      let data;
+      let response;
       if (selectedCity) {
         // Lấy tất cả rạp trong thành phố đã chọn
-        data = await CinemaService.searchCinemaByAddress(selectedCity, pageNum);
+        response = await CinemaService.searchCinemaByAddress(selectedCity, pageNum);
       } else if (term !== "") {
         // Tìm kiếm theo tên rạp khi không chọn thành phố
-        data = await CinemaService.searchCinemaByName(term, pageNum);
+        response = await CinemaService.searchCinemaByName(term, pageNum);
       } else {
         // Lấy tất cả rạp nếu không chọn thành phố và không có searchTerm
-        data = await CinemaService.getAllCinemas({ per_pages: 20, pages: pageNum });
+        response = await CinemaService.getAllCinemas({ per_page: 20, page: pageNum });
       }
-      // Đảm bảo data là mảng
+
+      // Xử lý dữ liệu từ API
+      const { data, last_page } = response;
+
       if (!Array.isArray(data)) {
         throw new Error("Dữ liệu rạp không đúng định dạng");
       }
+
       setAllCinemas((prev) => [...prev, ...data]);
       setCinemas((prev) => [...prev, ...data]);
-      setHasMore(data.length === 20); // per_pages là 20
+      setHasMore(pageNum < last_page);
     } catch (error) {
       message.error(error.message || "Không thể tải danh sách rạp");
       setAllCinemas((prev) => prev); // Giữ danh sách hiện tại nếu lỗi
