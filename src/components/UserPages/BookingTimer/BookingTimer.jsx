@@ -47,7 +47,7 @@ const BookingTimer = () => {
         >
           <div className={styles.timerContent}>
             <span className={styles.timerText}>
-              Booking {booking.bookingId}: {formatRemainingTime(booking.remainingTime)}
+              {booking.movieName}: {formatRemainingTime(booking.remainingTime)}
             </span>
             <Progress
               type="circle"

@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { message } from "antd";
 
@@ -9,23 +15,29 @@ export const BookingTimerProvider = ({ children }) => {
   const location = useLocation();
   const [bookings, setBookings] = useState([]); // Array of bookings
 
-  const startTimer = useCallback((bookingId, step, data = {}, path) => {
-    const deadline = new Date().getTime() + 5 * 60 * 1000; // 5 minutes from now
-    const newBooking = {
-      bookingId,
-      deadline,
-      remainingTime: 5 * 60, // Initial remaining time in seconds
-      progress: { bookingId, step, data, path },
-    };
+  const startTimer = useCallback(
+    (bookingId, movieName, step, data = {}, path) => {
+      const deadline = new Date().getTime() + 5 * 60 * 1000; // 5 minutes from now
+      const newBooking = {
+        bookingId,
+        movieName,
+        deadline,
+        remainingTime: 5 * 60, // Initial remaining time in seconds
+        progress: { bookingId, step, data, path },
+      };
 
-    setBookings((prev) => {
-      const updatedBookings = [...prev, newBooking];
-      localStorage.setItem("bookings", JSON.stringify(updatedBookings));
-      return updatedBookings;
-    });
+      setBookings((prev) => {
+        const updatedBookings = [...prev, newBooking];
+        localStorage.setItem("bookings", JSON.stringify(updatedBookings));
+        return updatedBookings;
+      });
 
-    message.warning(`Booking ${bookingId}: You have 5 minutes to complete your booking, or it will be canceled.`);
-  }, []);
+      message.warning(
+        `Booking ${bookingId}: You have 5 minutes to complete your booking, or it will be canceled.`
+      );
+    },
+    []
+  );
 
   const updateProgress = useCallback((bookingId, step, data, path) => {
     setBookings((prev) => {
@@ -36,7 +48,8 @@ export const BookingTimerProvider = ({ children }) => {
           if (
             updatedProgress.step === booking.progress.step &&
             updatedProgress.path === booking.progress.path &&
-            JSON.stringify(updatedProgress.data) === JSON.stringify(booking.progress.data)
+            JSON.stringify(updatedProgress.data) ===
+              JSON.stringify(booking.progress.data)
           ) {
             return booking; // No changes, skip update
           }
@@ -51,25 +64,33 @@ export const BookingTimerProvider = ({ children }) => {
 
   const clearTimer = useCallback((bookingId) => {
     setBookings((prev) => {
-      const updatedBookings = prev.filter((booking) => booking.bookingId !== bookingId);
+      const updatedBookings = prev.filter(
+        (booking) => booking.bookingId !== bookingId
+      );
       localStorage.setItem("bookings", JSON.stringify(updatedBookings));
       return updatedBookings;
     });
   }, []);
 
-  const resumeBooking = useCallback((bookingId) => {
-    const booking = bookings.find((b) => b.bookingId === bookingId);
-    if (booking && booking.progress.path) {
-      navigate(booking.progress.path);
-    }
-  }, [bookings, navigate]);
+  const resumeBooking = useCallback(
+    (bookingId) => {
+      const booking = bookings.find((b) => b.bookingId === bookingId);
+      if (booking && booking.progress.path) {
+        navigate(booking.progress.path);
+      }
+    },
+    [bookings, navigate]
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
       setBookings((prev) => {
         const updatedBookings = prev.map((booking) => {
           const now = new Date().getTime();
-          const timeLeft = Math.max(0, Math.floor((booking.deadline - now) / 1000));
+          const timeLeft = Math.max(
+            0,
+            Math.floor((booking.deadline - now) / 1000)
+          );
           return { ...booking, remainingTime: timeLeft };
         });
 
@@ -107,7 +128,13 @@ export const BookingTimerProvider = ({ children }) => {
 
   return (
     <BookingTimerContext.Provider
-      value={{ bookings, startTimer, updateProgress, clearTimer, resumeBooking }}
+      value={{
+        bookings,
+        startTimer,
+        updateProgress,
+        clearTimer,
+        resumeBooking,
+      }}
     >
       {children}
     </BookingTimerContext.Provider>
@@ -117,7 +144,9 @@ export const BookingTimerProvider = ({ children }) => {
 export const useBookingTimer = () => {
   const context = useContext(BookingTimerContext);
   if (!context) {
-    throw new Error("useBookingTimer must be used within a BookingTimerProvider");
+    throw new Error(
+      "useBookingTimer must be used within a BookingTimerProvider"
+    );
   }
   return context;
 };

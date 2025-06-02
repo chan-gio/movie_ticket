@@ -129,9 +129,10 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
       setLoading(true);
       const response = await BookingService.createBooking(bookingData);
       const bookingId = response.booking_id;
+      const movieName = response.movie_title; 
       if (bookingId) {
         const path = `/seats/${selectedRoomId}/${bookingId}`;
-        startTimer(bookingId, "SeatSelection", { selectedDate, selectedTime, selectedRoomId }, path);
+        startTimer(bookingId, movieName, "SeatSelection", { selectedDate, selectedTime, selectedRoomId }, path);
         navigate(path);
       } else {
         throw new Error("Booking ID not returned from server.");
