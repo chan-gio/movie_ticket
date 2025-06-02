@@ -216,6 +216,28 @@ const BookingService = {
       throw new Error(message);
     }
   },
+
+    // Update barcode URL for a booking
+  updateBarcode: async (bookingId, barcodeUrl) => {
+    try {
+      const response = await api.patch(`/bookings/${bookingId}/barcode`, {
+        barcode: barcodeUrl,
+      });
+      if (response.data.code === 200) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || "Failed to update barcode URL");
+      }
+    } catch (error) {
+      const message =
+        error.response?.status === 500
+          ? "Server error: Unable to update barcode URL. Please try again later."
+          : error.response?.data?.message || "Failed to update barcode URL";
+      throw new Error(message);
+    }
+  },
 };
+
+
 
 export default BookingService;
