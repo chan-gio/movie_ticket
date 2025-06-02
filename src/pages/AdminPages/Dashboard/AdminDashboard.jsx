@@ -29,10 +29,13 @@ import {
 } from "recharts";
 import styles from "./AdminDashboard.module.scss";
 import "../GlobalStyles.module.scss";
-import DashboardService from "../../../services/DashboardService"; // Import the DashboardService
+import DashboardService from "../../../services/DashboardService";
 
 const { Title, Text: TypographyText } = Typography;
 const { Option } = Select;
+
+// Formatter for Vietnamese number format (e.g., 1000000 -> 1.000.000)
+const numberFormatter = new Intl.NumberFormat("vi-VN");
 
 function AdminDashboard() {
   const [dashboardData, setDashboardData] = useState({
@@ -95,12 +98,14 @@ function AdminDashboard() {
       sorter: (a, b) => a.cinema_name.localeCompare(b.cinema_name),
     },
     {
-      title: "Total Price ($)",
+      title: "Total Price (VND)",
       dataIndex: "total_price",
       key: "total_price",
-      sorter: (a, b) => a.total_price - b.total_price,
+      sorter: (a, b) => (a.total_price ?? 0) - (b.total_price ?? 0),
       render: (price) => (
-        <TypographyText type="success">${price}</TypographyText>
+        <TypographyText type="success">
+          {numberFormatter.format(price ?? 0)} VND
+        </TypographyText>
       ),
     },
     {
@@ -214,7 +219,7 @@ function AdminDashboard() {
                   }
                   value={dashboardData.totalRevenue}
                   prefix={<DollarOutlined />}
-                  suffix="$"
+                  suffix="VND"
                   valueStyle={{ color: "#5f2eea" }}
                 />
               </Card>
@@ -258,7 +263,7 @@ function AdminDashboard() {
                     <YAxis
                       stroke="#6b7280"
                       label={{
-                        value: "Revenue ($)",
+                        value: "Revenue (VND)",
                         angle: -90,
                         position: "insideLeft",
                         offset: -10,
@@ -272,7 +277,7 @@ function AdminDashboard() {
                         borderRadius: "8px",
                       }}
                       labelStyle={{ color: "#14142b" }}
-                      formatter={(value) => `$${value}`}
+                      formatter={(value) => `${value} VND`}
                     />
                     <Legend verticalAlign="top" height={36} />
                     <Line
@@ -334,7 +339,8 @@ function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Top Cinemas by Bookings */}
+          {/* Top Cinemeker" contentType="text/jsx">
+as by Bookings */}
           <div className={styles.section}>
             <Title level={3} className={styles.sectionTitle}>
               Top Cinemas by Bookings
