@@ -1,15 +1,13 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Row, Col, Typography, Select } from 'antd';
-import { toastSuccess, toastError } from '../../../utils/toastNotifier';
-import CinemaService from '../../../services/CinemaService';
-import styles from './AdminAddCinemaForm.module.scss';
-import { VietnamCities } from '../../../../public/assets/VietnamCities'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Form, Input, Button, Row, Col, Typography, Select } from "antd";
+import { toastSuccess, toastError } from "../../../utils/toastNotifier";
+import CinemaService from "../../../services/CinemaService";
+import styles from "./AdminAddCinemaForm.module.scss";
+import { VietnamCities } from "../../../../public/assets/VietnamCities";
 
 const { Title } = Typography;
 const { Option } = Select;
-
-
 
 const AdminAddCinemaForm = () => {
   const navigate = useNavigate();
@@ -26,10 +24,10 @@ const AdminAddCinemaForm = () => {
 
       await CinemaService.createCinema(cinemaData);
 
-      toastSuccess('Cinema added successfully');
-      navigate('/admin/manage_cinema');
+      toastSuccess("Cinema added successfully");
+      navigate("/admin/manage_cinema");
     } catch (error) {
-      toastError(error.message || 'Failed to add cinema');
+      toastError(error.message || "Failed to add cinema");
     } finally {
       setSubmitting(false);
     }
@@ -58,7 +56,9 @@ const AdminAddCinemaForm = () => {
                 <Form.Item
                   label="Name"
                   name="name"
-                  rules={[{ required: true, message: 'Please enter the cinema name' }]}
+                  rules={[
+                    { required: true, message: "Please enter the cinema name" },
+                  ]}
                 >
                   <Input
                     placeholder="Enter cinema name"
@@ -73,7 +73,12 @@ const AdminAddCinemaForm = () => {
                 <Form.Item
                   label="Address"
                   name="cinema_address"
-                  rules={[{ required: true, message: 'Please enter the cinema address' }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter the cinema address",
+                    },
+                  ]}
                 >
                   <Input
                     placeholder="Enter cinema address"
@@ -86,7 +91,7 @@ const AdminAddCinemaForm = () => {
                 <Form.Item
                   label="City"
                   name="cinema_city"
-                  rules={[{ required: true, message: 'Please select a city' }]}
+                  rules={[{ required: true, message: "Please select a city" }]}
                 >
                   <Select
                     showSearch
@@ -95,7 +100,9 @@ const AdminAddCinemaForm = () => {
                     autoComplete="new-cinema-city"
                     data-form-type="cinema-city"
                     filterOption={(input, option) =>
-                      option.children.toLowerCase().includes(input.toLowerCase())
+                      option.children
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
                     }
                   >
                     {VietnamCities.map((city) => (
@@ -118,7 +125,7 @@ const AdminAddCinemaForm = () => {
                 Add Cinema
               </Button>
               <Button
-                onClick={() => navigate('/admin/manage_cinema')}
+                onClick={() => navigate("/admin/manage_cinema")}
                 style={{ marginLeft: 8 }}
                 disabled={submitting}
               >

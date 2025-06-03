@@ -62,7 +62,7 @@ function AdminManageCinema() {
       } catch (error) {
         console.error("Fetch total cinemas error:", error.message);
         setTotalCinemas(0);
-        toast.error("Không thể lấy tổng số rạp", {
+        toast.error("Unable to retrieve total cinemas", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -85,13 +85,21 @@ function AdminManageCinema() {
       if (searchTerm) {
         // Search by name or address
         if (searchType === "name") {
-          response = await CinemaService.searchCinemaByName(searchTerm, pagination.current, {
-            per_page: pagination.pageSize,
-          });
+          response = await CinemaService.searchCinemaByName(
+            searchTerm,
+            pagination.current,
+            {
+              per_page: pagination.pageSize,
+            }
+          );
         } else {
-          response = await CinemaService.searchCinemaByAddress(searchTerm, pagination.current, {
-            per_page: pagination.pageSize,
-          });
+          response = await CinemaService.searchCinemaByAddress(
+            searchTerm,
+            pagination.current,
+            {
+              per_page: pagination.pageSize,
+            }
+          );
         }
       } else {
         // Get all cinemas
@@ -129,7 +137,7 @@ function AdminManageCinema() {
 
       // Show toast for no results if search was performed
       if (searchTerm && cinemaData.length === 0) {
-        toast.info("Không tìm thấy rạp chiếu phim phù hợp", {
+        toast.info("No matching cinemas found", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -144,7 +152,7 @@ function AdminManageCinema() {
       setCinemas([]); // Ensure empty array on error
       setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
       setSelectedCinemaId(null);
-      toast.error(error.message || "Không thể tải dữ liệu rạp", {
+      toast.error(error.message || "Unable to load cinema data", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -203,7 +211,7 @@ function AdminManageCinema() {
           remainingCinemas.length > 0 ? remainingCinemas[0].cinema_id : null
         );
       }
-      toast.success("Xóa rạp thành công", {
+      toast.success("Cinema deleted successfully", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -213,7 +221,7 @@ function AdminManageCinema() {
         progressStyle: { background: "#5f2eea" },
       });
     } catch (error) {
-      toast.error(error.message || "Xóa rạp thất bại", {
+      toast.error(error.message || "Failed to delete cinema", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -244,19 +252,19 @@ function AdminManageCinema() {
       render: (text) => <TypographyText strong>{text}</TypographyText>,
     },
     {
-      title: "Tên Rạp",
+      title: "Name",
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: "Địa Chỉ",
+      title: "Address",
       dataIndex: "address",
       key: "address",
       sorter: (a, b) => a.address.localeCompare(b.address),
     },
     {
-      title: "Hành Động",
+      title: "Actions",
       key: "actions",
       render: (_, record) => (
         <Space>
@@ -269,7 +277,7 @@ function AdminManageCinema() {
             className={styles.editButton}
             disabled={deleting}
           >
-            Sửa
+            Edit
           </Button>
           <Button
             type="primary"
@@ -278,10 +286,10 @@ function AdminManageCinema() {
             className={styles.roomsButton}
             disabled={deleting}
           >
-            Quản Lý Phòng
+            Manage Rooms
           </Button>
           <Popconfirm
-            title="Bạn có chắc muốn xóa rạp này? Tất cả phòng liên quan cũng sẽ bị xóa."
+            title="Are you sure you want to delete this cinema? All related rooms will also be deleted."
             onConfirm={() => handleDeleteCinema(record.cinema_id)}
             disabled={deleting}
           >
@@ -291,7 +299,7 @@ function AdminManageCinema() {
               className={styles.deleteButton}
               disabled={deleting}
             >
-              Xóa
+              Delete
             </Button>
           </Popconfirm>
         </Space>
@@ -304,7 +312,7 @@ function AdminManageCinema() {
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Quản Lý Rạp Chiếu Phim
+            Manage Cinemas
           </Title>
         </Col>
         <Col>
@@ -316,7 +324,7 @@ function AdminManageCinema() {
               className={styles.addButton}
               disabled={deleting}
             >
-              Thêm Rạp
+              Add Cinema
             </Button>
             <Button
               type="primary"
@@ -325,7 +333,7 @@ function AdminManageCinema() {
               className={styles.viewDeletedButton}
               disabled={deleting}
             >
-              Xem Rạp Đã Xóa
+              View Deleted Cinemas
             </Button>
             <Button
               type="primary"
@@ -335,7 +343,7 @@ function AdminManageCinema() {
               className={styles.refreshButton}
               disabled={deleting}
             >
-              Làm Mới
+              Refresh
             </Button>
           </Space>
         </Col>
@@ -344,7 +352,9 @@ function AdminManageCinema() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Tổng Số Rạp</span>}
+              title={
+                <span className={styles.statisticTitle}>Total Cinemas</span>
+              }
               value={totalCinemas}
               valueStyle={{ color: "#5f2eea" }}
             />
@@ -360,11 +370,13 @@ function AdminManageCinema() {
               style={{ width: 150 }}
               className={styles.select}
             >
-              <Option value="name">Tìm Theo Tên</Option>
-              <Option value="address">Tìm Theo Địa Chỉ</Option>
+              <Option value="name">Search by Name</Option>
+              <Option value="address">Search by Address</Option>
             </Select>
             <Search
-              placeholder={`Nhập ${searchType === "name" ? "tên rạp" : "địa chỉ"}`}
+              placeholder={`Enter ${
+                searchType === "name" ? "cinema name" : "address"
+              }`}
               value={inputValue}
               onChange={handleSearchChange}
               onSearch={handleSearch}
@@ -392,7 +404,7 @@ function AdminManageCinema() {
                   ...pagination,
                   showSizeChanger: true,
                   pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Tổng ${total} rạp`,
+                  showTotal: (total) => `Total ${total} cinemas`,
                   onChange: (page, pageSize) =>
                     handleTableChange({ current: page, pageSize }),
                 }}
@@ -401,7 +413,7 @@ function AdminManageCinema() {
                 locale={{
                   emptyText: (
                     <TypographyText className={styles.emptyText}>
-                      Không tìm thấy rạp
+                      No cinemas found
                     </TypographyText>
                   ),
                 }}

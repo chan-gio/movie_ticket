@@ -61,7 +61,7 @@ function AdminManageMovie() {
       } catch (error) {
         console.error("Fetch total movies error:", error.message);
         setTotalMovies(0);
-        toast.error("Không thể lấy tổng số phim", {
+        toast.error("Unable to fetch total movies", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -118,7 +118,7 @@ function AdminManageMovie() {
       }
 
       if (searchTerm && movieData.length === 0) {
-        toast.info("Không tìm thấy phim phù hợp", {
+        toast.info("No movies found", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -132,7 +132,7 @@ function AdminManageMovie() {
       console.error("Load data error:", error.message);
       setMovies([]);
       setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
-      toast.error(error.message || "Không thể tải dữ liệu phim", {
+      toast.error(error.message || "Unable to load movie data", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -183,7 +183,7 @@ function AdminManageMovie() {
       await MovieService.softDeleteMovie(id);
       setMovies(movies.filter((movie) => movie.movie_id !== id));
       setTotalMovies((prev) => Math.max(0, prev - 1));
-      toast.success("Xóa phim thành công", {
+      toast.success("Movie deleted successfully", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -193,7 +193,7 @@ function AdminManageMovie() {
         progressStyle: { background: "#5f2eea" },
       });
     } catch (error) {
-      toast.error(error.message || "Xóa phim thất bại", {
+      toast.error(error.message || "Failed to delete movie", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -216,7 +216,7 @@ function AdminManageMovie() {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("vi-VN", {
+    return new Date(date).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -232,26 +232,28 @@ function AdminManageMovie() {
       render: (text) => <TypographyText strong>{text}</TypographyText>,
     },
     {
-      title: "Tên Phim",
+      title: "Movie Title",
       dataIndex: "title",
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
     },
     {
-      title: "Mô Tả",
+      title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (text) => <TypographyText>{text?.slice(0, 50) + "..."}</TypographyText>,
+      render: (text) => (
+        <TypographyText>{text?.slice(0, 50) + "..."}</TypographyText>
+      ),
     },
     {
-      title: "Thời Lượng (phút)",
+      title: "Duration (minutes)",
       dataIndex: "duration",
       key: "duration",
       sorter: (a, b) => a.duration - b.duration,
-      render: (duration) => <TypographyText>{duration} phút</TypographyText>,
+      render: (duration) => <TypographyText>{duration} minutes</TypographyText>,
     },
     {
-      title: "Ngày Phát Hành",
+      title: "Release Date",
       dataIndex: "release_date",
       key: "release_date",
       sorter: (a, b) => new Date(a.release_date) - new Date(b.release_date),
@@ -280,27 +282,29 @@ function AdminManageMovie() {
       ),
     },
     {
-      title: "Xếp Hạng Người Lớn",
+      title: "Adult Rating",
       dataIndex: "adult",
       key: "adult",
       render: (rating) => <TypographyText>{rating || "N/A"}</TypographyText>,
     },
     {
-      title: "Hành Động",
+      title: "Actions",
       key: "actions",
       render: (_, record) => (
         <Space>
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={() => navigate(`/admin/manage_movie/edit/${record.movie_id}`)}
+            onClick={() =>
+              navigate(`/admin/manage_movie/edit/${record.movie_id}`)
+            }
             className={styles.editButton}
             disabled={deleting}
           >
-            Sửa
+            Edit
           </Button>
           <Popconfirm
-            title="Bạn có chắc muốn xóa phim này?"
+            title="Are you sure you want to delete this movie?"
             onConfirm={() => handleDeleteMovie(record.movie_id)}
             disabled={deleting}
           >
@@ -310,7 +314,7 @@ function AdminManageMovie() {
               className={styles.deleteButton}
               disabled={deleting}
             >
-              Xóa
+              Delete
             </Button>
           </Popconfirm>
         </Space>
@@ -323,7 +327,7 @@ function AdminManageMovie() {
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Quản Lý Phim
+            Manage Movies
           </Title>
         </Col>
         <Col>
@@ -335,7 +339,7 @@ function AdminManageMovie() {
               className={styles.addButton}
               disabled={deleting}
             >
-              Thêm Phim
+              Add Movie
             </Button>
             <Button
               type="primary"
@@ -344,7 +348,7 @@ function AdminManageMovie() {
               className={styles.viewDeletedButton}
               disabled={deleting}
             >
-              Xem Phim Đã Xóa
+              View Deleted Movies
             </Button>
             <Button
               type="primary"
@@ -354,7 +358,7 @@ function AdminManageMovie() {
               className={styles.refreshButton}
               disabled={deleting}
             >
-              Làm Mới
+              Refresh
             </Button>
           </Space>
         </Col>
@@ -363,7 +367,9 @@ function AdminManageMovie() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Tổng Số Phim</span>}
+              title={
+                <span className={styles.statisticTitle}>Total Movies</span>
+              }
               value={totalMovies}
               valueStyle={{ color: "#5f2eea" }}
             />
@@ -379,12 +385,12 @@ function AdminManageMovie() {
               style={{ width: 150 }}
               className={styles.select}
             >
-              <Option value="title">Tìm Theo Tên</Option>
-              <Option value="adult">Tìm Theo Xếp Hạng</Option>
+              <Option value="title">Search by Title</Option>
+              <Option value="adult">Search by Rating</Option>
             </Select>
             {searchType === "title" ? (
               <Search
-                placeholder="Nhập tên phim"
+                placeholder="Enter movie title"
                 value={inputValue}
                 onChange={handleSearchChange}
                 onSearch={handleSearch}
@@ -402,7 +408,7 @@ function AdminManageMovie() {
                 }}
                 style={{ width: 200 }}
                 className={styles.select}
-                placeholder="Chọn xếp hạng"
+                placeholder="Select rating"
                 allowClear
               >
                 <Option value="G">G</Option>
@@ -431,7 +437,7 @@ function AdminManageMovie() {
                   ...pagination,
                   showSizeChanger: true,
                   pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Tổng ${total} phim`,
+                  showTotal: (total) => `Total ${total} movies`,
                   onChange: (page, pageSize) =>
                     handleTableChange({ current: page, pageSize }),
                 }}
@@ -440,7 +446,7 @@ function AdminManageMovie() {
                 locale={{
                   emptyText: (
                     <TypographyText className={styles.emptyText}>
-                      Không tìm thấy phim
+                      No movies found
                     </TypographyText>
                   ),
                 }}

@@ -55,7 +55,7 @@ function DeletedMovies() {
       } catch (error) {
         console.error("Fetch total deleted movies error:", error.message);
         setTotalDeletedMovies(0);
-        toast.error("Không thể lấy tổng số phim đã xóa", {
+        toast.error("Unable to retrieve total deleted movies", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -104,7 +104,7 @@ function DeletedMovies() {
       }
 
       if (searchTerm && movieData.length === 0) {
-        toast.info("Không tìm thấy phim phù hợp", {
+        toast.info("No matching movies found", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -118,7 +118,7 @@ function DeletedMovies() {
       console.error("Load data error:", error.message);
       setMovies([]);
       setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
-      toast.error(error.message || "Không thể tải dữ liệu phim", {
+      toast.error(error.message || "Unable to load movie data", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -160,7 +160,7 @@ function DeletedMovies() {
       await MovieService.restoreMovie(id);
       setMovies(movies.filter((movie) => movie.movie_id !== id));
       setTotalDeletedMovies((prev) => Math.max(0, prev - 1));
-      toast.success("Khôi phục phim thành công", {
+      toast.success("Movie restored successfully", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -170,7 +170,7 @@ function DeletedMovies() {
         progressStyle: { background: "#5f2eea" },
       });
     } catch (error) {
-      toast.error(error.message || "Khôi phục phim thất bại", {
+      toast.error(error.message || "Failed to restore movie", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -193,7 +193,7 @@ function DeletedMovies() {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("vi-VN", {
+    return new Date(date).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -209,26 +209,28 @@ function DeletedMovies() {
       render: (text) => <TypographyText strong>{text}</TypographyText>,
     },
     {
-      title: "Tên Phim",
+      title: "Title",
       dataIndex: "title",
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
     },
     {
-      title: "Mô Tả",
+      title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (text) => <TypographyText>{text?.slice(0, 50) + "..."}</TypographyText>,
+      render: (text) => (
+        <TypographyText>{text?.slice(0, 50) + "..."}</TypographyText>
+      ),
     },
     {
-      title: "Thời Lượng (phút)",
+      title: "Duration (minutes)",
       dataIndex: "duration",
       key: "duration",
       sorter: (a, b) => a.duration - b.duration,
-      render: (duration) => <TypographyText>{duration} phút</TypographyText>,
+      render: (duration) => <TypographyText>{duration} minutes</TypographyText>,
     },
     {
-      title: "Ngày Phát Hành",
+      title: "Release Date",
       dataIndex: "release_date",
       key: "release_date",
       sorter: (a, b) => new Date(a.release_date) - new Date(b.release_date),
@@ -257,18 +259,18 @@ function DeletedMovies() {
       ),
     },
     {
-      title: "Xếp Hạng Người Lớn",
+      title: "Adult Rating",
       dataIndex: "adult",
       key: "adult",
       render: (rating) => <TypographyText>{rating || "N/A"}</TypographyText>,
     },
     {
-      title: "Hành Động",
+      title: "Actions",
       key: "actions",
       render: (_, record) => (
         <Space>
           <Popconfirm
-            title="Bạn có chắc muốn khôi phục phim này?"
+            title="Are you sure you want to restore this movie?"
             onConfirm={() => handleRestoreMovie(record.movie_id)}
             disabled={restoring}
           >
@@ -278,7 +280,7 @@ function DeletedMovies() {
               className={styles.restoreButton}
               disabled={restoring}
             >
-              Khôi Phục
+              Restore
             </Button>
           </Popconfirm>
         </Space>
@@ -291,7 +293,7 @@ function DeletedMovies() {
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Quản Lý Phim Đã Xóa
+            Manage Deleted Movies
           </Title>
         </Col>
         <Col>
@@ -303,7 +305,7 @@ function DeletedMovies() {
               className={styles.backButton}
               disabled={restoring}
             >
-              Quay Lại Quản Lý Phim
+              Back to Movie Management
             </Button>
             <Button
               type="primary"
@@ -313,7 +315,7 @@ function DeletedMovies() {
               className={styles.refreshButton}
               disabled={restoring}
             >
-              Làm Mới
+              Refresh
             </Button>
           </Space>
         </Col>
@@ -322,7 +324,11 @@ function DeletedMovies() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Tổng Số Phim Đã Xóa</span>}
+              title={
+                <span className={styles.statisticTitle}>
+                  Total Deleted Movies
+                </span>
+              }
               value={totalDeletedMovies}
               valueStyle={{ color: "#5f2eea" }}
             />
@@ -333,7 +339,7 @@ function DeletedMovies() {
         <Col xs={24} md={12}>
           <Space style={{ marginBottom: 16, width: "100%" }}>
             <Search
-              placeholder="Nhập tên phim"
+              placeholder="Enter movie title"
               value={inputValue}
               onChange={handleSearchChange}
               onSearch={handleSearch}
@@ -361,7 +367,7 @@ function DeletedMovies() {
                   ...pagination,
                   showSizeChanger: true,
                   pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Tổng ${total} phim`,
+                  showTotal: (total) => `Total ${total} movies`,
                   onChange: (page, pageSize) =>
                     handleTableChange({ current: page, pageSize }),
                 }}
@@ -370,7 +376,7 @@ function DeletedMovies() {
                 locale={{
                   emptyText: (
                     <TypographyText className={styles.emptyText}>
-                      Không tìm thấy phim
+                      No movies found
                     </TypographyText>
                   ),
                 }}

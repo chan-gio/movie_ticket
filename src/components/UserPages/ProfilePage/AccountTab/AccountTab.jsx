@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
-import { Card, Row, Col, Typography, Form, Input, Button, Alert, Skeleton } from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Typography,
+  Form,
+  Input,
+  Button,
+  Alert,
+  Skeleton,
+} from "antd";
 import styles from "./AccountTab.module.scss";
 import UserService from "../../../../services/UserService";
 
@@ -173,11 +183,14 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
                 name="phoneNumber"
                 rules={[
                   { required: true, message: "Please enter your phone number" },
-                  { pattern: /^\d+$/, message: "Phone number must contain only digits" },
+                  {
+                    pattern: /^\d+$/,
+                    message: "Phone number must contain only digits",
+                  },
                 ]}
               >
                 <Input
-                  addonBefore="+62"
+                  addonBefore="+84"
                   placeholder="Enter your phone number"
                 />
               </Form.Item>
@@ -233,13 +246,18 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
                 name="confirmPassword"
                 dependencies={["newPassword"]}
                 rules={[
-                  { required: true, message: "Please confirm your new password" },
+                  {
+                    required: true,
+                    message: "Please confirm your new password",
+                  },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue("newPassword") === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(new Error("Passwords do not match"));
+                      return Promise.reject(
+                        new Error("Passwords do not match")
+                      );
                     },
                   }),
                 ]}

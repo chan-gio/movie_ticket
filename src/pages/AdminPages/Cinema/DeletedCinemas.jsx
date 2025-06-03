@@ -54,13 +54,21 @@ function DeletedCinemas() {
       if (searchTerm) {
         // Search by name or address
         if (searchType === "name") {
-          response = await CinemaService.searchDeletedCinemaByName(searchTerm, pagination.current, {
-            per_page: pagination.pageSize,
-          });
+          response = await CinemaService.searchDeletedCinemaByName(
+            searchTerm,
+            pagination.current,
+            {
+              per_page: pagination.pageSize,
+            }
+          );
         } else {
-          response = await CinemaService.searchDeletedCinemaByAddress(searchTerm, pagination.current, {
-            per_page: pagination.pageSize,
-          });
+          response = await CinemaService.searchDeletedCinemaByAddress(
+            searchTerm,
+            pagination.current,
+            {
+              per_page: pagination.pageSize,
+            }
+          );
         }
       } else {
         // Get all deleted cinemas
@@ -91,7 +99,7 @@ function DeletedCinemas() {
 
       // Show toast for no results if search was performed
       if (searchTerm && cinemaData.length === 0) {
-        toast.info("Không tìm thấy rạp chiếu phim phù hợp", {
+        toast.info("No matching cinemas found", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -105,7 +113,7 @@ function DeletedCinemas() {
       console.error("Load data error:", error.message);
       setCinemas([]); // Ensure empty array on error
       setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
-      toast.error(error.message || "Không thể tải dữ liệu rạp", {
+      toast.error(error.message || "Unable to load cinema data", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -155,7 +163,7 @@ function DeletedCinemas() {
     try {
       await CinemaService.restoreCinema(id);
       setCinemas(cinemas.filter((cinema) => cinema.cinema_id !== id));
-      toast.success("Khôi phục rạp thành công", {
+      toast.success("Cinema restored successfully", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -165,7 +173,7 @@ function DeletedCinemas() {
         progressStyle: { background: "#5f2eea" },
       });
     } catch (error) {
-      toast.error(error.message || "Khôi phục rạp thất bại", {
+      toast.error(error.message || "Failed to restore cinema", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -196,24 +204,24 @@ function DeletedCinemas() {
       render: (text) => <TypographyText strong>{text}</TypographyText>,
     },
     {
-      title: "Tên Rạp",
+      title: "Name",
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: "Địa Chỉ",
+      title: "Address",
       dataIndex: "address",
       key: "address",
       sorter: (a, b) => a.address.localeCompare(b.address),
     },
     {
-      title: "Hành Động",
+      title: "Actions",
       key: "actions",
       render: (_, record) => (
         <Space>
           <Popconfirm
-            title="Bạn có chắc muốn khôi phục rạp này?"
+            title="Are you sure you want to restore this cinema?"
             onConfirm={() => handleRestoreCinema(record.cinema_id)}
             disabled={restoring}
           >
@@ -223,7 +231,7 @@ function DeletedCinemas() {
               className={styles.restoreButton}
               disabled={restoring}
             >
-              Khôi Phục
+              Restore
             </Button>
           </Popconfirm>
         </Space>
@@ -236,7 +244,7 @@ function DeletedCinemas() {
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Quản Lý Rạp Đã Xóa
+            Manage Deleted Cinemas
           </Title>
         </Col>
         <Col>
@@ -248,7 +256,7 @@ function DeletedCinemas() {
               className={styles.backButton}
               disabled={restoring}
             >
-              Quay Lại Quản Lý Rạp
+              Back to Cinema Management
             </Button>
             <Button
               type="primary"
@@ -258,7 +266,7 @@ function DeletedCinemas() {
               className={styles.refreshButton}
               disabled={restoring}
             >
-              Làm Mới
+              Refresh
             </Button>
           </Space>
         </Col>
@@ -267,7 +275,11 @@ function DeletedCinemas() {
         <Col xs={24} lg={8}>
           <Card className={styles.statisticCard} hoverable>
             <Statistic
-              title={<span className={styles.statisticTitle}>Tổng Số Rạp Đã Xóa</span>}
+              title={
+                <span className={styles.statisticTitle}>
+                  Total Deleted Cinemas
+                </span>
+              }
               value={pagination.total}
               valueStyle={{ color: "#5f2eea" }}
             />
@@ -283,11 +295,13 @@ function DeletedCinemas() {
               style={{ width: 150 }}
               className={styles.select}
             >
-              <Option value="name">Tìm Theo Tên</Option>
-              <Option value="address">Tìm Theo Địa Chỉ</Option>
+              <Option value="name">Search by Name</Option>
+              <Option value="address">Search by Address</Option>
             </Select>
             <Search
-              placeholder={`Nhập ${searchType === "name" ? "tên rạp" : "địa chỉ"}`}
+              placeholder={`Enter ${
+                searchType === "name" ? "cinema name" : "address"
+              }`}
               value={inputValue}
               onChange={handleSearchChange}
               onSearch={handleSearch}
@@ -315,7 +329,7 @@ function DeletedCinemas() {
                   ...pagination,
                   showSizeChanger: true,
                   pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Tổng ${total} rạp`,
+                  showTotal: (total) => `Total ${total} cinemas`,
                   onChange: (page, pageSize) =>
                     handleTableChange({ current: page, pageSize }),
                 }}
@@ -324,7 +338,7 @@ function DeletedCinemas() {
                 locale={{
                   emptyText: (
                     <TypographyText className={styles.emptyText}>
-                      Không tìm thấy rạp
+                      No cinemas found
                     </TypographyText>
                   ),
                 }}
