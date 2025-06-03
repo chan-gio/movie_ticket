@@ -65,7 +65,7 @@ function CinemaPage() {
           };
         }
         movies[movieId].times.push({
-          time: moment(showtime.start_time).format("HH:mm"),
+          time: moment.utc(showtime.start_time).format("HH:mm"), // Parse as UTC
           room: showtime.room.room_name || showtime.room.room_id || "Unknown",
           showtimeId: showtime.showtime_id,
           roomId: showtime.room.room_id,

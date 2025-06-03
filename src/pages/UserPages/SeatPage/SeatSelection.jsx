@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton } from "antd";
+import moment from "moment";
 import styles from "./SeatSelection.module.scss";
 import SeatService from "../../../services/SeatService";
 import BookingService from "../../../services/BookingService";
@@ -112,21 +113,36 @@ function SeatSelection() {
 
   const { rows, cols } = parseSeatLayout();
 
+  const formatTime = (dateString) => {
+    return dateString ? moment.utc(dateString).format("HH:mm") : "Unknown";
+  };
+
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   const orderInfo = booking
     ? {
         movieTitle: booking.showtime?.movie?.title || "Unknown Movie",
         cinema: booking.showtime?.room?.cinema?.name || "Cinema 1",
+        roomName: booking.showtime?.room?.name || "Unknown Room",
         picture: booking.showtime?.movie?.poster_url || "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
         date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split("T")[0] : "Unknown Date",
-        time: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Unknown Time",
+        time: booking.showtime?.start_time ? formatTime(booking.showtime.start_time) : "Unknown Time",
         basePrice: booking.showtime?.price || 0,
       }
     : {
         movieTitle: "Movie 1",
         cinema: "Cinema 1",
+        roomName: "Unknown Room",
         picture: "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
-        date: "2025-05-15",
-        time: "2:00 PM",
+        date: "2025-06-06",
+        time: "21:31",
         basePrice: 10,
       };
 
@@ -163,8 +179,9 @@ function SeatSelection() {
       ? seatBookingStatus.find((s) => s.seat_number === seatNumber)
       : null;
     const isBooked = seatStatus ? seatStatus.is_booked : false;
+    const seatType = seat.seat_type.toUpperCase();
 
-    if (isBooked) {
+    if (isBooked || seatType === "UNAVAILABLE") {
       return;
     }
 
@@ -172,7 +189,7 @@ function SeatSelection() {
       let newSeats = [...prev];
       const isSelected = prev.includes(seatNumber);
 
-      if (seat.seat_type.toUpperCase() === "COUPLE") {
+      if (seatType === "COUPLE") {
         const row = seatNumber.match(/^[A-Z]+/)[0];
         const col = parseInt(seatNumber.match(/\d+$/)[0]);
         let pairSeat;
@@ -214,17 +231,6 @@ function SeatSelection() {
       updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
       console.log("SELECTED SEATS:", selectedSeats);
       return newSeats;
-    });
-
-
-    
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
     });
   };
 
@@ -423,6 +429,8 @@ function SeatSelection() {
                           ? styles.seatVip
                           : seatType === "COUPLE"
                           ? styles.seatCouple
+                          : seatType === "UNAVAILABLE"
+                          ? styles.seatUnavailable
                           : styles.seatStandard;
 
                         return (
@@ -433,7 +441,7 @@ function SeatSelection() {
                                   isSelected ? styles.seatSelected : ""
                                 }`}
                                 onClick={() => toggleSeat(seatNumber)}
-                                disabled={isBooked}
+                                disabled={isBooked || seatType === "UNAVAILABLE"}
                               >
                                 {col}
                               </Button>
@@ -488,6 +496,12 @@ function SeatSelection() {
                   <Paragraph>Sold</Paragraph>
                 </Space>
               </Col>
+              <Col xs={12} sm={5}>
+                <Space>
+                  <Tag className={styles.unavailableBox}></Tag>
+                  <Paragraph>Unavailable</Paragraph>
+                </Space>
+              </Col>
             </Row>
           </Card>
           <Row gutter={[16, 16]} className={styles.checkoutButtons}>
@@ -531,6 +545,10 @@ function SeatSelection() {
               <Paragraph className={styles.value}>
                 {orderInfo.movieTitle}
               </Paragraph>
+            </Row>
+            <Row justify="space-between">
+              <Paragraph className={styles.label}>Room</Paragraph>
+              <Paragraph className={styles.value}>{orderInfo.roomName}</Paragraph>
             </Row>
             <Row justify="space-between">
               <Paragraph className={styles.label}>

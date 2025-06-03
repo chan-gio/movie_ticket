@@ -668,17 +668,7 @@ function AdminManageSeats() {
                   Back to Rooms
                 </Button>
               </Col>
-              <Col xs={24} md={12}>
-                <Button
-                  type="primary"
-                  block
-                  onClick={handleSave}
-                  className={styles.saveButton}
-                  loading={savingSeats}
-                >
-                  Save Changes
-                </Button>
-              </Col>
+              
             </Row>
           </Card>
         </Col>

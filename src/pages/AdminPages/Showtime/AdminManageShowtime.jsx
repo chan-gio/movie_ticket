@@ -22,6 +22,7 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import ShowTimeService from "../../../services/ShowtimeService";
+import moment from "moment"; // Added moment import
 import styles from "./AdminManageShowtime.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -102,10 +103,7 @@ function AdminManageShowtime() {
   };
 
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return moment.utc(dateTime).format("D MMM YYYY, HH:mm");
   };
 
   const showtimeColumns = [

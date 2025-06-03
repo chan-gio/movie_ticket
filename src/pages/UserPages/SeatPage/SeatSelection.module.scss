@@ -134,10 +134,25 @@
 }
 
 .seatNotAvailable {
-  background-color: #a4a4a4;
+  background-color: #4eb4eb;
   &:hover {
     background-color: #c0c0c0;
   }
+}
+
+.seatUnavailable {
+  background-color: #a4a4a4 !important;
+  border: 1px solid #8c8c8c;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.unavailableBox {
+  background-color: #a4a4a4;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #8c8c8c;
 }
 
 .emptySeat {
@@ -186,7 +201,7 @@
 .notAvailableBox {
   width: 30px;
   height: 30px;
-  background-color: #a4a4a4;
+  background-color: #4eb4eb;
   border: none;
   border-radius: 4px;
 }

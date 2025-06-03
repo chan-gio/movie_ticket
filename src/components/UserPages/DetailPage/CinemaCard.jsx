@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Typography, Button, Space, Select, message, Progress } from "antd";
 import { CalendarOutlined } from "@ant-design/icons";
+import moment from "moment"; // Added moment import
 import styles from "./CinemaCard.module.scss";
 import BookingService from "../../../services/BookingService";
 import useAuth from "../../../utils/auth";
@@ -29,7 +30,7 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     const dates = new Set();
     safeShowtimes.forEach((showtime) => {
       if (showtime.start_time) {
-        const date = new Date(showtime.start_time).toISOString().split("T")[0];
+        const date = moment.utc(showtime.start_time).format("YYYY-MM-DD");
         dates.add(date);
       }
     });
@@ -37,13 +38,7 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
   };
 
   const formatDate = (date) => {
-    return date
-      ? new Date(date).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : "Unknown";
+    return date ? moment.utc(date).format("DD MMM YYYY") : "Unknown";
   };
 
   const getTimesForDate = (date) => {
@@ -51,15 +46,10 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     const times = safeShowtimes
       .filter((showtime) => {
         if (!showtime.start_time) return false;
-        const showtimeDate = new Date(showtime.start_time).toISOString().split("T")[0];
+        const showtimeDate = moment.utc(showtime.start_time).format("YYYY-MM-DD");
         return showtimeDate === date;
       })
-      .map((showtime) =>
-        new Date(showtime.start_time).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
+      .map((showtime) => moment.utc(showtime.start_time).format("HH:mm"));
     return [...new Set(times)].sort();
   };
 
@@ -68,11 +58,8 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     const rooms = safeShowtimes
       .filter((showtime) => {
         if (!showtime.start_time) return false;
-        const showtimeDate = new Date(showtime.start_time).toISOString().split("T")[0];
-        const showtimeTime = new Date(showtime.start_time).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        const showtimeDate = moment.utc(showtime.start_time).format("YYYY-MM-DD");
+        const showtimeTime = moment.utc(showtime.start_time).format("HH:mm");
         return showtimeDate === date && showtimeTime === time;
       })
       .map((showtime) => ({
@@ -87,11 +74,8 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
     if (!date || !time || !roomId) return null;
     const showtime = safeShowtimes.find((showtime) => {
       if (!showtime.start_time) return false;
-      const showtimeDate = new Date(showtime.start_time).toISOString().split("T")[0];
-      const showtimeTime = new Date(showtime.start_time).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      const showtimeDate = moment.utc(showtime.start_time).format("YYYY-MM-DD");
+      const showtimeTime = moment.utc(showtime.start_time).format("HH:mm");
       return showtimeDate === date && showtimeTime === time && showtime.room?.room_id === roomId;
     });
     return showtime ? showtime.showtime_id : null;
@@ -187,7 +171,7 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
                   setSelectedRoomId(null);
                 }}
                 className={styles.timeButton}
-              >
+                >
                 {time}
               </Button>
             ))
