@@ -161,6 +161,7 @@
   border: none;
   font-size: 14px;
   transition: background-color 0.3s ease;
+  position: relative;
 
   &:hover {
     background-color: #d1d5db;
@@ -184,6 +185,40 @@
 .seatCouple {
   background-color: #ff69b4; // Pink for Couple
   &:hover {
+    background-color: #ff4f99;
+  }
+}
+
+.seatCoupleOdd {
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -8px; // Matches table border-spacing
+    width: 8px;
+    height: 14px;
+    background-color: #ff69b4;
+    transform: translateY(-50%);
+  }
+
+  &:hover::after {
+    background-color: #ff4f99;
+  }
+}
+
+.seatCoupleEven {
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -8px; // Matches table border-spacing
+    width: 8px;
+    height: 4px;
+    background-color: #ff69b4;
+    transform: translateY(-50%);
+  }
+
+  &:hover::after {
     background-color: #ff4f99;
   }
 }

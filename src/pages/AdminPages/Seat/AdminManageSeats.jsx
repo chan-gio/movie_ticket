@@ -92,9 +92,46 @@ function AdminManageSeats() {
   }, [roomId]);
 
   const toggleSeatSelection = (seat) => {
-    setSelectedSeats(prev =>
-      prev.includes(seat) ? prev.filter(s => s !== seat) : [...prev, seat]
-    );
+    const row = seat.match(/^[A-Z]+/)[0];
+    const col = parseInt(seat.match(/\d+$/)[0]);
+    const seatType = seatMap[seat] || 'STANDARD';
+
+    setSelectedSeats(prev => {
+      let newSeats = [...prev];
+      const isSelected = prev.includes(seat);
+
+      if (seatType === 'COUPLE') {
+        let pairSeat;
+        if (col % 2 === 1) {
+          pairSeat = `${row}${col + 1}`;
+        } else {
+          pairSeat = `${row}${col - 1}`;
+        }
+
+        const pairSeatType = seatMap[pairSeat] || 'STANDARD';
+        if (pairSeatType === 'COUPLE' && col <= cols && col >= 1) {
+          if (!isSelected) {
+            if (!newSeats.includes(seat)) {
+              newSeats.push(seat);
+            }
+            if (!newSeats.includes(pairSeat)) {
+              newSeats.push(pairSeat);
+            }
+          } else {
+            newSeats = newSeats.filter(s => s !== seat && s !== pairSeat);
+          }
+        } else {
+          toastError('Cannot select couple seat: pair seat is unavailable or not a couple seat.');
+          return prev;
+        }
+      } else {
+        newSeats = isSelected
+          ? newSeats.filter(s => s !== seat)
+          : [...newSeats, seat];
+      }
+
+      return newSeats;
+    });
   };
 
   const clearSelection = () => {
@@ -108,22 +145,21 @@ function AdminManageSeats() {
       return;
     }
 
-    // Kiểm tra khi áp dụng loại COUPLE
     if (selectedType === 'COUPLE') {
       for (const seat of selectedSeats) {
         const row = seat.match(/^[A-Z]+/)[0];
         const col = parseInt(seat.match(/\d+$/)[0]);
 
-        if (col % 2 === 1) { // Cột lẻ (1, 3, 5, ...)
+        if (col % 2 === 1) {
           const rightSeat = `${row}${col + 1}`;
           if (!selectedSeats.includes(rightSeat) || col + 1 > cols) {
-            toastError('Vui lòng chọn hai ghế cạnh nhau để apply type couple');
+            toastError('Please select both seats in the couple pair.');
             return;
           }
-        } else { // Cột chẵn (2, 4, 6, ...)
+        } else {
           const leftSeat = `${row}${col - 1}`;
           if (!selectedSeats.includes(leftSeat) || col - 1 < 1) {
-            toastError('Vui lòng chọn hai ghế cạnh nhau để apply type couple');
+            toastError('Please select both seats in the couple pair.');
             return;
           }
         }
@@ -583,12 +619,14 @@ function AdminManageSeats() {
                         const seatType = seatMap[seat] || null;
                         const isNotAvailable = seatType === 'UNAVAILABLE';
                         const isSelected = selectedSeats.includes(seat);
+                        const isOddColumn = col % 2 === 1;
+                        const coupleClass = seatType === 'COUPLE' ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : '';
                         return (
                           <Fragment key={seat}>
                             <td>
                               {seatType ? (
                                 <Button
-                                  className={`${styles.seat} ${
+                                  className={`${styles.seat} ${coupleClass} ${
                                     isSelected ? styles.seatSelected :
                                     isNotAvailable ? styles.seatNotAvailable :
                                     seatType === 'VIP' ? styles.seatVip :
@@ -668,7 +706,6 @@ function AdminManageSeats() {
                   Back to Rooms
                 </Button>
               </Col>
-              
             </Row>
           </Card>
         </Col>

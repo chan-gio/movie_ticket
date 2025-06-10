@@ -414,15 +414,15 @@ function SeatSelection() {
                       <td className={styles.rowLabel}>{row}</td>
                       {cols.map((col) => {
                         const seatNumber = `${row}${col}`;
-                        const seat = seats.find(
-                          (s) => s.seat_number === seatNumber
-                        );
+                        const seat = seats.find((s) => s.seat_number === seatNumber);
                         const seatStatus = Array.isArray(seatBookingStatus)
                           ? seatBookingStatus.find((s) => s.seat_number === seatNumber)
                           : null;
                         const isSelected = selectedSeats.includes(seatNumber);
                         const isBooked = seatStatus ? seatStatus.is_booked : false;
                         const seatType = seat ? seat.seat_type.toUpperCase() : null;
+                        const isOddColumn = col % 2 === 1; // Xác định cột lẻ
+                        const coupleClass = seatType === "COUPLE" ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : "";
                         const seatClass = isBooked
                           ? styles.seatNotAvailable
                           : seatType === "VIP"
@@ -437,11 +437,12 @@ function SeatSelection() {
                           <td key={seatNumber}>
                             {seat ? (
                               <Button
-                                className={`${styles.seat} ${seatClass} ${
+                                className={`${styles.seat} ${seatClass} ${coupleClass} ${
                                   isSelected ? styles.seatSelected : ""
                                 }`}
                                 onClick={() => toggleSeat(seatNumber)}
                                 disabled={isBooked || seatType === "UNAVAILABLE"}
+                                data-col={col} // Giữ lại để debug nếu cần
                               >
                                 {col}
                               </Button>

@@ -1,13 +1,13 @@
 import React from "react";
 import styles from "./LeftContainer.module.scss";
-
-const logo = "https://via.placeholder.com/150x50?text=Movie"; // Replace with actual logo
+import { useSettings } from "../../../../Context/SettingContext";
 
 const LeftContainer = () => {
+  const { settings } = useSettings();
   return (
     <div className={styles.leftContainer}>
       <div className={styles.leftContent}>
-        <img src={logo} alt="Logo" className={styles.logo} />
+        <img src={settings.name} alt="Movie" />
         <p className={styles.tagline}>wait, watch, wow!</p>
         <p className={styles.subTagline}>Lets build your account</p>
         <ul className={styles.steps}>

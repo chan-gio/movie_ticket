@@ -181,6 +181,7 @@ const Auth = () => {
                     onClick={handleSignInSubmit}
                     loading={isLoading}
                     block
+                    className={styles.signInButton}
                   >
                     Sign In
                   </Button>
