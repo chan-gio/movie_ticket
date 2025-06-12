@@ -8,7 +8,7 @@ const { Title, Paragraph } = Typography;
 const MovieCard = ({ movie }) => {
   // Fallbacks for missing data
   const title = movie.title || "Untitled";
-  const poster = movie.poster || "https://wallpapercave.com/wp/wp1816326.jpg";
+  const poster = movie.poster_url || "https://wallpapercave.com/wp/wp1816326.jpg";
   const genre = movie.genre || "Unknown";
   const ageRating = movie.adult || "N/A";
   const releaseDate = movie.release_date
@@ -21,7 +21,7 @@ const MovieCard = ({ movie }) => {
 
   return (
     <div className={styles.movieCard}>
-      <Link to={`/movie/${movie.id}`}>
+      <Link to={`/movie/${movie.movie_id}`}>
         <img src={poster} alt={title} className={styles.moviePoster} />
       </Link>
       <Title level={5} className={styles.movieCardTitle}>

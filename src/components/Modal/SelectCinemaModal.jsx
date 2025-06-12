@@ -1,166 +1,123 @@
-import { Modal, Input as SearchInput, Select, Spin, message, Skeleton } from "antd";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { debounce } from "lodash";
-import CinemaService from "../../services/CinemaService";
-import styles from "./SelectCinemaModal.module.scss";
+// src/components/SelectCinemaModal.jsx
+import { Modal, Input as SearchInput, Select, Spin, message, Skeleton } from 'antd';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { debounce } from 'lodash';
+import { useCinemas, useSearchCinemasByName } from '../../hooks/useCinemas';
+import styles from './SelectCinemaModal.module.scss';
 
 const { Option } = Select;
 
-// Hàm chuẩn hóa văn bản tiếng Việt: bỏ dấu, chuyển thường
+// Hàm chuẩn hóa văn bản tiếng Việt
 const normalizeVietnamese = (text) => {
+  if (!text) return '';
   return text
-    .normalize("NFD") // Phân tách ký tự và dấu
-    .replace(/[\u0300-\u036f]/g, "") // Xóa dấu
-    .replace(/đ/g, "d") // Thay đ thành d
-    .replace(/Đ/g, "D") // Thay Đ thành D
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
     .toLowerCase();
 };
 
 function SelectCinemaModal({ visible, onOk, onCancel }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCity, setSelectedCity] = useState(null); // Mặc định null
-  const [allCinemas, setAllCinemas] = useState([]); // Lưu danh sách đầy đủ từ API
-  const [cinemas, setCinemas] = useState([]); // Danh sách hiển thị (lọc hoặc không)
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [filteredCinemas, setFilteredCinemas] = useState([]);
   const navigate = useNavigate();
   const observer = useRef();
 
-  // Debounced fetchCinemas
-  const debouncedFetchCinemas = useCallback(
-    debounce((pageNum, term) => {
-      fetchCinemas(pageNum, term);
-    }, 300),
-    [selectedCity]
+  // Debounced search term for API calls
+  const debouncedSetSearchTerm = useMemo(
+    () => debounce((value) => setDebouncedSearchTerm(value), 1000),
+    []
   );
 
-  // Ref để theo dõi phần tử cuối cùng cho infinite loading
+  // Update debounced search term when searchTerm changes
+  useEffect(() => {
+    debouncedSetSearchTerm(searchTerm);
+  }, [searchTerm, debouncedSetSearchTerm]);
+
+  // Gọi cả hai hook vô điều kiện
+  const cinemasQuery = useCinemas({ city: selectedCity });
+  const searchCinemasQuery = useSearchCinemasByName({ searchTerm: debouncedSearchTerm });
+
+  // Chọn query dựa trên điều kiện
+  const {
+    data: cinemaPages,
+    fetchNextPage,
+    hasNextPage,
+    isLoading,
+    isFetchingNextPage,
+    error,
+  } = searchTerm && !selectedCity ? searchCinemasQuery : cinemasQuery;
+
+  // Gộp dữ liệu từ các trang với useMemo
+  const allCinemas = useMemo(
+    () => cinemaPages?.pages.flatMap((page) => page.data) || [],
+    [cinemaPages]
+  );
+
+  // Lọc client-side khi có searchTerm và selectedCity
+  useEffect(() => {
+    if (searchTerm && selectedCity) {
+      const normalizedSearch = normalizeVietnamese(searchTerm);
+      const filtered = allCinemas.filter((cinema) => {
+        const normalizedName = normalizeVietnamese(cinema.name);
+        const normalizedAddress = normalizeVietnamese(cinema.address);
+        return (
+          normalizedName.includes(normalizedSearch) ||
+          normalizedAddress.includes(normalizedSearch)
+        );
+      });
+      setFilteredCinemas(filtered);
+    } else {
+      setFilteredCinemas(allCinemas);
+    }
+  }, [allCinemas, selectedCity, searchTerm]);
+
+  // Reset state khi modal mở
+  useEffect(() => {
+    if (visible) {
+      setSearchTerm('');
+      setDebouncedSearchTerm('');
+      setSelectedCity(null);
+    }
+  }, [visible]);
+
+  // Infinite loading
   const lastCinemaElementRef = useCallback(
     (node) => {
-      if (loading || (selectedCity && searchTerm)) return; // Không paginate khi lọc client-side
+      if (isLoading || isFetchingNextPage) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prev) => prev + 1);
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
         }
       });
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore, selectedCity, searchTerm]
+    [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]
   );
 
-  // Reset và tải rạp khi modal mở hoặc thành phố thay đổi
+  // Xử lý lỗi
   useEffect(() => {
-    if (visible) {
-      setAllCinemas([]);
-      setCinemas([]);
-      setSearchTerm("");
-      setPage(1);
-      setHasMore(true);
-      fetchCinemas(1, "");
+    if (error) {
+      message.error(error.message || 'Không thể tải danh sách rạp');
     }
-  }, [visible, selectedCity]);
+  }, [error]);
 
-  // Reset state khi modal đóng
-  useEffect(() => {
-    if (!visible) {
-      setAllCinemas([]);
-      setCinemas([]);
-      setSearchTerm("");
-      setSelectedCity(null);
-      setLoading(false);
-      setPage(1);
-      setHasMore(true);
-    }
-  }, [visible]);
-
-  // Tải thêm rạp khi trang thay đổi (chỉ khi không lọc client-side)
-  useEffect(() => {
-    if (page > 1 && visible && hasMore && !(selectedCity && searchTerm)) {
-      fetchCinemas(page, searchTerm);
-    }
-  }, [page, searchTerm]);
-
-  // Lọc client-side khi searchTerm thay đổi và có thành phố
-  useEffect(() => {
-    if (selectedCity && searchTerm) {
-      const normalizedSearchWords = normalizeVietnamese(searchTerm)
-        .split(/\s+/)
-        .filter((word) => word);
-      const filteredCinemas = allCinemas.filter((cinema) => {
-        const normalizedName = normalizeVietnamese(cinema.name);
-        return normalizedSearchWords.every((word) =>
-          normalizedName.includes(word)
-        );
-      });
-      setCinemas(filteredCinemas);
-      setHasMore(false); // Không paginate khi lọc client-side
-    } else {
-      setCinemas(allCinemas); // Hiển thị toàn bộ danh sách khi không có searchTerm hoặc không chọn thành phố
-      setHasMore(allCinemas.length === 20); // Kiểm tra pagination
-    }
-  }, [searchTerm, allCinemas, selectedCity]);
-
-  // Hàm lấy danh sách rạp
-  const fetchCinemas = async (pageNum, term) => {
-    setLoading(true);
-    try {
-      let response;
-      if (selectedCity) {
-        // Lấy tất cả rạp trong thành phố đã chọn
-        response = await CinemaService.searchCinemaByAddress(selectedCity, pageNum);
-      } else if (term !== "") {
-        // Tìm kiếm theo tên rạp khi không chọn thành phố
-        response = await CinemaService.searchCinemaByName(term, pageNum);
-      } else {
-        // Lấy tất cả rạp nếu không chọn thành phố và không có searchTerm
-        response = await CinemaService.getAllCinemas({ per_page: 20, page: pageNum });
-      }
-
-      // Xử lý dữ liệu từ API
-      const { data, last_page } = response;
-
-      if (!Array.isArray(data)) {
-        throw new Error("Dữ liệu rạp không đúng định dạng");
-      }
-
-      setAllCinemas((prev) => [...prev, ...data]);
-      setCinemas((prev) => [...prev, ...data]);
-      setHasMore(pageNum < last_page);
-    } catch (error) {
-      message.error(error.message || "Không thể tải danh sách rạp");
-      setAllCinemas((prev) => prev); // Giữ danh sách hiện tại nếu lỗi
-      setCinemas((prev) => prev);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Xử lý thay đổi ô tìm kiếm
+  // Xử lý tìm kiếm
   const handleSearchChange = (e) => {
     const value = e.target.value;
-    setSearchTerm(value);
-    if (!selectedCity) {
-      // Khi không có thành phố, reset và gọi API với debounce
-      setAllCinemas([]);
-      setCinemas([]);
-      setPage(1);
-      setHasMore(true);
-      debouncedFetchCinemas(1, value);
-    }
-    // Lọc client-side được xử lý trong useEffect khi có thành phố
+    setSearchTerm(value); // Update searchTerm immediately
   };
 
-  // Xử lý thay đổi thành phố
+  // Xử lý chọn thành phố
   const handleCityChange = (value) => {
     setSelectedCity(value);
-    setSearchTerm("");
-    setAllCinemas([]);
-    setCinemas([]);
-    setPage(1);
-    setHasMore(true);
+    setSearchTerm(''); // Reset search term when city changes
+    setDebouncedSearchTerm(''); // Reset debounced search term
   };
 
   // Xử lý click rạp
@@ -180,7 +137,7 @@ function SelectCinemaModal({ visible, onOk, onCancel }) {
     >
       <div className={styles.searchContainer}>
         <SearchInput
-          placeholder="Tìm rạp theo tên"
+          placeholder="Tìm rạp theo tên hoặc địa chỉ"
           value={searchTerm}
           onChange={handleSearchChange}
           className={styles.searchInput}
@@ -191,13 +148,13 @@ function SelectCinemaModal({ visible, onOk, onCancel }) {
           className={styles.citySelect}
           placeholder="Chọn thành phố"
         >
-          <Option value={null}>Chọn thành phố</Option>
+          <Option value={null}>Tất cả thành phố</Option>
           <Option value="Tp. Hồ Chí Minh">Tp. Hồ Chí Minh</Option>
           <Option value="Hà Nội">Hà Nội</Option>
           <Option value="Hải Phòng">Hải Phòng</Option>
         </Select>
       </div>
-      {loading && cinemas.length === 0 ? (
+      {isLoading ? (
         <div className={styles.skeletonContainer}>
           {[...Array(3)].map((_, index) => (
             <div key={index} className={styles.skeletonItem}>
@@ -211,11 +168,11 @@ function SelectCinemaModal({ visible, onOk, onCancel }) {
         </div>
       ) : (
         <div className={styles.cinemaList}>
-          {cinemas.length === 0 ? (
+          {filteredCinemas.length === 0 ? (
             <p>Không tìm thấy rạp nào.</p>
           ) : (
-            cinemas.map((cinema, index) => {
-              const isLastElement = cinemas.length === index + 1;
+            filteredCinemas.map((cinema, index) => {
+              const isLastElement = filteredCinemas.length === index + 1;
               return (
                 <div
                   key={cinema.cinema_id}
@@ -225,7 +182,7 @@ function SelectCinemaModal({ visible, onOk, onCancel }) {
                 >
                   <div className={styles.cinemaImage}>
                     <img
-                      src={`https://play-lh.googleusercontent.com/nxo4BC4BQ5hXuNi-UCdPM5kC0uZH1lq7bglINlWNUA_v8yMfHHOtTjhLTvo5NDjVeqx-?text=Cinema`}
+                      src="https://via.placeholder.com/50"
                       alt="Cinema"
                     />
                   </div>
@@ -237,7 +194,7 @@ function SelectCinemaModal({ visible, onOk, onCancel }) {
               );
             })
           )}
-          {loading && cinemas.length > 0 && (
+          {isFetchingNextPage && (
             <div className={styles.skeletonContainer}>
               {[...Array(2)].map((_, index) => (
                 <div key={index} className={styles.skeletonItem}>

@@ -1,141 +1,142 @@
-import React, { useState, useEffect } from "react";
-import { Row, Col, Card, Tabs, message } from "antd";
-import styles from "./Profile.module.scss";
-import InfoCard from "../../../components/UserPages/ProfilePage/InfoCard/InfoCard";
-import AccountTab from "../../../components/UserPages/ProfilePage/AccountTab/AccountTab";
-import OrderHistory from "../../../components/UserPages/ProfilePage/OrderHistory/OrderHistory";
-import UserService from "../../../services/UserService";
-import BookingService from "../../../services/BookingService";
-import useAuth from "../../../utils/auth";
-import { useNavigate } from "react-router-dom";
+/* eslint-disable no-unused-vars */
+import React, { useState } from 'react';
+import { Row, Col, Card, Tabs, message, Skeleton, Alert } from 'antd';
+import styles from './Profile.module.scss';
+import InfoCard from '../../../components/UserPages/ProfilePage/InfoCard/InfoCard';
+import AccountTab from '../../../components/UserPages/ProfilePage/AccountTab/AccountTab';
+import OrderHistory from '../../../components/UserPages/ProfilePage/OrderHistory/OrderHistory';
+import { useUserData, useOrderHistory, useInvalidateUserData } from '../../../hooks/useProfile';
+import useAuth from '../../../utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
 const Profile = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
-  const [orderHistory, setOrderHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
-    total: 0,
   });
+  const [activeTab, setActiveTab] = useState('settings'); // Controlled tab state
+
+  // Left section: User data for InfoCard
+  const { data: userData, isLoading: isUserLoading, error: userError } = useUserData(userId);
+
+  // Right section: Order history for OrderHistory tab
+  const { data: orderData, isLoading: isOrderLoading, error: orderError } = useOrderHistory(userId, {
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+  });
+  const invalidateUserData = useInvalidateUserData();
 
   const handleSignOut = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user_id");
-    navigate("/auth");
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_id');
+    navigate('/auth');
   };
-
-  const fetchData = async (page = 1, pageSize = 10) => {
-    if (!userId) {
-      message.error("User ID not found. Please log in.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Fetch user data
-      const userResponse = await UserService.getUserById(userId);
-      const [firstName, ...lastNameParts] = (userResponse.full_name || "").trim().split(/\s+/);
-      const user = {
-        firstName: firstName || "",
-        lastName: lastNameParts.join(" ") || "",
-        email: userResponse.email || "",
-        phone: userResponse.phone || "",
-        profile_picture_url: userResponse.profile_picture_url || "",
-      };
-      setUserData(user);
-
-      // Fetch order history with pagination
-      const bookingResponse = await BookingService.getBookingsByUserId(userId, { page, per_page: pageSize });
-      const transformedOrders = bookingResponse.data.map((booking) => ({
-        id: booking.booking_id,
-        date: new Date(booking.showtime.start_time).toLocaleString("en-US", {
-          weekday: "long",
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-        movie: booking.showtime.movie.title,
-        orderCode: booking.order_code,
-        status: booking.status === "CONFIRMED" ? "active" : booking.status === "PENDING" ? "pending" : booking.status === "CANCELLED" ? "cancelled" : booking.status,
-        createdAt: new Date(booking.created_at).toLocaleString("en-US", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-      }));
-
-      setOrderHistory(transformedOrders);
-      setPagination({
-        current: bookingResponse.current_page,
-        pageSize: bookingResponse.per_page,
-        total: bookingResponse.total,
-      });
-    } catch (error) {
-      message.error(error.message || "Failed to fetch profile data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData(pagination.current, pagination.pageSize);
-  }, [userId, navigate]);
 
   const handleProfileUpdate = () => {
-    fetchData(pagination.current, pagination.pageSize); // Refresh userData
+    invalidateUserData(userId); // Refresh user data
   };
 
   const handlePaginationChange = (page, pageSize) => {
-    setPagination((prev) => ({
-      ...prev,
-      current: page,
-      pageSize,
-    }));
-    fetchData(page, pageSize);
+    setPagination({ current: page, pageSize });
+    setActiveTab('history'); // Keep OrderHistory tab active
   };
 
-  if (!userData && !loading) {
+  const handleTabChange = (key) => {
+    setActiveTab(key); // Update active tab
+  };
+
+  // Render left section (InfoCard)
+  const renderLeftSection = () => {
+    if (userError) {
+      return (
+        <Alert
+          message="Error"
+          description={userError.message || 'Failed to load user data'}
+          type="error"
+          showIcon
+        />
+      );
+    }
+
+    if (isUserLoading) {
+      return <Skeleton active avatar paragraph={{ rows: 4 }} />;
+    }
+
+    if (!userData) {
+      return <Alert message="No user data available" type="warning" showIcon />;
+    }
+
     return (
-      <div className={styles.profile}>
-        <h2>Failed to load profile data</h2>
-      </div>
+      <InfoCard userData={userData} loading={isUserLoading} onSignOut={handleSignOut} />
     );
-  }
+  };
+
+  // Render right section (Tabs with Account Settings and Order History)
+  const renderRightSection = () => {
+    return (
+      <Card className={styles.accountCard}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          className={styles.tabs}
+        >
+          <TabPane tab="Account Settings" key="settings">
+            {userError ? (
+              <Alert
+                message="Error"
+                description={userError.message || 'User data unavailable for settings'}
+                type="error"
+                showIcon
+              />
+            ) : isUserLoading ? (
+              <Skeleton active paragraph={{ rows: 6 }} />
+            ) : (
+              <AccountTab
+                userData={userData}
+                loading={isUserLoading}
+                onProfileUpdate={handleProfileUpdate}
+              />
+            )}
+          </TabPane>
+          <TabPane tab="Order History" key="history">
+            {orderError ? (
+              <Alert
+                message="Error"
+                description={orderError.message || 'Failed to load order history'}
+                type="error"
+                showIcon
+              />
+            ) : isOrderLoading ? (
+              <Skeleton active paragraph={{ rows: 6 }} />
+            ) : (
+              <OrderHistory
+                orderHistory={orderData?.orders || []}
+                loading={isOrderLoading}
+                pagination={{
+                  ...pagination,
+                  total: orderData?.pagination.total || 0,
+                }}
+                onPaginationChange={handlePaginationChange}
+              />
+            )}
+          </TabPane>
+        </Tabs>
+      </Card>
+    );
+  };
 
   return (
     <div className={styles.profile}>
       <Row gutter={[16, 16]} className={styles.mainContent}>
         <Col xs={24} md={8}>
-          <InfoCard userData={userData} loading={loading} onSignOut={handleSignOut} />
+          {renderLeftSection()}
         </Col>
         <Col xs={24} md={16}>
-          <Card className={styles.accountCard}>
-            <Tabs defaultActiveKey="settings" className={styles.tabs}>
-              <TabPane tab="Account Settings" key="settings">
-                <AccountTab userData={userData} loading={loading} onProfileUpdate={handleProfileUpdate} />
-              </TabPane>
-              <TabPane tab="Order History" key="history">
-                <OrderHistory
-                  orderHistory={orderHistory}
-                  loading={loading}
-                  pagination={pagination}
-                  onPaginationChange={handlePaginationChange}
-                />
-              </TabPane>
-            </Tabs>
-          </Card>
+          {renderRightSection()}
         </Col>
       </Row>
     </div>
