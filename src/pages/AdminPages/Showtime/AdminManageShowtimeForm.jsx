@@ -12,9 +12,13 @@ import {
   Typography,
   Select,
   Spin,
+  Tag,
 } from "antd";
 import styles from "./AdminManageShowtimeForm.module.scss";
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
+
 import ShowTimeService from "../../../services/ShowtimeService";
 import MovieService from "../../../services/MovieService";
 import RoomService from "../../../services/RoomService";
@@ -32,12 +36,12 @@ function AdminManageShowtimeForm({ isEditMode }) {
   const [cinemas, setCinemas] = useState([]);
   const [selectedCinema, setSelectedCinema] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedDates, setSelectedDates] = useState([]); // State for selected dates
 
   // Watch form field values for preview
   const movieId = Form.useWatch("movie_id", showtimeForm);
   const cinemaId = Form.useWatch("cinema_id", showtimeForm);
   const roomId = Form.useWatch("room_id", showtimeForm);
-  const startTime = Form.useWatch("start_time", showtimeForm);
   const price = Form.useWatch("price", showtimeForm);
 
   useEffect(() => {
@@ -66,17 +70,9 @@ function AdminManageShowtimeForm({ isEditMode }) {
         if (isEditMode && id) {
           const showtime = await ShowTimeService.getShowTimeById(id);
           if (showtime) {
-            // Parse start_time with dayjs
             const startTimeDayjs = showtime.start_time
-              ? dayjs(showtime.start_time)
+              ? dayjs(showtime.start_time, "YYYY-MM-DD HH:mm:ss")
               : null;
-            console.log(
-              "Loaded start_time:",
-              showtime.start_time,
-              "Parsed:",
-              startTimeDayjs?.format("YYYY-MM-DD HH:mm:ss")
-            );
-
             showtimeForm.setFieldsValue({
               movie_id: showtime.movie_id,
               cinema_id: showtime.room?.cinema?.cinema_id,
@@ -86,8 +82,13 @@ function AdminManageShowtimeForm({ isEditMode }) {
             });
             setSelectedCinema(showtime.room?.cinema?.cinema_id);
           }
+        } else {
+          // Initialize empty dates for add mode
+          showtimeForm.setFieldsValue({ start_time: null });
+          setSelectedDates([]);
         }
       } catch (error) {
+        console.error("Error loading data:", error);
         message.error(error.message || "Failed to load data");
       } finally {
         setLoading(false);
@@ -105,42 +106,85 @@ function AdminManageShowtimeForm({ isEditMode }) {
     (room) => room.cinema_id === selectedCinema
   );
 
-  const handleSubmit = async (values) => {
-    setSubmitting(true);
-    try {
-      const showtimeData = {
-        movie_id: values.movie_id,
-        room_id: values.room_id,
-        start_time: values.start_time
-          ? values.start_time.format("YYYY-MM-DD HH:mm:ss")
-          : null,
-        price: Number(values.price),
-      };
-
-      console.log("Submitting showtimeData:", showtimeData);
-
-      if (isEditMode) {
-        await ShowTimeService.updateShowTime(id, showtimeData);
-        message.success("Showtime updated successfully");
-      } else {
-        await ShowTimeService.createShowTime(showtimeData);
-        message.success("Showtime added successfully");
+  const handleDateChange = (date, dateString) => {
+    if (!isEditMode) {
+      // Add new date to selectedDates if not already present
+      if (date && dayjs.isDayjs(date)) {
+        const dateExists = selectedDates.some((d) =>
+          d.isSame(date, "minute")
+        );
+        if (!dateExists) {
+          const newDates = [...selectedDates, date];
+          setSelectedDates(newDates);
+          showtimeForm.setFieldsValue({ start_time: null }); // Reset DatePicker
+        }
       }
-
-      showtimeForm.resetFields();
-      navigate("/admin/manage_showtime");
-    } catch (error) {
-      message.error(
-        error.message || `Failed to ${isEditMode ? "update" : "add"} showtime`
-      );
-    } finally {
-      setSubmitting(false);
+    } else {
+      // Update form for edit mode
+      showtimeForm.setFieldsValue({ start_time: date });
     }
   };
 
+  const handleRemoveDate = (index) => {
+    const newDates = selectedDates.filter((_, i) => i !== index);
+    setSelectedDates(newDates);
+  };
+
   const disabledDate = (current) => {
-    // Disable dates before today (June 1, 2025, 23:03 +07)
     return current && current < dayjs().startOf("day");
+  };
+
+  const handleSubmit = async (values) => {
+    setSubmitting(true);
+    try {
+      if (isEditMode) {
+        if (!values.start_time || !dayjs.isDayjs(values.start_time)) {
+          message.error("Please select a valid start time.");
+          setSubmitting(false);
+          return;
+        }
+        const showtimeData = {
+          movie_id: values.movie_id,
+          room_id: values.room_id,
+          start_time: values.start_time.format("YYYY-MM-DD HH:mm:ss"),
+          price: Number(values.price),
+        };
+        await ShowTimeService.updateShowTime(id, showtimeData);
+        message.success("Showtime updated successfully");
+      } else {
+        if (!selectedDates || selectedDates.length === 0) {
+          message.error("Please select at least one date.");
+          setSubmitting(false);
+          return;
+        }
+
+        const createShowtimePromises = selectedDates.map((date) => {
+          if (!dayjs.isDayjs(date)) {
+            throw new Error("Invalid date format in selectedDates");
+          }
+          const showtimeData = {
+            movie_id: values.movie_id,
+            room_id: values.room_id,
+            start_time: date.format("YYYY-MM-DD HH:mm:ss"),
+            price: Number(values.price),
+          };
+          return ShowTimeService.createShowTime(showtimeData);
+        });
+
+        await Promise.all(createShowtimePromises);
+        message.success(`Successfully added ${createShowtimePromises.length} showtime(s).`);
+      }
+
+      showtimeForm.resetFields();
+      setSelectedDates([]);
+      navigate("/admin/manage_showtime");
+    } catch (error) {
+      console.error("Submit error:", error);
+      const action = isEditMode ? "update" : "add";
+      message.error(error.message || `Failed to ${action} showtime(s)`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -149,11 +193,11 @@ function AdminManageShowtimeForm({ isEditMode }) {
         {isEditMode ? "Edit Showtime" : "Add Showtime"}
       </Title>
       {loading ? (
-        <div className={styles.loading}>
-          <Spin size="large" />
+        <div className={styles.pageTitle}>
+          <Text>Loading...</Text>
         </div>
       ) : (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[16, 24]}>
           <Col xs={24} lg={16}>
             <Card className={styles.card}>
               <Form
@@ -215,45 +259,83 @@ function AdminManageShowtimeForm({ isEditMode }) {
                   </Select>
                 </Form.Item>
                 <Form.Item
-                  label="Start Time"
+                  label={isEditMode ? "Start Time" : "Select Start Date(s) and Time(s)"}
                   name="start_time"
-                  rules={[{ required: true, message: "Please select a start time" }]}
                 >
-                  <DatePicker
-                    showTime={{ format: "HH:mm" }}
-                    format="YYYY-MM-DD HH:mm"
-                    disabledDate={disabledDate}
-                    style={{ width: "100%" }}
-                    onChange={(value) => {
-                      console.log(
-                        "DatePicker changed:",
-                        value ? value.format("YYYY-MM-DD HH:mm:ss") : null
-                      );
-                    }}
-                  />
+                  {isEditMode ? (
+                    <DatePicker
+                      showTime={{ format: "HH:mm" }}
+                      format="YYYY-MM-DD HH:mm"
+                      allowClear
+                      disabledDate={disabledDate}
+                      style={{ width: "100%", zIndex: 1000 }}
+                      placeholder="Select a start time"
+                      onChange={handleDateChange}
+                    />
+                  ) : (
+                    <div>
+                      <DatePicker
+                        showTime={{ format: "HH:mm" }}
+                        format="YYYY-MM-DD HH:mm"
+                        allowClear
+                        disabledDate={disabledDate}
+                        style={{ width: "100%", zIndex: 1000 }}
+                        placeholder="Select a start time"
+                        value={null} // Keep DatePicker empty after each selection
+                        onChange={handleDateChange}
+                      />
+                      {selectedDates.length > 0 && (
+                        <div style={{ marginTop: 8 }}>
+                          {selectedDates.map((date, index) => (
+                            <Tag
+                              key={index}
+                              closable
+                              onClose={() => handleRemoveDate(index)}
+                              style={{ margin: 4 }}
+                            >
+                              {date.format("YYYY-MM-DD HH:mm")}
+                            </Tag>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </Form.Item>
                 <Form.Item
-                  label="Price (VND)"
+                  label="Price (VNĐ)"
                   name="price"
                   rules={[
                     { required: true, message: "Please enter the price" },
                     {
-                      type: "number",
-                      min: 0,
-                      message: "Price must be a non-negative number",
+                      validator: (_, value) => {
+                        if (value === "" || value === null || value === undefined) {
+                          return Promise.resolve();
+                        }
+                        const numValue = Number(value);
+                        if (isNaN(numValue) || numValue < 0) {
+                          return Promise.reject(
+                            new Error("Price must be a non-negative number")
+                          );
+                        }
+                        return Promise.resolve();
+                      },
                     },
                   ]}
-                  normalize={(value) => (value ? Number(value) : value)}
+                  normalize={(value) => (value ? Number(value) : "")}
                 >
                   <Input type="number" placeholder="Enter ticket price" />
                 </Form.Item>
                 <Form.Item>
-                  <Button type="primary" htmlType="submit" loading={submitting}>
-                    {isEditMode ? "Update Showtime" : "Add Showtime"}
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={submitting}
+                  >
+                    {isEditMode ? "Update Showtime" : "Add Showtimes"}
                   </Button>
                   <Button
                     onClick={() => navigate("/admin/manage_showtime")}
-                    style={{ marginLeft: 8 }}
+                    style={{ marginLeft: 10 }}
                   >
                     Cancel
                   </Button>
@@ -268,33 +350,58 @@ function AdminManageShowtimeForm({ isEditMode }) {
                 <strong>Movie:</strong>{" "}
                 {movieId
                   ? movies.find((movie) => movie.movie_id === movieId)?.title
-                  : "Not Set"}
+                  : "Not provided"}
               </Text>
-              <br />
+              <div style={{ height: 4 }} />
               <Text>
                 <strong>Cinema:</strong>{" "}
                 {cinemaId
                   ? cinemas.find((cinema) => cinema.cinema_id === cinemaId)?.name
-                  : "Not Set"}
+                  : "Not provided"}
               </Text>
-              <br />
+              <div style={{ height: 4 }} />
               <Text>
                 <strong>Room:</strong>{" "}
                 {roomId
                   ? rooms.find((room) => room.room_id === roomId)?.room_name
-                  : "Not Set"}
+                  : "Not provided"}
               </Text>
-              <br />
+              <div style={{ height: 4 }} />
               <Text>
-                <strong>Start Time:</strong>{" "}
-                {startTime ? startTime.format("YYYY-MM-DD HH:mm:ss") : "Not Set"}
+                <strong>{isEditMode ? "Showtime:" : "Allowed Time(s):"}</strong>
               </Text>
-              <br />
+              <div style={{ marginTop: "4px" }}>
+                {isEditMode ? (
+                  <Text>
+                    {showtimeForm.getFieldValue("start_time") &&
+                    dayjs.isDayjs(showtimeForm.getFieldValue("start_time"))
+                      ? showtimeForm.getFieldValue("start_time").format("YYYY-MM-DD HH:mm")
+                      : "Not provided"}
+                  </Text>
+                ) : (
+                  selectedDates && selectedDates.length > 0 ? (
+                    <ul style={{ paddingLeft: 20, margin: 0 }}>
+                      {selectedDates.map((date, index) => (
+                        <li key={index}>
+                          <Text>
+                            {dayjs.isDayjs(date)
+                              ? date.format("YYYY-MM-DD HH:mm")
+                              : "Invalid time"}
+                          </Text>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <Text>Not provided</Text>
+                  )
+                )}
+              </div>
+              <div style={{ height: 4 }} />
               <Text>
                 <strong>Price:</strong>{" "}
                 {price
-                  ? `${Number(price).toLocaleString("vi-VN")} VND`
-                  : "Not Set"}
+                  ? `${Number(price).toLocaleString("vi-VN")} VNĐ`
+                  : "Not provided"}
               </Text>
             </Card>
           </Col>

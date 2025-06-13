@@ -1,103 +1,139 @@
-import api from './api'; // Import the configured Axios instance
+import api from './api';
 
-// Service methods for BookingSeatController endpoints
 const BookingSeatService = {
-  // Fetch all booking seats that are not deleted
   getAllBookingSeats: async () => {
     try {
       const response = await api.get('/booking-seats');
       if (response.data.code === 200) {
         return response.data.data;
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch booking seats');
       }
+      throw new Error(response.data.message || 'Failed to fetch booking seats');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to fetch booking seats');
     }
   },
 
-  // Create a new booking seat
   createBookingSeat: async (bookingSeatData) => {
     try {
       const response = await api.post('/booking-seats', bookingSeatData);
       if (response.data.code === 201) {
         return response.data.data;
-      } else {
-        throw new Error(response.data.message || 'Failed to create booking seat');
       }
+      throw new Error(response.data.message || 'Failed to create booking seat');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to create booking seat');
     }
   },
 
-  // Fetch a single booking seat by ID
   getBookingSeatById: async (bookingSeatId) => {
     try {
       const response = await api.get(`/booking-seats/${bookingSeatId}`);
       if (response.data.code === 200) {
         return response.data.data;
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch booking seat');
       }
+      throw new Error(response.data.message || 'Failed to fetch booking seat');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to fetch booking seat');
     }
   },
 
-  // Update a booking seat
   updateBookingSeat: async (bookingSeatId, bookingSeatData) => {
     try {
       const response = await api.put(`/booking-seats/${bookingSeatId}`, bookingSeatData);
       if (response.data.code === 200) {
         return response.data.data;
-      } else {
-        throw new Error(response.data.message || 'Failed to update booking seat');
       }
+      throw new Error(response.data.message || 'Failed to update booking seat');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to update booking seat');
     }
   },
 
-  // Soft delete a booking seat
   softDeleteBookingSeat: async (bookingSeatId) => {
     try {
-      const response = await api.delete(`/booking-seats/${bookingSeatId}`);
+      const response = await api.delete(`/booking-seats/soft/${bookingSeatId}`);
       if (response.data.code === 200) {
         return true;
-      } else {
-        throw new Error(response.data.message || 'Failed to soft delete booking seat');
       }
+      throw new Error(response.data.message || 'Failed to soft delete booking seat');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to soft delete booking seat');
     }
   },
 
-  // Hard delete a booking seat
   forceDeleteBookingSeat: async (bookingSeatId) => {
     try {
-      const response = await api.delete(`/booking-seats/${bookingSeatId}/force`);
+      const response = await api.delete(`/booking-seats/${bookingSeatId}`);
       if (response.data.code === 200) {
         return true;
-      } else {
-        throw new Error(response.data.message || 'Failed to hard delete booking seat');
       }
+      throw new Error(response.data.message || 'Failed to hard delete booking seat');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to hard delete booking seat');
     }
   },
 
-  // Fetch seats by showtime ID
   getSeatsByShowtime: async (showtimeId) => {
     try {
       const response = await api.get(`/booking-seats/showtimes/${showtimeId}/seats`);
       if (response.data.code === 200) {
         const seatData = response.data.data?.data || [];
         return Array.isArray(seatData) ? seatData : [];
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch seats by showtime');
       }
+      throw new Error(response.data.message || 'Failed to fetch seats by showtime');
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || 'Failed to fetch seats by showtime');
+    }
+  },
+
+  lockSeat: async (data) => {
+    try {
+      const response = await api.post('/booking-seats/lock', data);
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || 'Failed to lock seat');
+    } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || 'Failed to lock seat');
+    }
+  },
+
+  unlockSeat: async (data) => {
+    try {
+      const response = await api.post('/booking-seats/unlock', data);
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || 'Failed to unlock seat');
+    } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || 'Failed to unlock seat');
     }
   },
 };

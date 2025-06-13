@@ -9,6 +9,8 @@ import BookingSeatService from "../../../services/BookingSeatService";
 import { useSettings } from "../../../Context/SettingContext";
 import { useBookingTimer } from "../../../Context/BookingTimerContext";
 import { toastSuccess, toastError } from "../../../utils/toastNotifier";
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
 const { Title, Paragraph } = Typography;
 
@@ -19,7 +21,6 @@ function SeatSelection() {
   const { settings, error: settingsError } = useSettings();
   const { bookings, updateProgress, clearTimer } = useBookingTimer();
 
-  // Find the booking from the bookings array
   const currentBooking = bookings.find((b) => b.bookingId === bookingId);
   const initialSeats =
     currentBooking?.progress.step === "SeatSelection" &&
@@ -33,18 +34,70 @@ function SeatSelection() {
   const [seatBookingStatus, setSeatBookingStatus] = useState([]);
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState(null);
 
-  // Fetch initial data
+  // Setup Laravel Echo with Reverb
   useEffect(() => {
-    if (hasFetched.current) {
-      return;
+    if (!booking?.showtime?.showtime_id) return;
+
+    window.Pusher = Pusher;
+    const echo = new Echo({
+      broadcaster: 'pusher',
+      key: import.meta.env.VITE_PUSHER_KEY,
+      cluster: import.meta.env.VITE_PUSHER_CLUSTER,
+      forceTLS: true,
+      encrypted: true
+    });
+
+    echo.channel(`showtime.${booking.showtime.showtime_id}`)
+      .listen('.seat.booked', (e) => {
+        console.log('Seat booked event:', e);
+        setSeatBookingStatus((prev) =>
+          prev.map((s) =>
+            s.seat_number === e.seat_number ? { ...s, is_booked: true } : s
+          )
+        );
+        
+        if (e.booking_id !== bookingId) {
+          toastError(`Seat ${e.seat_number} has been booked by another user`);
+        } else {
+          toastSuccess(`Seat ${e.seat_number} booked successfully`);
+        }
+      });
+
+    return () => {
+      echo.leave(`showtime.${booking.showtime.showtime_id}`);
+    };
+}, [booking, bookingId]);
+  useEffect(() => {
+    if (currentBooking?.timeLeft === '00:00' && selectedSeats.length > 0) {
+      const unlockSeats = async () => {
+        try {
+          for (const seatNumber of selectedSeats) {
+            await BookingSeatService.unlockSeat({
+              booking_id: bookingId,
+              seat_number: seatNumber,
+              showtime_id: booking.showtime.showtime_id
+            });
+          }
+          setSelectedSeats([]);
+          toastError('Booking timed out. Seats have been released.');
+        } catch (err) {
+          console.error('Unlock seats error:', err);
+          toastError('Failed to release seats');
+        }
+      };
+      unlockSeats();
     }
+  }, [currentBooking, selectedSeats, bookingId, booking]);
+
+  useEffect(() => {
+    if (hasFetched.current) return;
 
     const fetchData = async () => {
       if (!roomId || !bookingId) {
         toastError("Room ID or Booking ID not provided");
+        setError("Missing required parameters");
         setLoading(false);
         return;
       }
@@ -53,19 +106,16 @@ function SeatSelection() {
         setLoading(true);
 
         const bookingResponse = await BookingService.getBookingById(bookingId);
-
-        // Check if the booking is canceled
         if (bookingResponse.status === 'CANCELLED') {
           toastError("This booking has been canceled.");
           navigate("/");
           setLoading(false);
           return;
         }
-
         setBooking(bookingResponse);
 
         const seatsResponse = await SeatService.getSeatByRoomId(roomId);
-        setSeats(seatsResponse.data);
+        setSeats(Array.isArray(seatsResponse.data) ? seatsResponse.data : []);
 
         const showtimeId = bookingResponse.showtime?.showtime_id;
         if (showtimeId) {
@@ -80,6 +130,7 @@ function SeatSelection() {
       } catch (err) {
         console.error('Fetch error:', err);
         toastError(err.message || "Failed to fetch data");
+        setError(err.message || "Failed to fetch data");
         setLoading(false);
       }
     };
@@ -87,7 +138,6 @@ function SeatSelection() {
     fetchData();
     hasFetched.current = true;
 
-    // Navigate back if settingsError exists
     if (settingsError) {
       toastError(settingsError);
       navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`);
@@ -98,12 +148,16 @@ function SeatSelection() {
     const rows = new Set();
     const cols = new Set();
 
-    seats.forEach((seat) => {
-      const row = seat.seat_number.charAt(0);
-      const col = parseInt(seat.seat_number.slice(1), 10);
-      rows.add(row);
-      cols.add(col);
-    });
+    if (Array.isArray(seats) && seats.length > 0) {
+      seats.forEach((seat) => {
+        if (seat && typeof seat.seat_number === 'string') {
+          const row = seat.seat_number.charAt(0);
+          const col = parseInt(seat.seat_number.slice(1), 10);
+          rows.add(row);
+          cols.add(col);
+        }
+      });
+    }
 
     return {
       rows: Array.from(rows).sort(),
@@ -171,9 +225,12 @@ function SeatSelection() {
     }, 0);
   };
 
-  const toggleSeat = (seatNumber) => {
+  const toggleSeat = async (seatNumber) => {
     const seat = seats.find((s) => s.seat_number === seatNumber);
-    if (!seat) return;
+    if (!seat) {
+      console.error('Seat not found:', seatNumber);
+      return;
+    }
 
     const seatStatus = Array.isArray(seatBookingStatus)
       ? seatBookingStatus.find((s) => s.seat_number === seatNumber)
@@ -185,53 +242,75 @@ function SeatSelection() {
       return;
     }
 
-    setSelectedSeats((prev) => {
-      let newSeats = [...prev];
-      const isSelected = prev.includes(seatNumber);
+    try {
+      const lockData = {
+        booking_id: bookingId,
+        seat_number: seatNumber,
+        showtime_id: booking.showtime.showtime_id
+      };
+      console.log('Toggling seat:', lockData);
+      const response = await BookingSeatService.lockSeat(lockData);
 
-      if (seatType === "COUPLE") {
-        const row = seatNumber.match(/^[A-Z]+/)[0];
-        const col = parseInt(seatNumber.match(/\d+$/)[0]);
-        let pairSeat;
+      setSelectedSeats((prev) => {
+        let newSeats = [...prev];
+        const isSelected = prev.includes(seatNumber);
 
-        if (col % 2 === 1) {
-          pairSeat = `${row}${col + 1}`;
-        } else {
-          pairSeat = `${row}${col - 1}`;
-        }
+        if (seatType === 'COUPLE') {
+          const row = seatNumber.match(/^[A-Z]+/)[0];
+          const col = parseInt(seatNumber.match(/\d+$/)[0], 10);
+          let pairSeat;
 
-        const pairSeatObj = seats.find((s) => s.seat_number === pairSeat);
-        const pairSeatStatus = Array.isArray(seatBookingStatus)
-          ? seatBookingStatus.find((s) => s.seat_number === pairSeat)
-          : null;
-        const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
+          if (col % 2 === 1) {
+            pairSeat = `${row}${col + 1}`;
+          } else {
+            pairSeat = `${row}${col - 1}`;
+          }
 
-        if (!isSelected) {
-          if (pairSeatObj && !isPairBooked && pairSeatObj.seat_type.toUpperCase() === "COUPLE") {
+          const pairSeatObj = seats.find((s) => s.seat_number === pairSeat);
+          const pairSeatStatus = Array.isArray(seatBookingStatus)
+            ? seatBookingStatus.find((s) => s.seat_number === pairSeat)
+            : null;
+          const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
+
+          if (response && response.data && response.data.message && response.data.message.includes('mở khóa')) {
+            // Seat was unlocked
+            newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
+            toastSuccess(`Seat ${seatNumber} and ${pairSeat} unlocked`);
+          } else if (!isSelected && pairSeatObj && !isPairBooked && pairSeatObj.seat_type.toUpperCase() === 'COUPLE') {
+            // Lock both couple seats
             if (!newSeats.includes(seatNumber)) {
               newSeats.push(seatNumber);
             }
             if (!newSeats.includes(pairSeat)) {
               newSeats.push(pairSeat);
             }
+            toastSuccess(`Seat ${seatNumber} and ${pairSeat} locked`);
           } else {
             toastError("Cannot select couple seat: pair seat is unavailable or not a couple seat.");
             return prev;
           }
         } else {
-          newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
+          if (response && response.data && response.data.message && response.data.message.includes('mở khóa')) {
+            // Seat was unlocked
+            newSeats = newSeats.filter((s) => s !== seatNumber);
+            toastSuccess(`Seat ${seatNumber} unlocked`);
+          } else {
+            // Lock the seat
+            newSeats = isSelected
+              ? newSeats.filter((s) => s !== seatNumber)
+              : [...newSeats, seatNumber];
+            toastSuccess(`Seat ${seatNumber} locked`);
+          }
         }
-      } else {
-        newSeats = isSelected
-          ? newSeats.filter((s) => s !== seatNumber)
-          : [...newSeats, seatNumber];
-      }
 
-      const path = `/seats/${roomId}/${bookingId}`;
-      updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
-      console.log("SELECTED SEATS:", selectedSeats);
-      return newSeats;
-    });
+        const path = `/seats/${roomId}/${bookingId}`;
+        updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
+        return newSeats;
+      });
+    } catch (err) {
+      console.error('Toggle seat error:', err);
+      toastError(err.message || "Unable to toggle seat");
+    }
   };
 
   const handleCheckout = async () => {
@@ -261,8 +340,6 @@ function SeatSelection() {
       toastSuccess("Seats booked successfully!");
 
       const totalPrice = calculateTotalPrice();
-
-      // Update booking with totalPrice
       await BookingService.updateTotalPrice(bookingId, totalPrice);
 
       const path = `/payment/${bookingId}`;
@@ -381,6 +458,16 @@ function SeatSelection() {
     );
   }
 
+  if (error) {
+    return (
+      <div className={styles.seatSelection}>
+        <Title level={3}>Error</Title>
+        <Paragraph>{error}</Paragraph>
+        <Button onClick={handleGoBack}>Go Back</Button>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.seatSelection}>
       <div className={styles.secondaryNavbar}>
@@ -421,7 +508,7 @@ function SeatSelection() {
                         const isSelected = selectedSeats.includes(seatNumber);
                         const isBooked = seatStatus ? seatStatus.is_booked : false;
                         const seatType = seat ? seat.seat_type.toUpperCase() : null;
-                        const isOddColumn = col % 2 === 1; // Xác định cột lẻ
+                        const isOddColumn = col % 2 === 1;
                         const coupleClass = seatType === "COUPLE" ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : "";
                         const seatClass = isBooked
                           ? styles.seatNotAvailable
@@ -442,7 +529,8 @@ function SeatSelection() {
                                 }`}
                                 onClick={() => toggleSeat(seatNumber)}
                                 disabled={isBooked || seatType === "UNAVAILABLE"}
-                                data-col={col} // Giữ lại để debug nếu cần
+                                title={`${seatNumber}: ${isBooked ? 'Booked' : seatType}`}
+                                data-col={col}
                               >
                                 {col}
                               </Button>
@@ -574,7 +662,7 @@ function SeatSelection() {
               </Paragraph>
             </Row>
             <Row justify="space-between">
-              <Paragraph className={styles.label}>Seat choosed</Paragraph>
+              <Paragraph className={styles.label}>Seat chosen</Paragraph>
               <Paragraph className={styles.value}>
                 {selectedSeats.join(", ") || "None"}
               </Paragraph>

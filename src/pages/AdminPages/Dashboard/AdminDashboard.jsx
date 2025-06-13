@@ -5,12 +5,13 @@ import {
   Typography,
   Card,
   Statistic,
-  Table,
-  Tag,
-  Spin,
   Button,
   Select,
   message,
+  Spin,
+  DatePicker,
+  Table,
+  Tag,
 } from "antd";
 import {
   ReloadOutlined,
@@ -18,6 +19,8 @@ import {
   DollarOutlined,
 } from "@ant-design/icons";
 import {
+  BarChart,
+  Bar,
   LineChart,
   Line,
   XAxis,
@@ -30,6 +33,7 @@ import {
 import styles from "./AdminDashboard.module.scss";
 import "../GlobalStyles.module.scss";
 import DashboardService from "../../../services/DashboardService";
+import dayjs from "dayjs";
 
 const { Title, Text: TypographyText } = Typography;
 const { Option } = Select;
@@ -45,29 +49,60 @@ function AdminDashboard() {
     revenueData: [],
     topMovies: [],
     topCinemas: [],
+    topMoviesByCinema: [],
   });
   const [loading, setLoading] = useState(true);
-  const [revenueFilter, setRevenueFilter] = useState("month");
+  const [filter, setFilter] = useState("month"); // Default to 'month'
+  const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM")); // Default to current month (2025-06)
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async (filter = revenueFilter) => {
+  const loadData = async (newFilter = filter, newMonth = selectedMonth) => {
     setLoading(true);
     try {
-      const data = await DashboardService.fetchDashboardData(filter);
+      // Validate filter
+      const validFilter = ["day", "week", "month"].includes(newFilter) ? newFilter : "month";
+      if (newFilter !== validFilter) {
+        console.warn("Invalid filter detected, falling back to 'month'", { invalidFilter: newFilter });
+        setFilter("month");
+      }
+
+      const params = { filter: validFilter };
+      if (validFilter === "month" && newMonth) {
+        params.month = newMonth;
+      }
+      console.log("Sending API request with params:", params); // Debug log
+      const data = await DashboardService.fetchDashboardData(params);
+      console.log("API response:", data); // Debug log
       setDashboardData(data);
     } catch (error) {
-      message.error(error.message || "Failed to load dashboard data");
+      console.error("Load data error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      message.error(error.response?.data?.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
   };
 
   const handleFilterChange = (value) => {
-    setRevenueFilter(value);
-    loadData(value);
+    console.log("Filter changed to:", value); // Debug log
+    setFilter(value);
+    // Reset month if filter is not 'month', otherwise keep current month
+    const newMonth = value === "month" ? selectedMonth : null;
+    setSelectedMonth(newMonth);
+    loadData(value, newMonth);
+  };
+
+  const handleMonthChange = (date) => {
+    const month = date ? date.format("YYYY-MM") : null;
+    console.log("Month changed to:", month); // Debug log
+    setSelectedMonth(month);
+    loadData(filter, month);
   };
 
   const bookingColumns = [
@@ -133,40 +168,6 @@ function AdminDashboard() {
     },
   ];
 
-  const movieColumns = [
-    {
-      title: "Movie Title",
-      dataIndex: "movie_title",
-      key: "movie_title",
-      sorter: (a, b) => a.movie_title.localeCompare(b.movie_title),
-      render: (text) => <TypographyText strong>{text}</TypographyText>,
-    },
-    {
-      title: "Bookings",
-      dataIndex: "bookings",
-      key: "bookings",
-      sorter: (a, b) => a.bookings - b.bookings,
-      render: (bookings) => <TypographyText>{bookings}</TypographyText>,
-    },
-  ];
-
-  const cinemaColumns = [
-    {
-      title: "Cinema Name",
-      dataIndex: "cinema_name",
-      key: "cinema_name",
-      sorter: (a, b) => a.cinema_name.localeCompare(b.cinema_name),
-      render: (text) => <TypographyText strong>{text}</TypographyText>,
-    },
-    {
-      title: "Bookings",
-      dataIndex: "bookings",
-      key: "bookings",
-      sorter: (a, b) => a.bookings - b.bookings,
-      render: (bookings) => <TypographyText>{bookings}</TypographyText>,
-    },
-  ];
-
   return (
     <div className={styles.container}>
       <Row justify="space-between" align="middle" className={styles.header}>
@@ -199,11 +200,7 @@ function AdminDashboard() {
             <Col xs={24} lg={12}>
               <Card className={styles.statisticCard} hoverable>
                 <Statistic
-                  title={
-                    <span className={styles.statisticTitle}>
-                      Total Bookings
-                    </span>
-                  }
+                  title={<span className={styles.statisticTitle}>Total Bookings</span>}
                   value={dashboardData.totalBookings}
                   prefix={<BookOutlined />}
                   suffix="bookings"
@@ -214,9 +211,7 @@ function AdminDashboard() {
             <Col xs={24} lg={12}>
               <Card className={styles.statisticCard} hoverable>
                 <Statistic
-                  title={
-                    <span className={styles.statisticTitle}>Total Revenue</span>
-                  }
+                  title={<span className={styles.statisticTitle}>Total Revenue</span>}
                   value={dashboardData.totalRevenue}
                   prefix={<DollarOutlined />}
                   suffix="VND"
@@ -236,15 +231,25 @@ function AdminDashboard() {
               </Col>
               <Col>
                 <Select
-                  value={revenueFilter}
+                  value={filter}
                   onChange={handleFilterChange}
-                  style={{ width: 120 }}
+                  style={{ width: 120, marginRight: 8 }}
                   className={styles.filterSelect}
                 >
                   <Option value="day">Daily</Option>
                   <Option value="week">Weekly</Option>
                   <Option value="month">Monthly</Option>
                 </Select>
+                {filter === "month" && (
+                  <DatePicker
+                    picker="month"
+                    value={selectedMonth ? dayjs(selectedMonth, "YYYY-MM") : null}
+                    onChange={handleMonthChange}
+                    format="YYYY-MM"
+                    placeholder="Select month"
+                    style={{ width: 120 }}
+                  />
+                )}
               </Col>
             </Row>
             <Card className={styles.chartCard}>
@@ -277,7 +282,7 @@ function AdminDashboard() {
                         borderRadius: "8px",
                       }}
                       labelStyle={{ color: "#14142b" }}
-                      formatter={(value) => `${value} VND`}
+                      formatter={(value) => `${numberFormatter.format(value)} VND`}
                     />
                     <Legend verticalAlign="top" height={36} />
                     <Line
@@ -288,6 +293,159 @@ function AdminDashboard() {
                       dot={{ fill: "#5f2eea", strokeWidth: 2 }}
                     />
                   </LineChart>
+                </ResponsiveContainer>
+              )}
+            </Card>
+          </div>
+
+          {/* Top Movies by Bookings - BarChart */}
+          <div className={styles.section}>
+            <Title level={3} className={styles.sectionTitle}>
+              Top Movies by Bookings
+            </Title>
+            <Card className={styles.chartCard}>
+              {dashboardData.topMovies.length === 0 ? (
+                <div className={styles.empty}>
+                  <TypographyText>No movie data available</TypographyText>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={dashboardData.topMovies}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="movie_title"
+                      stroke="#6b7280"
+                      angle={-45}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      label={{
+                        value: "Bookings",
+                        angle: -90,
+                        position: "insideLeft",
+                        offset: -10,
+                        fill: "#6b7280",
+                      }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        borderColor: "#e5e7eb",
+                        borderRadius: "8px",
+                      }}
+                      labelStyle={{ color: "#14142b" }}
+                      formatter={(value) => `${value} bookings`}
+                    />
+                    <Bar dataKey="bookings" fill="#5f2eea" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </Card>
+          </div>
+
+          {/* Top Cinemas by Bookings - BarChart */}
+          <div className={styles.section}>
+            <Title level={3} className={styles.sectionTitle}>
+              Top Cinemas by Bookings
+            </Title>
+            <Card className={styles.chartCard}>
+              {dashboardData.topCinemas.length === 0 ? (
+                <div className={styles.empty}>
+                  <TypographyText>No cinema data available</TypographyText>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={dashboardData.topCinemas}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="cinema_name"
+                      stroke="#6b7280"
+                      angle={-45}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      label={{
+                        value: "Bookings",
+                        angle: -90,
+                        position: "insideLeft",
+                        offset: -10,
+                        fill: "#6b7280",
+                      }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        borderColor: "#e5e7eb",
+                        borderRadius: "8px",
+                      }}
+                      labelStyle={{ color: "#14142b" }}
+                      formatter={(value) => `${value} bookings`}
+                    />
+                    <Bar dataKey="bookings" fill="#4b9bff" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </Card>
+          </div>
+
+          {/* Top Movies by Cinema - BarChart */}
+          <div className={styles.section}>
+            <Title level={3} className={styles.sectionTitle}>
+              Top Movies by Cinema
+            </Title>
+            <Card className={styles.chartCard}>
+              {dashboardData.topMoviesByCinema.length === 0 ? (
+                <div className={styles.empty}>
+                  <TypographyText>No data available</TypographyText>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={dashboardData.topMoviesByCinema}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="cinema_name"
+                      stroke="#6b7280"
+                      angle={-45}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      label={{
+                        value: "Bookings",
+                        angle: -90,
+                        position: "insideLeft",
+                        offset: -10,
+                        fill: "#6b7280",
+                      }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        borderColor: "#e5e7eb",
+                        borderRadius: "8px",
+                      }}
+                      labelStyle={{ color: "#14142b" }}
+                      formatter={(value, name, props) => [
+                        `${value} bookings`,
+                        `Movie: ${props.payload.movie_title}`,
+                      ]}
+                    />
+                    <Bar dataKey="bookings" fill="#ff6a6a" />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </Card>
@@ -308,53 +466,6 @@ function AdminDashboard() {
                   columns={bookingColumns}
                   dataSource={dashboardData.recentBookings}
                   rowKey="booking_id"
-                  pagination={false}
-                  rowClassName={styles.tableRow}
-                  className={styles.table}
-                />
-              )}
-            </Card>
-          </div>
-
-          {/* Top Movies by Bookings */}
-          <div className={styles.section}>
-            <Title level={3} className={styles.sectionTitle}>
-              Top Movies by Bookings
-            </Title>
-            <Card className={styles.tableCard}>
-              {dashboardData.topMovies.length === 0 ? (
-                <div className={styles.empty}>
-                  <TypographyText>No movie data available</TypographyText>
-                </div>
-              ) : (
-                <Table
-                  columns={movieColumns}
-                  dataSource={dashboardData.topMovies}
-                  rowKey="movie_title"
-                  pagination={false}
-                  rowClassName={styles.tableRow}
-                  className={styles.table}
-                />
-              )}
-            </Card>
-          </div>
-
-          {/* Top Cinemeker" contentType="text/jsx">
-as by Bookings */}
-          <div className={styles.section}>
-            <Title level={3} className={styles.sectionTitle}>
-              Top Cinemas by Bookings
-            </Title>
-            <Card className={styles.tableCard}>
-              {dashboardData.topCinemas.length === 0 ? (
-                <div className={styles.empty}>
-                  <TypographyText>No cinema data available</TypographyText>
-                </div>
-              ) : (
-                <Table
-                  columns={cinemaColumns}
-                  dataSource={dashboardData.topCinemas}
-                  rowKey="cinema_name"
                   pagination={false}
                   rowClassName={styles.tableRow}
                   className={styles.table}

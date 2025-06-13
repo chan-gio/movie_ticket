@@ -22,14 +22,6 @@ export const SettingsProvider = ({ children }) => {
     const fetchSettings = async () => {
       setLoading(true);
       try {
-        // // Check for cached settings in localStorage
-        // const cachedSettings = localStorage.getItem("settings");
-        // if (cachedSettings) {
-        //   setSettings(JSON.parse(cachedSettings));
-        //   setLoading(false);
-        //   return;
-        // }
-
         // Fetch settings from API
         const settingsData = await SettingService.getSetting();
         setSettings(settingsData);

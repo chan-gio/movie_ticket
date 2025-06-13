@@ -9,6 +9,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to fetch rooms");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to fetch rooms");
     }
   },
@@ -21,6 +24,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to create room");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to create room");
     }
   },
@@ -33,6 +39,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to fetch room");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to fetch room");
     }
   },
@@ -45,6 +54,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to update room");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to update room");
     }
   },
@@ -57,18 +69,24 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to update room status");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to update room status");
     }
   },
 
   updateCapacity: async (roomId, capacity) => {
     try {
-      const response = await api.put(`/rooms/${roomId}`, { capacity });
+      const response = await api.put(`/rooms/update-capacity/${roomId}`, { capacity });
       if (response.data.code === 200) {
         return response.data.data;
       }
       throw new Error(response.data.message || "Failed to update room capacity");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to update room capacity");
     }
   },
@@ -81,18 +99,24 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to soft delete room");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to soft delete room");
     }
   },
 
   restoreRoom: async (roomId) => {
     try {
-      const response = await api.post(`/rooms/${roomId}/restore`);
+      const response = await api.patch(`/rooms/restore/${roomId}`);
       if (response.data.code === 200) {
         return response.data.data;
       }
       throw new Error(response.data.message || "Failed to restore room");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to restore room");
     }
   },
@@ -105,6 +129,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to permanently delete room");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to permanently delete room");
     }
   },
@@ -117,6 +144,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to fetch rooms for cinema");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to fetch rooms for cinema");
     }
   },
@@ -129,6 +159,9 @@ const RoomService = {
       }
       throw new Error(response.data.message || "Failed to search rooms");
     } catch (error) {
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
       throw new Error(error.response?.data?.message || "Failed to search rooms");
     }
   },

@@ -1,4 +1,4 @@
-import api from "./api"; // Import the configured Axios instance
+import api from "./api";
 
 const CouponService = {
   getAllCoupons: async (page = 1, perPage = 10) => {
@@ -8,7 +8,7 @@ const CouponService = {
       });
       if (response.data.code === 200) {
         return {
-          data: response.data.data.data, // Extract coupons array
+          data: response.data.data.data,
           pagination: {
             current: response.data.data.current_page,
             pageSize: response.data.data.per_page,
@@ -18,11 +18,10 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to fetch coupons");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to fetch coupons. Please try again later."
-          : error.response?.data?.message || "Failed to fetch coupons";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to fetch coupons");
     }
   },
 
@@ -34,11 +33,10 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to create coupon");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to create coupon. Please try again later."
-          : error.response?.data?.message || "Failed to create coupon";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to create coupon");
     }
   },
 
@@ -50,11 +48,10 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to fetch coupon");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to fetch coupon. Please try again later."
-          : error.response?.data?.message || "Failed to fetch coupon";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to fetch coupon");
     }
   },
 
@@ -66,11 +63,10 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to update coupon");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to update coupon. Please try again later."
-          : error.response?.data?.message || "Failed to update coupon";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to update coupon");
     }
   },
 
@@ -82,11 +78,10 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to soft delete coupon");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to soft delete coupon. Please try again later."
-          : error.response?.data?.message || "Failed to soft delete coupon";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to soft delete coupon");
     }
   },
 
@@ -98,69 +93,62 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to restore coupon");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to restore coupon. Please try again later."
-          : error.response?.data?.message || "Failed to restore coupon";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to restore coupon");
     }
   },
 
   forceDeleteCoupon: async (couponId) => {
     try {
-      const response = await api.delete(`/coupons/force/${couponId}`);
+      const response = await api.delete(`/coupons/${couponId}`);
       if (response.data.code === 200) {
         return true;
       }
       throw new Error(response.data.message || "Failed to hard delete coupon");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to hard delete coupon. Please try again later."
-          : error.response?.data?.message || "Failed to hard delete coupon";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to hard delete coupon");
     }
   },
 
-  // Search coupons by code (partial match)
   searchCouponsByCode: async (code) => {
     try {
       const response = await api.get("/coupons/search/code", {
         params: { code },
       });
       if (response.data.code === 200) {
-        return response.data.data; // Returns an array of matching coupons
+        return response.data.data;
       }
       throw new Error(response.data.message || "Failed to search coupons");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to search coupons. Please try again later."
-          : error.response?.data?.message || "Failed to search coupons";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to search coupons");
     }
   },
 
-  // Search coupon by code (exact match)
   searchCouponByExactCode: async (code) => {
     try {
       const response = await api.get("/coupons/search/exact-code", {
         params: { code },
       });
       if (response.data.code === 200) {
-        return response.data.data; // Returns a single coupon (or null if not found)
+        return response.data.data;
       }
       throw new Error(response.data.message || "Failed to search coupon by exact code");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to search coupon by exact code. Please try again later."
-          : error.response?.data?.message || "Failed to search coupon by exact code";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to search coupon by exact code");
     }
   },
 
-  // Increment or decrement coupon usage
   updateCouponUsage: async (couponId, action) => {
     try {
       const response = await api.post(`/coupons/${couponId}/usage`, { action });
@@ -169,15 +157,13 @@ const CouponService = {
       }
       throw new Error(response.data.message || `Failed to ${action} coupon usage`);
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? `Server error: Unable to ${action} coupon usage. Please try again later.`
-          : error.response?.data?.message || `Failed to ${action} coupon usage`;
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || `Failed to ${action} coupon usage`);
     }
   },
 
-  // Decrement coupon usage (specific method for cancellation)
   decrementCouponUsage: async (couponId) => {
     try {
       const response = await api.post(`/coupons/${couponId}/usage`, { action: "decrement" });
@@ -186,15 +172,13 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to decrement coupon usage");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to decrement coupon usage. Please try again later."
-          : error.response?.data?.message || "Failed to decrement coupon usage";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to decrement coupon usage");
     }
   },
 
-  // Increment coupon usage (for completeness)
   incrementCouponUsage: async (couponId) => {
     try {
       const response = await api.post(`/coupons/${couponId}/usage`, { action: "increment" });
@@ -203,11 +187,10 @@ const CouponService = {
       }
       throw new Error(response.data.message || "Failed to increment coupon usage");
     } catch (error) {
-      const message =
-        error.response?.status === 500
-          ? "Server error: Unable to increment coupon usage. Please try again later."
-          : error.response?.data?.message || "Failed to increment coupon usage";
-      throw new Error(message);
+      if (error.response?.status === 401) {
+        throw new Error("Unauthorized: Please login again");
+      }
+      throw new Error(error.response?.data?.message || "Failed to increment coupon usage");
     }
   },
 };
