@@ -1,24 +1,14 @@
-import { useState, useEffect } from "react";
-import {
-  Card,
-  Row,
-  Col,
-  Typography,
-  Form,
-  Input,
-  Button,
-  Alert,
-  Skeleton,
-} from "antd";
-import styles from "./AccountTab.module.scss";
-import UserService from "../../../../services/UserService";
+import { useState, useEffect } from 'react';
+import { Card, Row, Col, Typography, Form, Input, Button, Alert, Skeleton } from 'antd';
+import styles from './AccountTab.module.scss';
+import UserService from '../../../../services/UserService';
 
 const { Title } = Typography;
 
 const AccountTab = ({ userData, loading, onProfileUpdate }) => {
   const [profileForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
-  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
+  const [alert, setAlert] = useState({ show: false, type: '', message: '' });
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
@@ -26,34 +16,34 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
   useEffect(() => {
     if (userData) {
       profileForm.setFieldsValue({
-        firstName: userData.firstName || "",
-        lastName: userData.lastName || "",
-        email: userData.email || "",
-        phoneNumber: userData.phone || "",
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        email: userData.email || '',
+        phoneNumber: userData.phone || ''
       });
     }
   }, [userData, profileForm]);
 
-  const handleProfileUpdate = async (values) => {
+  const handleProfileUpdate = async values => {
     setIsProfileLoading(true);
     try {
       const updatedData = {
         full_name: `${values.firstName} ${values.lastName}`.trim(),
         email: values.email,
-        phone: values.phoneNumber,
+        phone: values.phoneNumber
       };
 
-      const userId = localStorage.getItem("user_id");
+      const userId = localStorage.getItem('user_id');
       if (!userId) {
-        throw new Error("User ID not found. Please log in again.");
+        throw new Error('User ID not found. Please log in again.');
       }
 
       await UserService.updateUser(userId, updatedData);
 
       setAlert({
         show: true,
-        type: "success",
-        message: "Profile updated successfully!",
+        type: 'success',
+        message: 'Profile updated successfully!'
       });
 
       // Trigger parent refresh
@@ -63,41 +53,41 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
     } catch (error) {
       setAlert({
         show: true,
-        type: "error",
-        message: error.message || "Failed to update profile",
+        type: 'error',
+        message: error.message || 'Failed to update profile'
       });
     } finally {
       setIsProfileLoading(false);
     }
   };
 
-  const handlePasswordChange = async (values) => {
+  const handlePasswordChange = async values => {
     setIsPasswordLoading(true);
     try {
       const passwordData = {
         old_password: values.oldPassword,
         new_password: values.newPassword,
-        new_password_confirmation: values.confirmPassword,
+        new_password_confirmation: values.confirmPassword
       };
 
-      const userId = localStorage.getItem("user_id");
+      const userId = localStorage.getItem('user_id');
       if (!userId) {
-        throw new Error("User ID not found. Please log in again.");
+        throw new Error('User ID not found. Please log in again.');
       }
 
       await UserService.changePassword(userId, passwordData);
 
       setAlert({
         show: true,
-        type: "success",
-        message: "Password changed successfully!",
+        type: 'success',
+        message: 'Password changed successfully!'
       });
       passwordForm.resetFields();
     } catch (error) {
       setAlert({
         show: true,
-        type: "error",
-        message: error.message || "Failed to change password",
+        type: 'error',
+        message: error.message || 'Failed to change password'
       });
     } finally {
       setIsPasswordLoading(false);
@@ -120,33 +110,20 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
 
   return (
     <div className={styles.tabContent}>
-      {alert.show && (
-        <Alert
-          message={alert.message}
-          type={alert.type}
-          showIcon
-          closable
-          onClose={() => setAlert({ ...alert, show: false })}
-          className={styles.alert}
-        />
-      )}
+      {alert.show && <Alert message={alert.message} type={alert.type} showIcon closable onClose={() => setAlert({ ...alert, show: false })} className={styles.alert} />}
       <Card className={styles.detailCard}>
         <Title level={4}>Edit Profile</Title>
         <div className={styles.divider} />
-        <Form
-          form={profileForm}
-          onFinish={handleProfileUpdate}
-          layout="vertical"
-        >
+        <Form form={profileForm} onFinish={handleProfileUpdate} layout="vertical">
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="First Name"
                 name="firstName"
                 rules={[
-                  { required: true, message: "Please enter your first name" },
-                  { min: 2, message: "First name is too short" },
-                  { max: 30, message: "First name is too long" },
+                  { required: true, message: 'Please enter your first name' },
+                  { min: 2, message: 'First name is too short' },
+                  { max: 30, message: 'First name is too long' }
                 ]}
               >
                 <Input placeholder="Enter your first name" />
@@ -157,9 +134,9 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
                 label="Last Name"
                 name="lastName"
                 rules={[
-                  { required: true, message: "Please enter your last name" },
-                  { min: 2, message: "Last name is too short" },
-                  { max: 30, message: "Last name is too long" },
+                  { required: true, message: 'Please enter your last name' },
+                  { min: 2, message: 'Last name is too short' },
+                  { max: 30, message: 'Last name is too long' }
                 ]}
               >
                 <Input placeholder="Enter your last name" />
@@ -170,8 +147,8 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
                 label="Email"
                 name="email"
                 rules={[
-                  { required: true, message: "Please enter your email" },
-                  { type: "email", message: "Please enter a valid email" },
+                  { required: true, message: 'Please enter your email' },
+                  { type: 'email', message: 'Please enter a valid email' }
                 ]}
               >
                 <Input placeholder="Enter your email" />
@@ -182,27 +159,19 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
                 label="Phone Number"
                 name="phoneNumber"
                 rules={[
-                  { required: true, message: "Please enter your phone number" },
+                  { required: true, message: 'Please enter your phone number' },
                   {
                     pattern: /^\d+$/,
-                    message: "Phone number must contain only digits",
-                  },
+                    message: 'Phone number must contain only digits'
+                  }
                 ]}
               >
-                <Input
-                  addonBefore="+84"
-                  placeholder="Enter your phone number"
-                />
+                <Input addonBefore="+84" placeholder="Enter your phone number" />
               </Form.Item>
             </Col>
           </Row>
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isProfileLoading}
-              block
-            >
+            <Button type="primary" htmlType="submit" loading={isProfileLoading} block>
               Update Profile
             </Button>
           </Form.Item>
@@ -211,20 +180,10 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
       <Card className={styles.detailCard}>
         <Title level={4}>Change Password</Title>
         <div className={styles.divider} />
-        <Form
-          form={passwordForm}
-          onFinish={handlePasswordChange}
-          layout="vertical"
-        >
+        <Form form={passwordForm} onFinish={handlePasswordChange} layout="vertical">
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={24}>
-              <Form.Item
-                label="Old Password"
-                name="oldPassword"
-                rules={[
-                  { required: true, message: "Please enter your old password" },
-                ]}
-              >
+              <Form.Item label="Old Password" name="oldPassword" rules={[{ required: true, message: 'Please enter your old password' }]}>
                 <Input.Password placeholder="Enter your old password" />
               </Form.Item>
             </Col>
@@ -233,8 +192,8 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
                 label="New Password"
                 name="newPassword"
                 rules={[
-                  { required: true, message: "Please enter your new password" },
-                  { min: 6, message: "Password must be at least 6 characters" },
+                  { required: true, message: 'Please enter your new password' },
+                  { min: 6, message: 'Password must be at least 6 characters' }
                 ]}
               >
                 <Input.Password placeholder="Enter your new password" />
@@ -244,22 +203,20 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
               <Form.Item
                 label="Confirm Password"
                 name="confirmPassword"
-                dependencies={["newPassword"]}
+                dependencies={['newPassword']}
                 rules={[
                   {
                     required: true,
-                    message: "Please confirm your new password",
+                    message: 'Please confirm your new password'
                   },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
-                      if (!value || getFieldValue("newPassword") === value) {
+                      if (!value || getFieldValue('newPassword') === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(
-                        new Error("Passwords do not match")
-                      );
-                    },
-                  }),
+                      return Promise.reject(new Error('Passwords do not match'));
+                    }
+                  })
                 ]}
               >
                 <Input.Password placeholder="Confirm your new password" />
@@ -267,12 +224,7 @@ const AccountTab = ({ userData, loading, onProfileUpdate }) => {
             </Col>
           </Row>
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isPasswordLoading}
-              block
-            >
+            <Button type="primary" htmlType="submit" loading={isPasswordLoading} block>
               Change Password
             </Button>
           </Form.Item>

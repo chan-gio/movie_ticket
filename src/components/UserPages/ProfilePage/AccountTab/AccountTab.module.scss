@@ -120,3 +120,35 @@
 :global(.ant-card .ant-card-bordered){
   margin: 10px 0px !important;
 }
+
+.profileImageWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.cameraIconBtn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: #fff;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: background 0.2s;
+  z-index: 2;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+
+  svg {
+    font-size: 18px;
+    color: #5f2eea;
+  }
+}

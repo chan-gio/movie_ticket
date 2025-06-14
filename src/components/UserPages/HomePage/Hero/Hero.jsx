@@ -38,7 +38,6 @@ function Hero() {
                 images.map((url, idx) => (
                   <Link
                     key={idx}
-                    to={`/banner/${idx}`} // You can adjust the link as needed
                     className={styles.imgGradient}
                   >
                     <img

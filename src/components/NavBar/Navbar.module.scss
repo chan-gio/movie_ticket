@@ -32,9 +32,7 @@
   gap: 30px;
 
   @media (max-width: 991px) {
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 10px;
+    
   }
 }
 
@@ -54,11 +52,7 @@
   gap: 20px;
 
   @media (max-width: 991px) {
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 10px;
-    width: 100%;
-    align-items: flex-end;
+   
   }
 }
 
@@ -78,23 +72,17 @@
 
 .searchForm {
   position: relative;
-  width: 50px;
+  width: 200px;
   height: 50px;
   background: white;
   border-radius: 25px;
   border: 4px solid #eeeeee;
   box-sizing: border-box;
-  transition: all 1s;
-
-  &:hover {
-    width: 200px;
-  }
+  transition: none;
+  overflow: hidden;
 
   @media (max-width: 991px) {
-    width: 100%;
-    &:hover {
-      width: 100%;
-    }
+   
   }
 }
 
@@ -122,13 +110,7 @@
     border: none !important;
     border-radius: 20px !important;
     padding: 0 40px 0px 20px !important;
-    display: none;
-  }
-
-  .searchForm:hover & {
-    :global(.ant-input) {
-      display: block;
-    }
+    display: block;
   }
 
   :global(.ant-input-suffix) {
@@ -179,14 +161,113 @@
 }
 
 @media (max-width: 991px) {
+  
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: white;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+@media (max-width: 600px) {
   .navbarContainer {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    padding: 0 8px;
+    position: relative;
   }
 
   .leftSection {
-    flex-direction: column;
-    align-items: flex-start;
     width: 100%;
+    justify-content: center;
+    gap: 0;
+    order: 2;
+  }
+
+  .navbarLogo {
+    justify-content: center;
+    width: 100%;
+    order: 1;
+    margin: 8px 0;
+    img {
+      height: 32px;
+    }
+  }
+
+  .navLinks {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #1f2937;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    border-top: 1px solid #333;
+
+    /* Hiệu ứng đóng/mở */
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s;
+  }
+
+  .navLinks.open {
+    max-height: 500px; /* đủ lớn cho menu, có thể tăng nếu menu dài hơn */
+    opacity: 1;
+    pointer-events: auto;
+    transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.25s;
+  }
+
+  .navLink {
+    padding: 16px;
+    font-size: 18px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+  }
+
+  .navActions {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+    order: 3;
+    margin-top: 8px;
+  }
+
+  .hamburger {
+    display: block;
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    z-index: 20;
+  }
+}
+
+.mobileMenuExtras {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .navActions {
+    display: none;
+  }
+  .mobileMenuExtras {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 0 8px 0;
+    background: #1f2937;
+  }
+  .mobileMenuExtras .searchForm {
+    width: 90vw;
+    max-width: 320px;
   }
 }

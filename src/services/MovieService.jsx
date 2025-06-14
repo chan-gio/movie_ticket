@@ -1,5 +1,5 @@
-import api from "./api";
-import { uploadMoviePosterToCloudinary } from "../utils/cloudinaryConfig";
+import api from './api';
+import { uploadMoviePosterToCloudinary } from '../utils/cloudinaryConfig';
 
 const MovieService = {
   getAllMovies: async ({ perPage, page } = {}) => {
@@ -29,7 +29,7 @@ const MovieService = {
           console.log(`Upload progress: ${progress}%`);
         });
         if (!posterUrl) {
-          throw new Error("Failed to upload poster image");
+          throw new Error('Failed to upload poster image');
         }
       }
 
@@ -55,7 +55,7 @@ const MovieService = {
       }
       throw new Error(response.data.message || "Failed to fetch movie");
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Failed to fetch movie");
+      throw new Error(error.response?.data?.message || 'Failed to fetch movie');
     }
   },
 
@@ -67,7 +67,7 @@ const MovieService = {
           console.log(`Upload progress: ${progress}%`);
         });
         if (!posterUrl) {
-          throw new Error("Failed to upload poster image");
+          throw new Error('Failed to upload poster image');
         }
       }
 
@@ -117,7 +117,7 @@ const MovieService = {
 
   getDeletedMovies: async () => {
     try {
-      const response = await api.get("/movies/deleted");
+      const response = await api.get('/movies/deleted');
       if (response.data.code === 200) {
         return response.data.data;
       }
@@ -132,7 +132,7 @@ const MovieService = {
 
   searchMoviesByTitle: async (title) => {
     try {
-      const response = await api.get("/movies/search", { params: { title } });
+      const response = await api.get('/movies/search', { params: { title } });
       if (response.data.code === 200) {
         return response.data.data;
       }
@@ -221,7 +221,7 @@ getNowShowing: async () => {
     } catch (error) {
       throw new Error(error.response?.data?.message || "Failed to search movies");
     }
-  },
+  }
 };
 
 export default MovieService;

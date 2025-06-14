@@ -4,13 +4,30 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  margin: 20px auto;
-  max-width: 1200px;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 991px) {
+    padding: 14px;
+    margin: 0;
+  }
+  @media (max-width: 575px) {
+    padding: 8px;
+    margin: 0;
+    border-radius: 12px;
+  }
 }
 
 .hero {
   padding-top: 25px;
   padding-bottom: 25px;
+
+  @media (max-width: 575px) {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
 }
 
 .heroSubtitle {
@@ -18,8 +35,11 @@
   color: #6b7280;
   margin: 0;
 
+  @media (max-width: 991px) {
+    font-size: 18px;
+  }
   @media (max-width: 767px) {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
@@ -30,16 +50,20 @@
   margin: 0;
 
   @media (max-width: 991px) {
-    font-size: 48px;
+    font-size: 38px;
   }
-
   @media (max-width: 767px) {
-    font-size: 36px;
+    font-size: 28px;
   }
 }
 
 .heroSubtitleContainer {
   margin-left: 25px;
+
+  @media (max-width: 991px) {
+    margin-left: 0;
+    text-align: center;
+  }
 }
 
 .imageContainer {
@@ -51,9 +75,14 @@
   flex-wrap: nowrap;
   overflow-x: auto;
 
+  @media (max-width: 991px) {
+    margin-right: 0;
+    justify-content: center;
+    gap: 8px;
+  }
   @media (max-width: 575px) {
     gap: 2px;
-    justify-content: center;
+    padding: 8px 0;
   }
 }
 
@@ -76,6 +105,13 @@
   &:nth-child(even) {
     transform: translateY(-10px);
   }
+
+  @media (max-width: 575px) {
+    &:nth-child(odd),
+    &:nth-child(even) {
+      transform: none;
+    }
+  }
 }
 
 .heroImage {
@@ -91,12 +127,40 @@
     width: 300px;
   }
 
-  @media (max-width: 575px) {
-    width: 94.82px;
-    height: 311.98px;
+  @media (max-width: 991px) {
+    width: 80px;
+    height: 220px;
 
     .imgGradient:hover & {
-      width: 189.64px;
+      width: 160px;
     }
+  }
+  @media (max-width: 575px) {
+    width: 60px;
+    height: 160px;
+
+    .imgGradient:hover & {
+      width: 120px;
+    }
+  }
+}
+
+.skeletonContainer {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.skeletonImage {
+  border-radius: 16px;
+  @media (max-width: 991px) {
+    width: 80px !important;
+    height: 220px !important;
+  }
+  @media (max-width: 575px) {
+    width: 60px !important;
+    height: 160px !important;
   }
 }

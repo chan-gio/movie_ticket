@@ -1,7 +1,11 @@
 .home {
-  max-width: 1200px;
+  width: 100vw;
   margin: 0 auto;
   padding: 0 20px;
+
+   @media (min-width: 1170px) {
+    padding: 0 100px;
+  }
 }
 
 .section {

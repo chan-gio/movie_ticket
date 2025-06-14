@@ -6,6 +6,25 @@
   padding: 20px;
   margin: 20px auto;
   max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 991px) {
+    padding: 14px;
+    margin: 12px 0;
+    max-width: 900px;
+  }
+  @media (max-width: 767px) {
+    padding: 8px;
+    margin: 8px 0;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+  @media (max-width: 575px) {
+    padding: 4px;
+    margin: 4px 0;
+    border-radius: 8px;
+  }
 }
 
 .sectionTitle {
@@ -74,72 +93,26 @@
 
   .slick-slide {
     padding: 0 10px;
+    display: flex;
+    justify-content: center;
   }
 
-  .slick-dots li button:before {
-    color: #6c63ff;
-  }
-
-  .slick-dots li.slick-active button:before {
-    color: #6c63ff;
-  }
-
-  :global {
-    .slick-arrow {
-      background: transparent;
-      top: 50%;
-      transform: translateY(-50%);
-      background-color: rgba(95, 46, 234, 0.15);
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      z-index: 10;
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.3s ease;
-
-      &::before {
-        font-size: 24px;
-        color: #6c63ff;
-        opacity: 1;
-      }
-
-      &:hover {
-        background-color: #6c63ff;
-
-        &::before {
-          color: white;
-        }
-      }
+  @media (max-width: 991px) {
+    padding: 12px 0;
+    .slick-slide {
+      padding: 0 6px;
     }
-
-    .slick-prev {
-      left: -85px;
-
-      @media (max-width: 767px) {
-        left: -40px;
-        width: 40px;
-        height: 40px;
-      }
-
-      @media (max-width: 575px) {
-        left: -30px;
-      }
+  }
+  @media (max-width: 767px) {
+    padding: 6px 0;
+    .slick-slide {
+      padding: 0 3px;
     }
-
-    .slick-next {
-      right: -85px;
-
-      @media (max-width: 767px) {
-        right: -40px;
-        width: 40px;
-        height: 40px;
-      }
-
-      @media (max-width: 575px) {
-        right: -30px;
-      }
+  }
+  @media (max-width: 575px) {
+    padding: 2px 0;
+    .slick-slide {
+      padding: 0 1px;
     }
   }
 }

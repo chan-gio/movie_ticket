@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom"; // Added Link import
 import styles from "./Footer.module.scss";
 import waveImg from "/assets/wave.png";
@@ -9,15 +8,10 @@ import {
   FaPinterest,
   FaYoutube,
 } from "react-icons/fa";
-import MovieService from "../../services/MovieService";
-import { toastError } from "../../utils/toastNotifier";
 import { useSettings } from "../../Context/SettingContext"; // Added useSettings import
 
 const Footer = () => {
   const { settings } = useSettings(); // Added useSettings hook
-  const [searchParams, setSearchParams] = useSearchParams();
-  const searchQuery = searchParams.get("search") || "";
-  const navigate = useNavigate();
 
   useEffect(() => {
     const navbar = document.querySelector(".navbar");
@@ -34,40 +28,6 @@ const Footer = () => {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Update search query in URL
-  const handleSearchInputChange = (e) => {
-    const value = e.target.value;
-    if (value) {
-      setSearchParams({ search: value });
-    } else {
-      setSearchParams({});
-    }
-  };
-
-  // Search function triggered by icon click or Enter
-  const handleSearch = async () => {
-    if (searchQuery.trim() === "") {
-      navigate("/movies", {
-        state: { searchQuery: "", searchResults: null },
-      });
-      window.scrollTo(0, 0); // Scroll to top
-      return;
-    }
-    try {
-      const response = await MovieService.searchByTitleFE({
-        title: searchQuery,
-        perPage: 20,
-        page: 1,
-      });
-      navigate("/movies", {
-        state: { searchQuery, searchResults: response },
-      });
-      window.scrollTo(0, 0); // Scroll to top
-    } catch (error) {
-      toastError(error.message || "Failed to search movies");
-    }
-  };
 
   return (
     <footer className={styles.footer}>
@@ -101,24 +61,6 @@ const Footer = () => {
             {/* Updated to use Link */}
             <img src={settings.name} alt="Movie" />
           </Link>
-          <div className={styles.searchBar}>
-            <span
-              className={styles.searchIcon}
-              onClick={handleSearch}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            >
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="Tìm phim, rạp, suất chiếu..."
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-          </div>
           <div className={styles.socialIcons}>
             <a href="#">
               <FaInstagram />
