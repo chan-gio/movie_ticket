@@ -5,21 +5,23 @@ const AuthService = {
   register: async (userData) => {
     try {
       const response = await api.post("/auth/register", userData);
-      console.log("Register Response:", response); // Debug log
+
+      // Check if the HTTP status is in the success range (200-299)
       if (response.status >= 200 && response.status < 300) {
-        if (response.data.success === true) {
-          return response.data.data;
+        // Backend uses code 201 for successful registration
+        if (response.data.code === 201) {
+          return response.data.data; // Returns { user, access_token, refresh_token }
         } else {
           throw new Error(response.data.message || "Failed to register user");
         }
-      } else if (response.status === 302) {
-        throw new Error("Unexpected redirect during registration");
       } else {
         throw new Error(response.data?.message || "Failed to register user");
       }
     } catch (error) {
       console.error("Register Error:", error); // Debug log
-      throw new Error(error.response?.data?.message || error.message || "Failed to register user");
+      // Prioritize backend error message if available
+      const errorMessage = error.response?.data?.message || error.message || "Failed to register user";
+      throw new Error(errorMessage);
     }
   },
 
@@ -27,24 +29,23 @@ const AuthService = {
   login: async (credentials) => {
     try {
       const response = await api.post("/auth/login", credentials);
-      console.log("Login Response:", response); // Debug log
+
+      // Check if the HTTP status is in the success range (200-299)
       if (response.status >= 200 && response.status < 300) {
-        if (response.data.success === true) {
-          return {
-            token: response.data.token,
-            user: response.data.user,
-          };
+        // Backend uses code 200 for successful login
+        if (response.data.code === 200) {
+          return response.data.data; // Returns { access_token, refresh_token, user }
         } else {
           throw new Error(response.data.message || "Failed to login");
         }
-      } else if (response.status === 302) {
-        throw new Error("Unexpected redirect during login");
       } else {
         throw new Error(response.data?.message || "Failed to login");
       }
     } catch (error) {
       console.error("Login Error:", error); // Debug log
-      throw new Error(error.response?.data?.message || error.message || "Failed to login");
+      // Prioritize backend error message if available
+      const errorMessage = error.response?.data?.message || error.message || "Failed to login";
+      throw new Error(errorMessage);
     }
   },
 };

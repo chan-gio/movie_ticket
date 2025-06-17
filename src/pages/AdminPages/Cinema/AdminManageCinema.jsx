@@ -109,9 +109,6 @@ function AdminManageCinema() {
         });
       }
 
-      // Log response for debugging
-      console.log("API Response:", response);
-
       // Extract cinema data and pagination info
       const cinemaData = response.data || [];
       setCinemas(cinemaData);
@@ -163,7 +160,6 @@ function AdminManageCinema() {
       });
     } finally {
       setLoading(false);
-      console.log("Cinemas state:", cinemas);
     }
   }, [searchTerm, searchType, pagination.current, pagination.pageSize]);
 

@@ -111,10 +111,8 @@ function AdminSettings() {
         couple: values.couple,
         banner: validBannerUrls, // Send as an array of strings
       };
-      console.log("Submitting settings:", settingData);
 
       const updatedSettings = await SettingService.updateSetting(settingData);
-      console.log("Updated settings:", updatedSettings);
 
       form.setFieldsValue({
         name: updatedSettings.name,
@@ -203,11 +201,9 @@ function AdminSettings() {
           file,
           import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET,
           (progress) => {
-            console.log(`Logo upload progress: ${progress}%`);
             setUploadProgressLogo(progress);
           }
         );
-        console.log("Logo uploaded, URL:", url);
         if (url) {
           setLogoUrl(url); // Store the Cloudinary URL
           setFileListLogo([{ ...updatedFileList[0], url, status: "done" }]);
@@ -242,16 +238,12 @@ function AdminSettings() {
           newFile.originFileObj,
           import.meta.env.VITE_MOVIE_POSTER_UPLOAD_PRESET,
           (progress) => {
-            console.log(
-              `Banner ${newFileList.length} upload progress: ${progress}%`
-            );
             setUploadProgressBanner((prev) => ({
               ...prev,
               [`banner_${newFileList.length - 1}`]: progress,
             }));
           }
         );
-        console.log(`Banner ${newFileList.length} uploaded, URL:`, url);
         if (url) {
           setBannerUrls((prev) => [...prev, url]);
           setFileListBanner((prev) =>

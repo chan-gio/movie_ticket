@@ -51,7 +51,6 @@ function SeatSelection() {
 
     echo.channel(`showtime.${booking.showtime.showtime_id}`)
       .listen('.seat.booked', (e) => {
-        console.log('Seat booked event:', e);
         setSeatBookingStatus((prev) =>
           prev.map((s) =>
             s.seat_number === e.seat_number ? { ...s, is_booked: true } : s
@@ -248,7 +247,6 @@ function SeatSelection() {
         seat_number: seatNumber,
         showtime_id: booking.showtime.showtime_id
       };
-      console.log('Toggling seat:', lockData);
       const response = await BookingSeatService.lockSeat(lockData);
 
       setSelectedSeats((prev) => {

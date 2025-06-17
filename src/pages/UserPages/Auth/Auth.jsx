@@ -53,9 +53,7 @@ const Auth = () => {
         phone: signUpPhone,
       };
 
-      console.log("Attempting registration with values:", values); // Debug log
       const user = await AuthService.register(values);
-      console.log("Registration successful:", user); // Debug log
       toastSuccess("Registration successful! Please sign in.");
 
       // Reset Sign Up fields
@@ -78,36 +76,37 @@ const Auth = () => {
 
   // Handle Sign In submission
   const handleSignInSubmit = async (event) => {
-    event.preventDefault(); // Ngăn hành vi mặc định nếu có
-    setIsLoading(true);
-    try {
-      if (!signInEmail || !signInPassword) {
-        throw new Error("Please fill in all fields");
-      }
-      if (!/\S+@\S+\.\S+/.test(signInEmail)) {
-        throw new Error("Please enter a valid email");
-      }
-  
-      const values = {
-        email: signInEmail,
-        password: signInPassword,
-      };
-  
-      console.log("Attempting login with values:", values);
-      const { token, user } = await AuthService.login(values);
-      console.log("Login successful:", { token, user });
-      localStorage.setItem('access_token', token);
-      localStorage.setItem('user_id', user.user_id);
-      localStorage.setItem('profile_picture_url', user.profile_picture_url);
-      toastSuccess("Login successful!");
-      navigate('/');
-    } catch (error) {
-      console.error("Sign In Error:", error);
-      toastError(error.message || "Login failed");
-    } finally {
-      setIsLoading(false);
+  event.preventDefault();
+  setIsLoading(true);
+  try {
+    if (!signInEmail || !signInPassword) {
+      throw new Error("Please fill in all fields");
     }
-  };
+    if (!/\S+@\S+\.\S+/.test(signInEmail)) {
+      throw new Error("Please enter a valid email");
+    }
+
+    const values = {
+      email: signInEmail,
+      password: signInPassword,
+    };
+
+    const response = await AuthService.login(values);
+    const { access_token, user, refresh_token } = response;
+
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+    localStorage.setItem('user_id', user.user_id);
+    localStorage.setItem('profile_picture_url', user.profile_picture_url);
+    toastSuccess("Login successful!");
+    navigate('/');
+  } catch (error) {
+    console.error("Sign In Error:", error);
+    toastError(error.message || "Login failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Handle Forgot Password submission
   const handleForgotPasswordSubmit = async () => {

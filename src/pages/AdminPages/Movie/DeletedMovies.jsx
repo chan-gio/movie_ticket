@@ -88,7 +88,6 @@ function DeletedMovies() {
         });
       }
 
-      console.log("API Response:", response);
       const movieData = response.data || [];
       setMovies(movieData);
 
@@ -129,7 +128,6 @@ function DeletedMovies() {
       });
     } finally {
       setLoading(false);
-      console.log("Movies state:", movies);
     }
   }, [searchTerm, pagination.current, pagination.pageSize]);
 

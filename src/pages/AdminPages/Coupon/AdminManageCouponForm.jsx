@@ -56,12 +56,6 @@ function AdminManageCouponForm({ isEditMode }) {
         const expiryDateDayjs = coupon.expiry_date
           ? dayjs(coupon.expiry_date)
           : null;
-        console.log(
-          "Loaded expiry_date:",
-          coupon.expiry_date,
-          "Parsed:",
-          expiryDateDayjs?.format("YYYY-MM-DD")
-        );
 
         couponForm.setFieldsValue({
           ...coupon,
@@ -83,7 +77,6 @@ function AdminManageCouponForm({ isEditMode }) {
           ? values.expiry_date.format("YYYY-MM-DD")
           : null,
       };
-      console.log("Submitting couponData:", couponData);
       await CouponService.createCoupon(couponData);
       couponForm.resetFields();
       navigate("/admin/manage_coupon");
@@ -101,7 +94,6 @@ function AdminManageCouponForm({ isEditMode }) {
           ? values.expiry_date.format("YYYY-MM-DD")
           : null,
       };
-      console.log("Submitting couponData:", couponData);
       await CouponService.updateCoupon(id, couponData);
       couponForm.resetFields();
       navigate("/admin/manage_coupon");
@@ -175,12 +167,6 @@ function AdminManageCouponForm({ isEditMode }) {
                     format="YYYY-MM-DD"
                     disabledDate={disabledDate}
                     style={{ width: "100%" }}
-                    onChange={(value) => {
-                      console.log(
-                        "DatePicker changed:",
-                        value ? value.format("YYYY-MM-DD") : null
-                      );
-                    }}
                   />
                 </Form.Item>
                 <Form.Item

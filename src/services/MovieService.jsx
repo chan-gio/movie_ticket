@@ -26,7 +26,6 @@ const MovieService = {
       let posterUrl = movieData.poster_url || null;
       if (posterFile) {
         posterUrl = await uploadMoviePosterToCloudinary(posterFile, (progress) => {
-          console.log(`Upload progress: ${progress}%`);
         });
         if (!posterUrl) {
           throw new Error('Failed to upload poster image');
@@ -64,7 +63,6 @@ const MovieService = {
       let posterUrl = movieData.poster_url || null;
       if (posterFile) {
         posterUrl = await uploadMoviePosterToCloudinary(posterFile, (progress) => {
-          console.log(`Upload progress: ${progress}%`);
         });
         if (!posterUrl) {
           throw new Error('Failed to upload poster image');

@@ -73,9 +73,7 @@ function AdminDashboard() {
       if (validFilter === "month" && newMonth) {
         params.month = newMonth;
       }
-      console.log("Sending API request with params:", params); // Debug log
       const data = await DashboardService.fetchDashboardData(params);
-      console.log("API response:", data); // Debug log
       setDashboardData(data);
     } catch (error) {
       console.error("Load data error:", {
@@ -90,7 +88,6 @@ function AdminDashboard() {
   };
 
   const handleFilterChange = (value) => {
-    console.log("Filter changed to:", value); // Debug log
     setFilter(value);
     // Reset month if filter is not 'month', otherwise keep current month
     const newMonth = value === "month" ? selectedMonth : null;
@@ -100,7 +97,6 @@ function AdminDashboard() {
 
   const handleMonthChange = (date) => {
     const month = date ? date.format("YYYY-MM") : null;
-    console.log("Month changed to:", month); // Debug log
     setSelectedMonth(month);
     loadData(filter, month);
   };
