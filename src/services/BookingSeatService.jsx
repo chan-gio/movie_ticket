@@ -106,36 +106,6 @@ const BookingSeatService = {
       throw new Error(error.response?.data?.message || 'Failed to fetch seats by showtime');
     }
   },
-
-  lockSeat: async (data) => {
-    try {
-      const response = await api.post('/booking-seats/lock', data);
-      if (response.data.code === 200) {
-        return response.data.data;
-      }
-      throw new Error(response.data.message || 'Failed to lock seat');
-    } catch (error) {
-      if (error.response?.status === 401) {
-        throw new Error("Unauthorized: Please login again");
-      }
-      throw new Error(error.response?.data?.message || 'Failed to lock seat');
-    }
-  },
-
-  unlockSeat: async (data) => {
-    try {
-      const response = await api.post('/booking-seats/unlock', data);
-      if (response.data.code === 200) {
-        return response.data.data;
-      }
-      throw new Error(response.data.message || 'Failed to unlock seat');
-    } catch (error) {
-      if (error.response?.status === 401) {
-        throw new Error("Unauthorized: Please login again");
-      }
-      throw new Error(error.response?.data?.message || 'Failed to unlock seat');
-    }
-  },
 };
 
 export default BookingSeatService;

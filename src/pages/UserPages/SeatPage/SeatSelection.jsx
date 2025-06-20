@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton } from "antd";
-import moment from "moment";
-import styles from "./SeatSelection.module.scss";
-import SeatService from "../../../services/SeatService";
-import BookingService from "../../../services/BookingService";
-import BookingSeatService from "../../../services/BookingSeatService";
-import { useSettings } from "../../../Context/SettingContext";
-import { useBookingTimer } from "../../../Context/BookingTimerContext";
-import { toastSuccess, toastError } from "../../../utils/toastNotifier";
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton } from 'antd';
+import moment from 'moment';
+import styles from './SeatSelection.module.scss';
+import SeatService from '../../../services/SeatService';
+import BookingService from '../../../services/BookingService';
+import BookingSeatService from '../../../services/BookingSeatService';
+import { useSettings } from '../../../Context/SettingContext';
+import { useBookingTimer } from '../../../Context/BookingTimerContext';
+import { toastSuccess, toastError } from '../../../utils/toastNotifier';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
@@ -23,7 +23,7 @@ function SeatSelection() {
 
   const currentBooking = bookings.find((b) => b.bookingId === bookingId);
   const initialSeats =
-    currentBooking?.progress.step === "SeatSelection" &&
+    currentBooking?.progress.step === 'SeatSelection' &&
     currentBooking?.progress.bookingId === bookingId &&
     Array.isArray(currentBooking?.progress.data.selectedSeats)
       ? currentBooking.progress.data.selectedSeats
@@ -36,7 +36,7 @@ function SeatSelection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Setup Laravel Echo with Reverb
+  // Setup Laravel Echo with Pusher
   useEffect(() => {
     if (!booking?.showtime?.showtime_id) return;
 
@@ -46,7 +46,7 @@ function SeatSelection() {
       key: import.meta.env.VITE_PUSHER_KEY,
       cluster: import.meta.env.VITE_PUSHER_CLUSTER,
       forceTLS: true,
-      encrypted: true
+      encrypted: true,
     });
 
     echo.channel(`showtime.${booking.showtime.showtime_id}`)
@@ -56,8 +56,8 @@ function SeatSelection() {
             s.seat_number === e.seat_number ? { ...s, is_booked: true } : s
           )
         );
-        
         if (e.booking_id !== bookingId) {
+          setSelectedSeats((prev) => prev.filter((s) => s !== e.seat_number));
           toastError(`Seat ${e.seat_number} has been booked by another user`);
         } else {
           toastSuccess(`Seat ${e.seat_number} booked successfully`);
@@ -67,36 +67,24 @@ function SeatSelection() {
     return () => {
       echo.leave(`showtime.${booking.showtime.showtime_id}`);
     };
-}, [booking, bookingId]);
+  }, [booking, bookingId]);
+
+  // Xử lý hết thời gian đặt vé
   useEffect(() => {
     if (currentBooking?.timeLeft === '00:00' && selectedSeats.length > 0) {
-      const unlockSeats = async () => {
-        try {
-          for (const seatNumber of selectedSeats) {
-            await BookingSeatService.unlockSeat({
-              booking_id: bookingId,
-              seat_number: seatNumber,
-              showtime_id: booking.showtime.showtime_id
-            });
-          }
-          setSelectedSeats([]);
-          toastError('Booking timed out. Seats have been released.');
-        } catch (err) {
-          console.error('Unlock seats error:', err);
-          toastError('Failed to release seats');
-        }
-      };
-      unlockSeats();
+      setSelectedSeats([]);
+      toastError('Booking timed out. Seats have been released.');
     }
-  }, [currentBooking, selectedSeats, bookingId, booking]);
+  }, [currentBooking, selectedSeats]);
 
+  // Tải dữ liệu
   useEffect(() => {
     if (hasFetched.current) return;
 
     const fetchData = async () => {
       if (!roomId || !bookingId) {
-        toastError("Room ID or Booking ID not provided");
-        setError("Missing required parameters");
+        toastError('Room ID or Booking ID not provided');
+        setError('Missing required parameters');
         setLoading(false);
         return;
       }
@@ -106,8 +94,8 @@ function SeatSelection() {
 
         const bookingResponse = await BookingService.getBookingById(bookingId);
         if (bookingResponse.status === 'CANCELLED') {
-          toastError("This booking has been canceled.");
-          navigate("/");
+          toastError('This booking has been canceled.');
+          navigate('/');
           setLoading(false);
           return;
         }
@@ -128,8 +116,8 @@ function SeatSelection() {
         setLoading(false);
       } catch (err) {
         console.error('Fetch error:', err);
-        toastError(err.message || "Failed to fetch data");
-        setError(err.message || "Failed to fetch data");
+        toastError(err.message || 'Failed to fetch data');
+        setError(err.message || 'Failed to fetch data');
         setLoading(false);
       }
     };
@@ -167,35 +155,35 @@ function SeatSelection() {
   const { rows, cols } = parseSeatLayout();
 
   const formatTime = (dateString) => {
-    return dateString ? moment.utc(dateString).format("HH:mm") : "Unknown";
+    return dateString ? moment.utc(dateString).format('HH:mm') : 'Unknown';
   };
 
   const formatDate = (date) => {
     const d = new Date(date);
-    return d.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
+    return d.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
     });
   };
 
   const orderInfo = booking
     ? {
-        movieTitle: booking.showtime?.movie?.title || "Unknown Movie",
-        cinema: booking.showtime?.room?.cinema?.name || "Cinema 1",
-        roomName: booking.showtime?.room?.name || "Unknown Room",
-        picture: booking.showtime?.movie?.poster_url || "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
-        date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split("T")[0] : "Unknown Date",
-        time: booking.showtime?.start_time ? formatTime(booking.showtime.start_time) : "Unknown Time",
+        movieTitle: booking.showtime?.movie?.title || 'Unknown Movie',
+        cinema: booking.showtime?.room?.cinema?.name || 'Cinema 1',
+        roomName: booking.showtime?.room?.name || 'Unknown Room',
+        picture: booking.showtime?.movie?.poster_url || 'https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp',
+        date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split('T')[0] : 'Unknown Date',
+        time: booking.showtime?.start_time ? formatTime(booking.showtime.start_time) : 'Unknown Time',
         basePrice: booking.showtime?.price || 0,
       }
     : {
-        movieTitle: "Movie 1",
-        cinema: "Cinema 1",
-        roomName: "Unknown Room",
-        picture: "https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp",
-        date: "2025-06-06",
-        time: "21:31",
+        movieTitle: 'Movie 1',
+        cinema: 'Cinema 1',
+        roomName: 'Unknown Room',
+        picture: 'https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp',
+        date: '2025-06-06',
+        time: '21:31',
         basePrice: 10,
       };
 
@@ -207,11 +195,11 @@ function SeatSelection() {
     const seatType = seat.seat_type.toUpperCase();
 
     switch (seatType) {
-      case "VIP":
+      case 'VIP':
         return basePrice + (basePrice * settings.vip / 100);
-      case "COUPLE":
+      case 'COUPLE':
         return basePrice + (basePrice * settings.couple / 100);
-      case "STANDARD":
+      case 'STANDARD':
       default:
         return basePrice;
     }
@@ -224,10 +212,11 @@ function SeatSelection() {
     }, 0);
   };
 
-  const toggleSeat = async (seatNumber) => {
+  const toggleSeat = (seatNumber) => {
     const seat = seats.find((s) => s.seat_number === seatNumber);
     if (!seat) {
       console.error('Seat not found:', seatNumber);
+      toastError('Seat not found');
       return;
     }
 
@@ -237,89 +226,79 @@ function SeatSelection() {
     const isBooked = seatStatus ? seatStatus.is_booked : false;
     const seatType = seat.seat_type.toUpperCase();
 
-    if (isBooked || seatType === "UNAVAILABLE") {
+    if (isBooked || seatType === 'UNAVAILABLE') {
       return;
     }
 
-    try {
-      const lockData = {
-        booking_id: bookingId,
-        seat_number: seatNumber,
-        showtime_id: booking.showtime.showtime_id
-      };
-      const response = await BookingSeatService.lockSeat(lockData);
+    const isSelected = selectedSeats.includes(seatNumber);
 
-      setSelectedSeats((prev) => {
-        let newSeats = [...prev];
-        const isSelected = prev.includes(seatNumber);
+    setSelectedSeats((prev) => {
+      let newSeats = [...prev];
 
-        if (seatType === 'COUPLE') {
-          const row = seatNumber.match(/^[A-Z]+/)[0];
-          const col = parseInt(seatNumber.match(/\d+$/)[0], 10);
-          let pairSeat;
+      if (seatType === 'COUPLE') {
+        const row = seatNumber.match(/^[A-Z]+/)[0];
+        const col = parseInt(seatNumber.match(/\d+$/)[0], 10);
+        let pairSeat;
 
-          if (col % 2 === 1) {
-            pairSeat = `${row}${col + 1}`;
-          } else {
-            pairSeat = `${row}${col - 1}`;
-          }
-
-          const pairSeatObj = seats.find((s) => s.seat_number === pairSeat);
-          const pairSeatStatus = Array.isArray(seatBookingStatus)
-            ? seatBookingStatus.find((s) => s.seat_number === pairSeat)
-            : null;
-          const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
-
-          if (response && response.data && response.data.message && response.data.message.includes('mở khóa')) {
-            // Seat was unlocked
-            newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
-            toastSuccess(`Seat ${seatNumber} and ${pairSeat} unlocked`);
-          } else if (!isSelected && pairSeatObj && !isPairBooked && pairSeatObj.seat_type.toUpperCase() === 'COUPLE') {
-            // Lock both couple seats
-            if (!newSeats.includes(seatNumber)) {
-              newSeats.push(seatNumber);
-            }
-            if (!newSeats.includes(pairSeat)) {
-              newSeats.push(pairSeat);
-            }
-            toastSuccess(`Seat ${seatNumber} and ${pairSeat} locked`);
-          } else {
-            toastError("Cannot select couple seat: pair seat is unavailable or not a couple seat.");
-            return prev;
-          }
+        if (col % 2 === 1) {
+          pairSeat = `${row}${col + 1}`;
         } else {
-          if (response && response.data && response.data.message && response.data.message.includes('mở khóa')) {
-            // Seat was unlocked
-            newSeats = newSeats.filter((s) => s !== seatNumber);
-            toastSuccess(`Seat ${seatNumber} unlocked`);
-          } else {
-            // Lock the seat
-            newSeats = isSelected
-              ? newSeats.filter((s) => s !== seatNumber)
-              : [...newSeats, seatNumber];
-            toastSuccess(`Seat ${seatNumber} locked`);
-          }
+          pairSeat = `${row}${col - 1}`;
         }
 
-        const path = `/seats/${roomId}/${bookingId}`;
-        updateProgress(bookingId, "SeatSelection", { selectedSeats: newSeats }, path);
-        return newSeats;
-      });
-    } catch (err) {
-      console.error('Toggle seat error:', err);
-      toastError(err.message || "Unable to toggle seat");
-    }
+        const pairSeatObj = seats.find((s) => s.seat_number === pairSeat);
+        const pairSeatStatus = Array.isArray(seatBookingStatus)
+          ? seatBookingStatus.find((s) => s.seat_number === pairSeat)
+          : null;
+        const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
+
+        if (!pairSeatObj || isPairBooked || pairSeatObj.seat_type.toUpperCase() !== 'COUPLE') {
+          toastError('Cannot select couple seat: pair seat is unavailable or not a couple seat.');
+          return prev;
+        }
+
+        if (isSelected) {
+          // Bỏ chọn cả hai ghế couple
+          newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
+          toastSuccess(`Seats ${seatNumber} and ${pairSeat} unselected`);
+        } else {
+          // Chọn cả hai ghế couple
+          if (!newSeats.includes(seatNumber)) {
+            newSeats.push(seatNumber);
+          }
+          if (!newSeats.includes(pairSeat)) {
+            newSeats.push(pairSeat);
+          }
+          toastSuccess(`Seats ${seatNumber} and ${pairSeat} selected`);
+        }
+      } else {
+        if (isSelected) {
+          // Bỏ chọn ghế
+          newSeats = newSeats.filter((s) => s !== seatNumber);
+          toastSuccess(`Seat ${seatNumber} unselected`);
+        } else {
+          // Chọn ghế
+          newSeats = [...newSeats, seatNumber];
+          toastSuccess(`Seat ${seatNumber} selected`);
+        }
+      }
+
+      const path = `/seats/${roomId}/${bookingId}`;
+      updateProgress(bookingId, 'SeatSelection', { selectedSeats: newSeats }, path);
+      return newSeats;
+    });
   };
 
   const handleCheckout = async () => {
     if (selectedSeats.length === 0) {
-      toastError("Please select at least one seat to proceed.");
+      toastError('Please select at least one seat to proceed.');
       return;
     }
 
     try {
       setLoading(true);
 
+      // Gọi createBookingSeat cho tất cả ghế đã chọn
       const bookingSeatPromises = selectedSeats.map(async (seatNumber) => {
         const seat = seats.find((s) => s.seat_number === seatNumber);
         if (!seat) {
@@ -335,17 +314,17 @@ function SeatSelection() {
       });
 
       await Promise.all(bookingSeatPromises);
-      toastSuccess("Seats booked successfully!");
 
       const totalPrice = calculateTotalPrice();
       await BookingService.updateTotalPrice(bookingId, totalPrice);
 
       const path = `/payment/${bookingId}`;
-      updateProgress(bookingId, "Payment", { selectedSeats }, path);
+      updateProgress(bookingId, 'Payment', { selectedSeats }, path);
       navigate(path, { state: { totalPrice } });
+      toastSuccess('Seats booked successfully! Proceeding to payment');
     } catch (err) {
       console.error('Checkout error:', err);
-      toastError(err.message || "Failed to complete checkout. Please try again.");
+      toastError(err.message || 'Failed to book seats. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -353,10 +332,10 @@ function SeatSelection() {
 
   const handleChangeMovie = async () => {
     try {
-      await BookingService.updateBookingStatus(bookingId, "CANCELLED");
+      await BookingService.updateBookingStatus(bookingId, 'CANCELLED');
       clearTimer(bookingId);
       toastError(`Booking ${bookingId}: Your booking has been cancelled.`);
-      navigate("/movies");
+      navigate('/movies');
     } catch (error) {
       toastError(`Failed to cancel booking: ${error.message}`);
     }
@@ -382,7 +361,7 @@ function SeatSelection() {
 
         <Row gutter={[16, 16]} className={styles.mainContent}>
           <Col xs={24} lg={16}>
-            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Skeleton active title={{ width: '30%' }} paragraph={{ rows: 0 }} />
             <Card className={styles.seatCard}>
               <div className={styles.screen}>
                 <Skeleton.Input active size="small" style={{ width: 100 }} />
@@ -414,7 +393,7 @@ function SeatSelection() {
                   </tbody>
                 </table>
               </div>
-              <Skeleton active title={{ width: "20%" }} paragraph={{ rows: 0 }} />
+              <Skeleton active title={{ width: '20%' }} paragraph={{ rows: 0 }} />
               <Row gutter={[16, 16]}>
                 {[...Array(5)].map((_, index) => (
                   <Col key={index} xs={5}>
@@ -437,7 +416,7 @@ function SeatSelection() {
           </Col>
 
           <Col xs={24} lg={8}>
-            <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
+            <Skeleton active title={{ width: '30%' }} paragraph={{ rows: 0 }} />
             <Card className={styles.orderCard}>
               <div className={styles.cinemaInfo}>
                 <Skeleton.Image active style={{ width: 50, height: 50 }} />
@@ -507,14 +486,14 @@ function SeatSelection() {
                         const isBooked = seatStatus ? seatStatus.is_booked : false;
                         const seatType = seat ? seat.seat_type.toUpperCase() : null;
                         const isOddColumn = col % 2 === 1;
-                        const coupleClass = seatType === "COUPLE" ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : "";
+                        const coupleClass = seatType === 'COUPLE' ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : '';
                         const seatClass = isBooked
                           ? styles.seatNotAvailable
-                          : seatType === "VIP"
+                          : seatType === 'VIP'
                           ? styles.seatVip
-                          : seatType === "COUPLE"
+                          : seatType === 'COUPLE'
                           ? styles.seatCouple
-                          : seatType === "UNAVAILABLE"
+                          : seatType === 'UNAVAILABLE'
                           ? styles.seatUnavailable
                           : styles.seatStandard;
 
@@ -523,10 +502,10 @@ function SeatSelection() {
                             {seat ? (
                               <Button
                                 className={`${styles.seat} ${seatClass} ${coupleClass} ${
-                                  isSelected ? styles.seatSelected : ""
+                                  isSelected ? styles.seatSelected : ''
                                 }`}
                                 onClick={() => toggleSeat(seatNumber)}
-                                disabled={isBooked || seatType === "UNAVAILABLE"}
+                                disabled={isBooked || seatType === 'UNAVAILABLE'}
                                 title={`${seatNumber}: ${isBooked ? 'Booked' : seatType}`}
                                 data-col={col}
                               >
@@ -662,7 +641,7 @@ function SeatSelection() {
             <Row justify="space-between">
               <Paragraph className={styles.label}>Seat chosen</Paragraph>
               <Paragraph className={styles.value}>
-                {selectedSeats.join(", ") || "None"}
+                {selectedSeats.join(', ') || 'None'}
               </Paragraph>
             </Row>
             <div className={styles.divider} />
