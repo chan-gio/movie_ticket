@@ -23,10 +23,38 @@ const ShowTimeService = {
       }
       throw new Error(response.data.message || "Failed to create showtime");
     } catch (error) {
-      if (error.response?.status === 401) {
+      // Xử lý lỗi chi tiết
+      const status = error.response?.status;
+      const errorMessage = error.response?.data?.message || error.message || "Failed to create showtime";
+      const errorDetails = {
+        message: errorMessage,
+        status: status,
+        responseData: error.response?.data,
+        requestData: showtimeData,
+      };
+
+      // Ghi log chi tiết vào console
+      console.error("Error creating showtime:", errorDetails);
+
+      // Xử lý các mã lỗi cụ thể
+      if (status === 401) {
         throw new Error("Unauthorized: Please login again");
       }
-      throw new Error(error.response?.data?.message || "Failed to create showtime");
+      if (status === 422) {
+        throw new Error(`Invalid data: ${errorMessage}`);
+      }
+      if (status === 400) {
+        throw new Error(`Bad request: ${errorMessage}`);
+      }
+      if (status === 404) {
+        throw new Error(`Not found: ${errorMessage}`);
+      }
+      if (status === 500) {
+        throw new Error(`Server error: ${errorMessage}`);
+      }
+
+      // Lỗi mặc định
+      throw new Error(errorMessage);
     }
   },
 
