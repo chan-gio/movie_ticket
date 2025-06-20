@@ -7,7 +7,6 @@ import SelectCinemaModal from "../Modal/SelectCinemaModal";
 import { useSettings } from "../../Context/SettingContext";
 import MovieService from "../../services/MovieService";
 import { toastError } from "../../utils/toastNotifier";
-import useAuth from "../../utils/auth";
 
 function Navbar() {
   const { settings } = useSettings();
@@ -15,8 +14,8 @@ function Navbar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || ""); // Local state for search input
   const navigate = useNavigate();
-  const { profile_picture_url } = useAuth();
-
+  const url = localStorage.getItem('profile_picture_url');
+  
   // Hamburger menu state
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -130,7 +129,7 @@ function Navbar() {
             <Avatar
               size={50}
               src={
-                profile_picture_url ||
+                url ||
                 "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
               }
               icon={<UserOutlined />}
@@ -159,7 +158,7 @@ function Navbar() {
           <Avatar
             size={50}
             src={
-              profile_picture_url ||
+              url ||
               "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
             }
             icon={<UserOutlined />}
