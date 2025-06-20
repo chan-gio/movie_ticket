@@ -33,6 +33,7 @@ const Profile = () => {
   const handleSignOut = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_id');
+    localStorage.removeItem('profile_picture_url');
     navigate('/auth');
   };
 
