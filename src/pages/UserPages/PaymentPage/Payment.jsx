@@ -319,7 +319,7 @@ function Payment() {
     }
 
     const description = orderData.movieTitle.length <= 9 ? orderData.movieTitle : orderData.movieTitle.substring(0, 9);
-    const baseUrl = 'http://localhost:5173';
+    const baseUrl = import.meta.env.VITE_FE_URL ? import.meta.env.VITE_FE_URL : 'http://localhost:5173';
     const returnUrl = `${baseUrl}/confirmation/${bookingId}?orderCode=${orderCode}`;
     const cancelUrl = `${baseUrl}/payment/${bookingId}`;
 
