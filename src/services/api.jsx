@@ -47,7 +47,7 @@ api.interceptors.response.use(
     // Kiểm tra nếu là lỗi 401 và chưa retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Tránh refresh token cho các endpoint auth
-      if (originalRequest.url.includes('/auth/auth') || 
+      if (originalRequest.url.includes('/auth/login') || 
           originalRequest.url.includes('/auth/register') ||
           originalRequest.url.includes('/auth/refresh')) {
         return Promise.reject(error);
@@ -117,7 +117,7 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         
         // Chuyển về trang login
-        window.location.href = '/login';
+        window.location.href = '/auth';
         
         return Promise.reject(refreshError);
       } finally {
