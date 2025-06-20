@@ -27,7 +27,14 @@ const RoomService = {
       if (error.response?.status === 401) {
         throw new Error("Unauthorized: Please login again");
       }
-      throw new Error(error.response?.data?.message || "Failed to create room");
+      // Hiển thị chi tiết lỗi từ backend
+      const errorMessage = error.response?.data?.message || error.message || "Failed to create room";
+      console.error("Error creating room:", {
+        message: errorMessage,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw new Error(errorMessage);
     }
   },
 
