@@ -29,7 +29,6 @@ const AdminManageShowtimeForm = lazy(() => import('../pages/AdminPages/Showtime/
 const AdminManageCinema = lazy(() => import('../pages/AdminPages/Cinema/AdminManageCinema.jsx'));
 const AdminManageRoom = lazy(() => import('../pages/AdminPages/Room/AdminManageRoom.jsx'));
 const AdminManageSeats = lazy(() => import('../pages/AdminPages/Seat/AdminManageSeats.jsx'));
-const AdminManageSeatForm = lazy(() => import('../pages/AdminPages/Seat/AdminManageSeatForm.jsx'));
 const AdminManageBooking = lazy(() => import('../pages/AdminPages/Booking/AdminManageBooking.jsx'));
 const AdminManageBookingDetails = lazy(() => import('../pages/AdminPages/Booking/AdminManageBookingDetails.jsx'));
 const AdminManageCoupon = lazy(() => import('../pages/AdminPages/Coupon/AdminManageCoupon.jsx'));
@@ -64,8 +63,6 @@ const routeConfig = [
   { path: '/admin/deleted_cinemas', element: <ProtectedAdminRoute><Admin><DeletedCinemas /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_rooms/:cinemaId', element: <ProtectedAdminRoute><Admin><AdminManageRoom /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_seats/edit_room/:roomId', element: <ProtectedAdminRoute><Admin><AdminManageSeats /></Admin></ProtectedAdminRoute> },
-  { path: '/admin/manage_seats/add', element: <ProtectedAdminRoute><Admin><AdminManageSeatForm isEditMode={false} /></Admin></ProtectedAdminRoute> },
-  { path: '/admin/manage_seats/edit/:id', element: <ProtectedAdminRoute><Admin><AdminManageSeatForm isEditMode={true} /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_showtime', element: <ProtectedAdminRoute><Admin><AdminManageShowtime /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_showtime/add', element: <ProtectedAdminRoute><Admin><AdminManageShowtimeForm isEditMode={false} /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_showtime/edit/:id', element: <ProtectedAdminRoute><Admin><AdminManageShowtimeForm isEditMode={true} /></Admin></ProtectedAdminRoute> },
