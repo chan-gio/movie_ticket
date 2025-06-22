@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   Form,
@@ -6,7 +6,6 @@ import {
   InputNumber,
   Button,
   Typography,
-  message,
   Row,
   Col,
   Space,
@@ -21,84 +20,112 @@ import {
   UploadOutlined,
   CloseCircleOutlined,
   DeleteOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
+import {
+  useSettings,
+  useUpdateSettings,
+  useResetSettings,
+  useRefreshSettings,
+  useParseBannerData,
+  useValidateImageUrl,
+} from "../../../hooks/useSettings";
+import { toastSuccess, toastError, toastInfo, toastWarning } from "../../../utils/toastNotifier";
+import { uploadImageToCloudinary } from "../../../utils/cloudinaryConfig";
 import styles from "./AdminSettings.module.scss";
 import "../GlobalStyles.module.scss";
-import SettingService from "../../../services/SettingService";
-import { uploadImageToCloudinary } from "../../../utils/cloudinaryConfig";
 
 const { Title, Text: TypographyText } = Typography;
 
 function AdminSettings() {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
   const [fileListLogo, setFileListLogo] = useState([]);
   const [fileListBanner, setFileListBanner] = useState([]);
-  const [logoUrl, setLogoUrl] = useState(null); // Store the Cloudinary URL for the logo
-  const [bannerUrls, setBannerUrls] = useState([]); // Store up to 4 banner URLs
-  const [uploadProgressLogo, setUploadProgressLogo] = useState(0); // Track progress for logo upload
-  const [uploadProgressBanner, setUploadProgressBanner] = useState({}); // Track progress for each banner upload
+  const [logoUrl, setLogoUrl] = useState(null);
+  const [bannerUrls, setBannerUrls] = useState([]);
+  const [uploadProgressLogo, setUploadProgressLogo] = useState(0);
+  const [uploadProgressBanner, setUploadProgressBanner] = useState({});
 
+  // Custom hooks
+  const {
+    data: settings,
+    isLoading: loading,
+    isError,
+    error,
+  } = useSettings();
+
+  const updateSettingsMutation = useUpdateSettings();
+  const resetSettingsMutation = useResetSettings();
+  const refreshSettingsMutation = useRefreshSettings();
+  const parseBannerData = useParseBannerData();
+  const validateImageUrl = useValidateImageUrl();
+
+  // Memoize the parseBannerData function to prevent infinite loops
+  const parseBannerDataMemo = useCallback((bannerData) => {
+    if (!bannerData) return [];
+    
+    try {
+      // Try parsing as JSON if it's a string
+      let banners = typeof bannerData === "string" 
+        ? JSON.parse(bannerData) 
+        : bannerData;
+      
+      // Ensure banners is an array of strings
+      banners = Array.isArray(banners)
+        ? banners.filter(url => typeof url === "string" && url.trim() !== "")
+        : [];
+      
+      return banners;
+    } catch (err) {
+      console.error("Error parsing banner data:", err);
+      // If parsing fails, treat as a comma-separated string
+      return typeof bannerData === "string"
+        ? bannerData.split(",").filter(url => url.trim() !== "")
+        : [];
+    }
+  }, []);
+
+  // Memoize the validateImageUrl function
+  const validateImageUrlMemo = useCallback((url) => {
+    if (!url) return false;
+    const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg|webp))$/i;
+    return urlPattern.test(url);
+  }, []);
+
+  // Set form values when settings data is loaded
   useEffect(() => {
-    const loadSettings = async () => {
-      setLoading(true);
-      try {
-        const settings = await SettingService.getSetting();
-        form.setFieldsValue({
-          name: settings.name,
-          vip: settings.vip,
-          couple: settings.couple,
-        });
-        setLogoUrl(settings.name || null);
-        // Parse banner field (could be a JSON string or array)
-        let banners = [];
-        if (settings.banner) {
-          try {
-            // Try parsing as JSON if it's a string
-            banners =
-              typeof settings.banner === "string"
-                ? JSON.parse(settings.banner)
-                : settings.banner;
-            // Ensure banners is an array of strings
-            banners = Array.isArray(banners)
-              ? banners.filter(
-                  (url) => typeof url === "string" && url.trim() !== ""
-                )
-              : [];
-          } catch (err) {
-            console.error("Error parsing banner field:", err);
-            // If parsing fails, treat as a comma-separated string
-            banners =
-              typeof settings.banner === "string"
-                ? settings.banner.split(",").filter((url) => url.trim() !== "")
-                : [];
-          }
-        }
-        setBannerUrls(banners);
-        setFileListLogo(
-          settings.name
-            ? [{ uid: "-1", name: "logo", url: settings.name, status: "done" }]
-            : []
-        );
-        setFileListBanner(
-          banners.map((url, index) => ({
-            uid: `-${index + 1}`,
-            name: `banner_${index + 1}`,
-            url,
-            status: "done",
-          }))
-        );
-      } catch (error) {
-        message.error(error.message || "Failed to load settings");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadSettings();
-  }, [form]);
+    if (settings) {
+      form.setFieldsValue({
+        name: settings.name,
+        vip: settings.vip,
+        couple: settings.couple,
+      });
+      
+      setLogoUrl(settings.name || null);
+      
+      // Parse banner data
+      const banners = parseBannerDataMemo(settings.banner);
+      setBannerUrls(banners);
+      
+      // Set file lists
+      setFileListLogo(
+        settings.name
+          ? [{ uid: "-1", name: "logo", url: settings.name, status: "done" }]
+          : []
+      );
+      
+      setFileListBanner(
+        banners.map((url, index) => ({
+          uid: `-${index + 1}`,
+          name: `banner_${index + 1}`,
+          url,
+          status: "done",
+        }))
+      );
+    }
+  }, [settings, form, parseBannerDataMemo]);
 
   const handleSubmit = async (values) => {
-    setLoading(true);
     try {
       // Ensure bannerUrls contains only valid strings
       const validBannerUrls = bannerUrls.filter(
@@ -109,72 +136,12 @@ function AdminSettings() {
         name: logoUrl || values.name,
         vip: values.vip,
         couple: values.couple,
-        banner: validBannerUrls, // Send as an array of strings
+        banner: validBannerUrls,
       };
 
-      const updatedSettings = await SettingService.updateSetting(settingData);
-
-      form.setFieldsValue({
-        name: updatedSettings.name,
-        vip: updatedSettings.vip,
-        couple: updatedSettings.couple,
-      });
-      setLogoUrl(updatedSettings.name || null);
-
-      // Parse the updated banner field
-      let updatedBanners = [];
-      if (updatedSettings.banner) {
-        try {
-          updatedBanners =
-            typeof updatedSettings.banner === "string"
-              ? JSON.parse(updatedSettings.banner)
-              : updatedSettings.banner;
-          updatedBanners = Array.isArray(updatedBanners)
-            ? updatedBanners.filter(
-                (url) => typeof url === "string" && url.trim() !== ""
-              )
-            : [];
-        } catch (err) {
-          console.error("Error parsing updated banner field:", err);
-          updatedBanners =
-            typeof updatedSettings.banner === "string"
-              ? updatedSettings.banner
-                  .split(",")
-                  .filter((url) => url.trim() !== "")
-              : [];
-        }
-      }
-      setBannerUrls(updatedBanners);
-      setFileListLogo(
-        updatedSettings.name
-          ? [
-              {
-                uid: "-1",
-                name: "logo",
-                url: updatedSettings.name,
-                status: "done",
-              },
-            ]
-          : []
-      );
-      setFileListBanner(
-        updatedBanners.map((url, index) => ({
-          uid: `-${index + 1}`,
-          name: `banner_${index + 1}`,
-          url,
-          status: "done",
-        }))
-      );
-      message.success("Settings saved successfully");
+      await updateSettingsMutation.mutateAsync(settingData);
     } catch (error) {
       console.error("Error updating settings:", error);
-      message.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to save settings"
-      );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -186,7 +153,15 @@ function AdminSettings() {
     setLogoUrl(null);
     setUploadProgressLogo(0);
     setUploadProgressBanner({});
-    message.info("Form reset to initial values");
+    toastInfo("Form reset to initial values");
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await refreshSettingsMutation.mutateAsync();
+    } catch (error) {
+      console.error("Error refreshing settings:", error);
+    }
   };
 
   const handleLogoUploadChange = async ({ fileList: newFileList }) => {
@@ -205,20 +180,20 @@ function AdminSettings() {
           }
         );
         if (url) {
-          setLogoUrl(url); // Store the Cloudinary URL
+          setLogoUrl(url);
           setFileListLogo([{ ...updatedFileList[0], url, status: "done" }]);
-          form.setFieldsValue({ name: url }); // Set the uploaded URL in the form
-          message.success("Logo uploaded successfully");
+          form.setFieldsValue({ name: url });
+          toastSuccess("Logo uploaded successfully");
         } else {
           throw new Error("Failed to upload logo");
         }
       } catch (error) {
         console.error("Logo upload error:", error);
-        message.error(error.message || "Failed to upload logo to Cloudinary");
+        toastError(error.message || "Failed to upload logo to Cloudinary");
         setFileListLogo([]);
         setLogoUrl(null);
       } finally {
-        setUploadProgressLogo(0); // Reset progress
+        setUploadProgressLogo(0);
       }
     } else {
       setLogoUrl(null);
@@ -232,7 +207,7 @@ function AdminSettings() {
       setUploadProgressBanner((prev) => ({
         ...prev,
         [`banner_${newFileList.length - 1}`]: 0,
-      })); // Reset progress
+      }));
       try {
         const url = await uploadImageToCloudinary(
           newFile.originFileObj,
@@ -251,13 +226,13 @@ function AdminSettings() {
               f.uid === newFile.uid ? { ...f, url, status: "done" } : f
             )
           );
-          message.success("Banner uploaded successfully");
+          toastSuccess("Banner uploaded successfully");
         } else {
           throw new Error("Failed to upload banner");
         }
       } catch (error) {
         console.error("Banner upload error:", error);
-        message.error(error.message || "Failed to upload banner to Cloudinary");
+        toastError(error.message || "Failed to upload banner to Cloudinary");
         setFileListBanner((prev) => prev.filter((f) => f.uid !== newFile.uid));
         setBannerUrls((prev) =>
           prev.filter((_, index) => fileListBanner[index]?.uid !== newFile.uid)
@@ -266,7 +241,7 @@ function AdminSettings() {
         setUploadProgressBanner((prev) => ({
           ...prev,
           [`banner_${newFileList.length - 1}`]: 0,
-        })); // Reset progress
+        }));
       }
     }
   };
@@ -276,7 +251,7 @@ function AdminSettings() {
     setLogoUrl(null);
     form.setFieldsValue({ name: "" });
     setUploadProgressLogo(0);
-    return true; // Allow removal
+    return true;
   };
 
   const handleBannerRemove = (file) => {
@@ -284,7 +259,7 @@ function AdminSettings() {
     setBannerUrls((prev) =>
       prev.filter((_, index) => fileListBanner[index]?.uid !== file.uid)
     );
-    message.success("Banner removed successfully");
+    toastSuccess("Banner removed successfully");
   };
 
   // Validate URL format
@@ -293,8 +268,7 @@ function AdminSettings() {
       return Promise.reject(new Error("Please upload or enter an image URL"));
     }
     if (typeof value === "string") {
-      const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg|webp))$/i;
-      if (!urlPattern.test(value)) {
+      if (!validateImageUrlMemo(value)) {
         return Promise.reject(
           new Error("Please enter a valid image URL (e.g., .png, .jpg)")
         );
@@ -307,18 +281,17 @@ function AdminSettings() {
     onChange: handleLogoUploadChange,
     fileList: fileListLogo,
     beforeUpload: (file) => {
-      // Validate file type and size
       const isImage = file.type.startsWith("image/");
       if (!isImage) {
-        message.error("You can only upload image files!");
+        toastError("You can only upload image files!");
         return Upload.LIST_IGNORE;
       }
       const isLt5M = file.size / 1024 / 1024 < 5;
       if (!isLt5M) {
-        message.error("Image must be smaller than 5MB!");
+        toastError("Image must be smaller than 5MB!");
         return Upload.LIST_IGNORE;
       }
-      return false; // Prevent automatic upload
+      return false;
     },
     showUploadList: false,
     disabled: fileListLogo.length > 0 || uploadProgressLogo > 0,
@@ -328,26 +301,45 @@ function AdminSettings() {
     onChange: handleBannerUploadChange,
     fileList: fileListBanner,
     beforeUpload: (file) => {
-      // Validate file type and size
       const isImage = file.type.startsWith("image/");
       if (!isImage) {
-        message.error("You can only upload image files!");
+        toastError("You can only upload image files!");
         return Upload.LIST_IGNORE;
       }
       const isLt5M = file.size / 1024 / 1024 < 5;
       if (!isLt5M) {
-        message.error("Image must be smaller than 5MB!");
+        toastError("Image must be smaller than 5MB!");
         return Upload.LIST_IGNORE;
       }
       if (bannerUrls.length >= 4) {
-        message.error("Maximum 4 banner images allowed");
+        toastError("Maximum 4 banner images allowed");
         return Upload.LIST_IGNORE;
       }
-      return false; // Prevent automatic upload
+      return false;
     },
     showUploadList: false,
     disabled: bannerUrls.length >= 4,
   };
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <TypographyText type="danger">
+            Error: {error?.message || "Failed to load settings"}
+          </TypographyText>
+          <Button 
+            type="primary" 
+            onClick={handleRefresh}
+            style={{ marginTop: 16 }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -356,6 +348,17 @@ function AdminSettings() {
           <Title level={2} className={styles.pageTitle}>
             Settings
           </Title>
+        </Col>
+        <Col>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            loading={refreshSettingsMutation.isPending}
+            className={styles.refreshButton}
+          >
+            Refresh
+          </Button>
         </Col>
       </Row>
       <Row gutter={[16, 16]} className={styles.mainContent}>
@@ -373,14 +376,14 @@ function AdminSettings() {
                 initialValues={{
                   name: "",
                   vip: 0,
-                  couple: 0, // Updated initial value to align with new range
+                  couple: 0,
                 }}
               >
                 <Title level={4} className={styles.sectionTitle}>
                   General Settings
                 </Title>
                 <TypographyText className={styles.headText}>
-                  Configure the site’s branding and pricing settings.
+                  Configure the site's branding and pricing settings.
                 </TypographyText>
                 <Row gutter={[16, 16]}>
                   <Col xs={24} md={12}>
@@ -470,9 +473,7 @@ function AdminSettings() {
                             onChange={(e) => {
                               const url = e.target.value;
                               if (url && bannerUrls.length < 4) {
-                                const urlPattern =
-                                  /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg|webp))$/i;
-                                if (urlPattern.test(url)) {
+                                if (validateImageUrlMemo(url)) {
                                   setBannerUrls((prev) => [...prev, url]);
                                   setFileListBanner((prev) => [
                                     ...prev,
@@ -484,14 +485,10 @@ function AdminSettings() {
                                     },
                                   ]);
                                 } else {
-                                  message.error(
-                                    "Please enter a valid image URL"
-                                  );
+                                  toastError("Please enter a valid image URL");
                                 }
                               } else if (bannerUrls.length >= 4) {
-                                message.error(
-                                  "Maximum 4 banner images allowed"
-                                );
+                                toastError("Maximum 4 banner images allowed");
                               }
                             }}
                             className={styles.input}
@@ -619,15 +616,23 @@ function AdminSettings() {
                       onClick={handleReset}
                       className={styles.resetButton}
                     >
-                      Reset
+                      Reset Form
+                    </Button>
+                    <Button
+                      type="default"
+                      onClick={() => resetSettingsMutation.mutate()}
+                      loading={resetSettingsMutation.isPending}
+                      className={styles.resetButton}
+                    >
+                      Reset to Default
                     </Button>
                     <Button
                       type="primary"
                       icon={<SaveOutlined />}
                       htmlType="submit"
-                      loading={loading}
+                      loading={updateSettingsMutation.isPending}
                       className={styles.saveButton}
-                      disabled={!logoUrl} // Disable submit until logo is uploaded
+                      disabled={!logoUrl}
                     >
                       Save Settings
                     </Button>

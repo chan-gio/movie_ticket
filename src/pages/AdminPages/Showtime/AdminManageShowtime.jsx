@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -21,8 +21,8 @@ import {
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import ShowTimeService from "../../../services/ShowtimeService";
-import moment from "moment"; // Added moment import
+import { useShowtimesWithSearch, useDeleteShowtime, useRefreshShowtimes } from "../../../hooks/useShowtimes";
+import moment from "moment";
 import styles from "./AdminManageShowtime.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -30,62 +30,58 @@ const { Title, Text: TypographyText } = Typography;
 
 function AdminManageShowtime() {
   const navigate = useNavigate();
-  const [showtimes, setShowtimes] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
 
-  const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
-    setLoading(true);
-    try {
-      let response;
-      if (keyword) {
-        response = await ShowTimeService.searchShowtimes(
-          keyword,
-          page,
-          pageSize
-        );
-        setIsSearching(true);
-      } else {
-        response = await ShowTimeService.getAllShowTimes(page, pageSize);
-        setIsSearching(false);
-      }
-      setShowtimes(response.data || []);
-      setPagination({
-        current: response.current_page,
-        pageSize: response.per_page,
-        total: response.total,
-      });
-    } catch (error) {
-      console.error("Error loading showtimes:", error.message);
-      message.error(error.message || "Failed to load showtimes");
-      setIsSearching(true);
-    } finally {
-      setLoading(false);
-    }
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: showtimesData, 
+    isLoading, 
+    error, 
+    isSearching 
+  } = useShowtimesWithSearch({ 
+    keyword: searchKeyword,
+    page: pagination.current, 
+    perPage: pagination.pageSize 
+  });
+
+  const { mutate: deleteShowtime, isLoading: isDeleting } = useDeleteShowtime();
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshShowtimes();
+
+  // Cập nhật data từ response
+  const showtimes = showtimesData?.data || [];
+  const paginationData = {
+    current: showtimesData?.current_page || 1,
+    pageSize: showtimesData?.per_page || 10,
+    total: showtimesData?.total || 0,
   };
 
-  useEffect(() => {
-    loadData(pagination.current, pagination.pageSize);
-  }, []);
+  // Show error message if there's an error
+  if (error) {
+    message.error(error.message || "Failed to load showtimes");
+  }
 
   const handleDeleteShowtime = async (id) => {
-    try {
-      await ShowTimeService.deleteShowTime(id);
-      message.success("Showtime deleted successfully");
-      loadData(pagination.current, pagination.pageSize);
-    } catch (error) {
-      message.error(error.message || "Failed to delete showtime");
-    }
+    deleteShowtime(id, {
+      onSuccess: () => {
+        message.success("Showtime deleted successfully");
+      },
+      onError: (error) => {
+        message.error(error.message || "Failed to delete showtime");
+      },
+    });
   };
 
   const handleTableChange = (newPagination) => {
-    loadData(newPagination.current, newPagination.pageSize);
+    setPagination({
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+      total: newPagination.total,
+    });
   };
 
   const handleSearch = () => {
@@ -93,13 +89,22 @@ function AdminManageShowtime() {
       message.warning("Please enter a keyword to search");
       return;
     }
-    loadData(1, pagination.pageSize, searchKeyword);
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleClearSearch = () => {
     setSearchKeyword("");
-    setIsSearching(false);
-    loadData(1, pagination.pageSize, "");
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const handleRefresh = () => {
+    setSearchKeyword("");
+    setPagination({ current: 1, pageSize: 10, total: 0 });
+    refreshData({ 
+      page: 1, 
+      perPage: 10, 
+      keyword: undefined 
+    });
   };
 
   const formatDateTime = (dateTime) => {
@@ -179,6 +184,7 @@ function AdminManageShowtime() {
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
+              loading={isDeleting}
             >
               Delete
             </Button>
@@ -198,31 +204,6 @@ function AdminManageShowtime() {
         </Col>
         <Col>
           <Space>
-            <Input
-              placeholder="Search by movie, cinema, or date (YYYY-MM-DD)"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onPressEnter={handleSearch}
-              className={styles.searchInput}
-              allowClear
-            />
-            <Button
-              type="primary"
-              icon={<SearchOutlined />}
-              onClick={handleSearch}
-              className={styles.searchButton}
-            >
-              Search
-            </Button>
-            {isSearching && (
-              <Button
-                type="default"
-                onClick={handleClearSearch}
-                className={styles.clearButton}
-              >
-                Clear Search
-              </Button>
-            )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -231,41 +212,93 @@ function AdminManageShowtime() {
             >
               Add Showtime
             </Button>
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={() =>
-                loadData(pagination.current, pagination.pageSize, searchKeyword)
-              }
-              loading={loading}
-              className={styles.refreshButton}
-            >
-              Refresh
-            </Button>
           </Space>
         </Col>
       </Row>
-      <Row gutter={[16, 16]} className={styles.mainContent}>
+
+      {/* Statistics */}
+      <Row gutter={[16, 16]} className={styles.statsRow}>
         <Col xs={24} lg={8}>
-          <Card className={styles.statisticCard} hoverable>
+          <Card className={styles.statCard} hoverable>
             <Statistic
-              title={
-                <span className={styles.statisticTitle}>Total Showtimes</span>
-              }
-              value={pagination.total}
+              title="Total Showtimes"
+              value={paginationData.total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
         </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Current Page"
+              value={showtimes.length}
+              suffix={`/ ${paginationData.total}`}
+              valueStyle={{ color: "#4b9bff" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Search Results"
+              value={isSearching ? showtimes.length : 0}
+              suffix={isSearching ? " found" : "No search"}
+              valueStyle={{ color: "#ff6a6a" }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Search and Controls */}
+      <Row gutter={[16, 16]} className={styles.controlsRow}>
+        <Col xs={24} lg={16}>
+          <Input
+            placeholder="Search by movie title, cinema name, or room name..."
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onPressEnter={handleSearch}
+            className={styles.searchInput}
+            allowClear
+          />
+        </Col>
+        <Col xs={24} lg={4}>
+          <Button
+            type="primary"
+            icon={<SearchOutlined />}
+            onClick={handleSearch}
+            className={styles.searchButton}
+            block
+          >
+            Search
+          </Button>
+        </Col>
+        <Col xs={24} lg={4}>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            loading={isRefreshing}
+            className={styles.refreshButton}
+            block
+          >
+            Refresh
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Showtimes Table */}
+      <Row gutter={[16, 16]} className={styles.mainContent}>
         <Col xs={24}>
           <Card className={styles.tableCard}>
-            {loading ? (
+            {isLoading ? (
               <div className={styles.loading}>
                 <Spin size="large" />
               </div>
             ) : showtimes.length === 0 ? (
               <div className={styles.empty}>
-                <TypographyText>No showtimes found</TypographyText>
+                <TypographyText>
+                  {isSearching ? "No showtimes found" : "No showtimes available"}
+                </TypographyText>
               </div>
             ) : (
               <Table
@@ -273,13 +306,18 @@ function AdminManageShowtime() {
                 dataSource={showtimes}
                 rowKey="showtime_id"
                 pagination={{
-                  ...pagination,
+                  current: paginationData.current,
+                  pageSize: paginationData.pageSize,
+                  total: paginationData.total,
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} showtimes`,
                 }}
                 onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
+                scroll={{ x: 1200 }} // Enable horizontal scroll for responsive design
               />
             )}
           </Card>

@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, Row, Col, Typography, Select } from "antd";
-import { toastSuccess, toastError } from "../../../utils/toastNotifier";
-import CinemaService from "../../../services/CinemaService";
+import { toast } from "react-toastify";
+import { useCreateCinema } from "../../../hooks/useCinemas";
 import styles from "./AdminAddCinemaForm.module.scss";
 import { VietnamCities } from "../../../../public/assets/VietnamCities";
 
@@ -12,25 +11,40 @@ const { Option } = Select;
 const AdminAddCinemaForm = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [submitting, setSubmitting] = useState(false);
+
+  const { mutate: createCinema, isLoading: isCreating } = useCreateCinema();
 
   const onFinish = async (values) => {
-    setSubmitting(true);
-    try {
-      const cinemaData = {
-        name: values.name,
-        address: `${values.cinema_address}, ${values.cinema_city}`,
-      };
+    const cinemaData = {
+      name: values.name,
+      address: `${values.cinema_address}, ${values.cinema_city}`,
+    };
 
-      await CinemaService.createCinema(cinemaData);
-
-      toastSuccess("Cinema added successfully");
-      navigate("/admin/manage_cinema");
-    } catch (error) {
-      toastError(error.message || "Failed to add cinema");
-    } finally {
-      setSubmitting(false);
-    }
+    createCinema(cinemaData, {
+      onSuccess: () => {
+        toast.success("Cinema added successfully", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+        navigate("/admin/manage_cinema");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to add cinema", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+    });
   };
 
   return (
@@ -64,6 +78,7 @@ const AdminAddCinemaForm = () => {
                     placeholder="Enter cinema name"
                     autoComplete="off"
                     data-form-type="cinema-name"
+                    disabled={isCreating}
                   />
                 </Form.Item>
               </Col>
@@ -84,6 +99,7 @@ const AdminAddCinemaForm = () => {
                     placeholder="Enter cinema address"
                     autoComplete="new-cinema-address"
                     data-form-type="cinema-address"
+                    disabled={isCreating}
                   />
                 </Form.Item>
               </Col>
@@ -99,6 +115,7 @@ const AdminAddCinemaForm = () => {
                     optionFilterProp="children"
                     autoComplete="new-cinema-city"
                     data-form-type="cinema-city"
+                    disabled={isCreating}
                     filterOption={(input, option) =>
                       option.children
                         .toLowerCase()
@@ -118,16 +135,16 @@ const AdminAddCinemaForm = () => {
               <Button
                 type="primary"
                 htmlType="submit"
-                loading={submitting}
+                loading={isCreating}
                 className={styles.submitButton}
-                disabled={submitting}
+                disabled={isCreating}
               >
                 Add Cinema
               </Button>
               <Button
                 onClick={() => navigate("/admin/manage_cinema")}
                 style={{ marginLeft: 8 }}
-                disabled={submitting}
+                disabled={isCreating}
               >
                 Cancel
               </Button>

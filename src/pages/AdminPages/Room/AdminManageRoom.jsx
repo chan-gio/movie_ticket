@@ -1,13 +1,17 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Row, Col, Card, Button, Table, Space, Popconfirm, Typography, Form, Input, Spin, Select } from 'antd';
-import { EditOutlined, DeleteOutlined, SettingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { toastSuccess, toastError, toastInfo } from '../../../utils/toastNotifier';
+import { Row, Col, Card, Button, Table, Space, Popconfirm, Typography, Form, Input, Spin, Select, Statistic } from 'antd';
+import { DeleteOutlined, SettingOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
+import { toast } from 'react-toastify';
 import styles from './AdminManageRoom.module.scss';
-import RoomService from '../../../services/RoomService';
-import CinemaService from '../../../services/CinemaService';
+import { useCinemaById } from '../../../hooks/useCinemas';
+import { 
+  useRoomsByCinemaId, 
+  useCreateRoom, 
+  useSoftDeleteRoom, 
+  useUpdateRoomStatus,
+  useRefreshRooms
+} from '../../../hooks/useRooms';
 
 const { Title, Text: TypographyText } = Typography;
 const { Option } = Select;
@@ -15,99 +19,184 @@ const { Option } = Select;
 function AdminManageRoom() {
   const navigate = useNavigate();
   const { cinemaId } = useParams();
-  const [rooms, setRooms] = useState([]);
-  const [cinema, setCinema] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
   const [addingRoom, setAddingRoom] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(null);
   const [roomForm] = Form.useForm();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: cinema, 
+    isLoading: isLoadingCinema, 
+    error: cinemaError 
+  } = useCinemaById(cinemaId);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [fetchedCinema, fetchedRooms] = await Promise.all([
-        CinemaService.getCinemaById(cinemaId),
-        RoomService.getRoomsByCinemaId(cinemaId),
-      ]);
-      setCinema(fetchedCinema);
-      setRooms(fetchedRooms);
-    } catch (error) {
-      toastError(error.message || 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    data: roomsData, 
+    isLoading: isLoadingRooms, 
+    error: roomsError 
+  } = useRoomsByCinemaId({ 
+    cinemaId, 
+    page: 1, 
+    perPage: 100 
+  });
+
+  const { mutate: createRoom, isLoading: isCreating } = useCreateRoom();
+  const { mutate: deleteRoom, isLoading: isDeleting } = useSoftDeleteRoom();
+  const { mutate: updateStatus, isLoading: isUpdatingStatus } = useUpdateRoomStatus();
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshRooms();
+
+  // Cập nhật data từ response
+  const rooms = roomsData || [];
+
+  // Show error message if there's an error
+  if (cinemaError) {
+    toast.error(cinemaError.message || 'Failed to load cinema data', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: '#5f2eea' },
+    });
+  }
+
+  if (roomsError) {
+    toast.error(roomsError.message || 'Failed to load rooms data', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: '#5f2eea' },
+    });
+  }
 
   const handleAddRoom = async (values) => {
-    setAddingRoom(true);
-    try {
-      const roomData = {
-        cinema_id: cinemaId,
-        room_name: values.room_name,
-        status: values.status || 'UNAVAILABLE',
-      };
-      const newRoom = await RoomService.createRoom(roomData);
-      setRooms([...rooms, newRoom]);
-      roomForm.resetFields();
-      toastSuccess('Room added successfully');
-    } catch (error) {
-      toastError(error.message || 'Failed to add room');
-    } finally {
-      setAddingRoom(false);
-    }
+    const roomData = {
+      cinema_id: cinemaId,
+      room_name: values.room_name,
+      status: values.status || 'UNAVAILABLE',
+    };
+    
+    createRoom(roomData, {
+      onSuccess: () => {
+        roomForm.resetFields();
+        toast.success('Room added successfully', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: '#5f2eea' },
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message || 'Failed to add room', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: '#5f2eea' },
+        });
+      },
+    });
   };
 
   const handleDeleteRoom = async (id) => {
-    setDeleting(true);
-    try {
-      await RoomService.softDeleteRoom(id);
-      setRooms(rooms.filter(room => room.room_id !== id));
-      toastSuccess('Room deleted successfully');
-    } catch (error) {
-      toastError(error.message || 'Failed to delete room');
-    } finally {
-      setDeleting(false);
-    }
+    deleteRoom(id, {
+      onSuccess: () => {
+        toast.success('Room deleted successfully', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: '#5f2eea' },
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message || 'Failed to delete room', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: '#5f2eea' },
+        });
+      },
+    });
   };
 
   const handleUpdateStatus = async (roomId, status) => {
-    setUpdatingStatus(roomId);
-    try {
-      await RoomService.updateRoomStatus(roomId, status);
-      setRooms(rooms.map(room =>
-        room.room_id === roomId ? { ...room, status } : room
-      ));
-      toastSuccess('Room status updated successfully');
-    } catch (error) {
-      toastError(error.message || 'Failed to update room status');
-    } finally {
-      setUpdatingStatus(null);
-    }
+    updateStatus({ roomId, status }, {
+      onSuccess: () => {
+        toast.success('Room status updated successfully', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: '#5f2eea' },
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message || 'Failed to update room status', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: '#5f2eea' },
+        });
+      },
+    });
+  };
+
+  const handleRefresh = () => {
+    refreshData();
   };
 
   const handleResetRoomForm = () => {
     roomForm.resetFields();
-    toastInfo('Room form reset');
+    toast.info('Room form reset', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: '#5f2eea' },
+    });
   };
+
+  const isLoading = isLoadingCinema || isLoadingRooms;
+  const isSubmitting = isCreating || isDeleting || isUpdatingStatus;
 
   const roomColumns = [
     {
-      title: 'ID',
-      dataIndex: 'room_id',
-      key: 'room_id',
-      sorter: (a, b) => a.room_id.localeCompare(b.room_id),
-      render: text => <TypographyText strong>{text}</TypographyText>,
+      title: 'No.',
+      key: 'serial',
+      width: 60,
+      render: (_, __, index) => index + 1,
     },
     {
       title: 'Room Name',
       dataIndex: 'room_name',
       key: 'room_name',
       sorter: (a, b) => a.room_name.localeCompare(b.room_name),
+      render: (name) => (
+        <TypographyText strong className={styles.roomName}>
+          {name}
+        </TypographyText>
+      ),
     },
     {
       title: 'Status',
@@ -115,9 +204,13 @@ function AdminManageRoom() {
       key: 'status',
       sorter: (a, b) => a.status.localeCompare(b.status),
       render: status => (
-        <TypographyText type={status === 'AVAILABLE' ? 'success' : 'danger'}>
+        <span
+          className={`${styles.status} ${
+            status === 'AVAILABLE' ? styles.available : styles.unavailable
+          }`}
+        >
           {status}
-        </TypographyText>
+        </span>
       ),
     },
     {
@@ -129,8 +222,8 @@ function AdminManageRoom() {
             value={record.status}
             onChange={value => handleUpdateStatus(record.room_id, value)}
             style={{ width: 140 }}
-            disabled={deleting || addingRoom || updatingStatus === record.room_id}
-            loading={updatingStatus === record.room_id}
+            disabled={isSubmitting}
+            loading={isUpdatingStatus}
           >
             <Option value="AVAILABLE">AVAILABLE</Option>
             <Option value="UNAVAILABLE">UNAVAILABLE</Option>
@@ -140,20 +233,21 @@ function AdminManageRoom() {
             icon={<SettingOutlined />}
             onClick={() => navigate(`/admin/manage_seats/edit_room/${record.room_id}`)}
             className={styles.settingsButton}
-            disabled={deleting || addingRoom || updatingStatus}
+            disabled={isSubmitting}
           >
             Settings
           </Button>
           <Popconfirm
             title="Are you sure to delete this room?"
             onConfirm={() => handleDeleteRoom(record.room_id)}
-            disabled={deleting || addingRoom || updatingStatus}
+            disabled={isSubmitting}
           >
             <Button
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
-              disabled={deleting || addingRoom || updatingStatus}
+              disabled={isSubmitting}
+              loading={isDeleting}
             >
               Delete
             </Button>
@@ -176,10 +270,10 @@ function AdminManageRoom() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={loadData}
-              loading={loading}
+              onClick={handleRefresh}
+              loading={isRefreshing}
+              disabled={isSubmitting}
               className={styles.refreshButton}
-              disabled={deleting || addingRoom || updatingStatus}
             >
               Refresh
             </Button>
@@ -187,82 +281,124 @@ function AdminManageRoom() {
               block
               onClick={() => navigate(-1)}
               className={styles.backButton}
-              disabled={loading || deleting || addingRoom || updatingStatus}
+              disabled={isLoading || isSubmitting}
             >
               Back
             </Button>
           </Space>
         </Col>
       </Row>
-      {loading ? (
+
+      {/* Statistics */}
+      <Row gutter={[16, 16]} className={styles.statsRow}>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Total Rooms"
+              value={rooms.length}
+              valueStyle={{ color: "#5f2eea" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Available Rooms"
+              value={rooms.filter(room => room.status === 'AVAILABLE').length}
+              valueStyle={{ color: "#52c41a" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Unavailable Rooms"
+              value={rooms.filter(room => room.status === 'UNAVAILABLE').length}
+              valueStyle={{ color: "#ff4d4f" }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {isLoading ? (
         <div className={styles.loading}>
           <Spin size="large" />
         </div>
       ) : (
         <Row gutter={[16, 16]} className={styles.mainContent}>
-          <Col xs={24}>
-            <Card className={styles.tableCard}>
-              <Title level={4} className={styles.sectionTitle}>
-                Rooms
-              </Title>
+          {/* Add Room Form */}
+          <Col xs={24} lg={8}>
+            <Card title="Add New Room" className={styles.formCard}>
               <Form
                 form={roomForm}
-                layout="inline"
+                layout="vertical"
                 onFinish={handleAddRoom}
-                className={styles.roomForm}
-                autoComplete="off"
+                className={styles.form}
               >
                 <Form.Item
+                  label="Room Name"
                   name="room_name"
-                  rules={[{ required: true, message: 'Required' }]}
+                  rules={[{ required: true, message: 'Please enter room name' }]}
                 >
-                  <Input
-                    placeholder="Room Name"
-                    className={styles.input}
-                    autoComplete="new-room-name"
-                    data-form-type="room-name"
+                  <Input 
+                    placeholder="Enter room name" 
+                    disabled={isSubmitting}
                   />
                 </Form.Item>
-                <Form.Item name="status" initialValue="UNAVAILABLE" hidden>
-                  <Input type="hidden" />
+                <Form.Item
+                  label="Status"
+                  name="status"
+                  initialValue="UNAVAILABLE"
+                >
+                  <Select 
+                    placeholder="Select status" 
+                    disabled={isSubmitting}
+                  >
+                    <Option value="AVAILABLE">AVAILABLE</Option>
+                    <Option value="UNAVAILABLE">UNAVAILABLE</Option>
+                  </Select>
                 </Form.Item>
                 <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className={styles.addRoomButton}
-                    disabled={deleting || addingRoom || updatingStatus}
-                    loading={addingRoom}
-                  >
-                    Add Room
-                  </Button>
-                </Form.Item>
-                <Form.Item>
-                  <Button
-                    onClick={handleResetRoomForm}
-                    className={styles.resetButton}
-                    disabled={deleting || addingRoom || updatingStatus}
-                  >
-                    Reset
-                  </Button>
+                  <Space>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={isCreating}
+                      disabled={isSubmitting}
+                      icon={<PlusOutlined />}
+                    >
+                      Add Room
+                    </Button>
+                    <Button
+                      onClick={handleResetRoomForm}
+                      disabled={isSubmitting}
+                    >
+                      Reset
+                    </Button>
+                  </Space>
                 </Form.Item>
               </Form>
+            </Card>
+          </Col>
+
+          {/* Rooms Table */}
+          <Col xs={24} lg={16}>
+            <Card title="Rooms List" className={styles.tableCard}>
               {rooms.length === 0 ? (
                 <div className={styles.empty}>
-                  <TypographyText>No rooms found for this cinema</TypographyText>
+                  <TypographyText>
+                    No rooms available for this cinema
+                  </TypographyText>
                 </div>
               ) : (
                 <Table
                   columns={roomColumns}
                   dataSource={rooms}
                   rowKey="room_id"
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    pageSizeOptions: ['10', '20', '50'],
-                  }}
+                  pagination={false}
                   rowClassName={styles.tableRow}
                   className={styles.table}
+                  scroll={{ x: 800 }}
                 />
               )}
             </Card>

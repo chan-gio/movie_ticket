@@ -8,10 +8,10 @@ import {
   FaPinterest,
   FaYoutube,
 } from "react-icons/fa";
-import { useSettings } from "../../Context/SettingContext"; // Added useSettings import
+import { useSettingsContext } from "../../Context/SettingContext"; // Updated import
 
 const Footer = () => {
-  const { settings } = useSettings(); // Added useSettings hook
+  const { settings, loading } = useSettingsContext(); // Updated hook usage
 
   useEffect(() => {
     const navbar = document.querySelector(".navbar");
@@ -59,7 +59,11 @@ const Footer = () => {
           <Link to="/" className={styles.footerLogoLink}>
             {" "}
             {/* Updated to use Link */}
-            <img src={settings.name} alt="Movie" />
+            <img 
+              src={settings?.name || "https://via.placeholder.com/150x50?text=MovieLogo"} 
+              alt="Movie" 
+              style={{ opacity: loading ? 0.5 : 1 }}
+            />
           </Link>
           <div className={styles.socialIcons}>
             <a href="#">

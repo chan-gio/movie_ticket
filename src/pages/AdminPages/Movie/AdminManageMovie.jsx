@@ -1,6 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -27,7 +25,11 @@ import {
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import styles from "./AdminManageMovie.module.scss";
-import MovieService from "../../../services/MovieService";
+import { 
+  useAdminMoviesWithSearch, 
+  useDeleteMovie, 
+  useRefreshMovies
+} from "../../../hooks/useMovies";
 
 const { Title, Text: TypographyText } = Typography;
 const { Option } = Select;
@@ -35,126 +37,54 @@ const { Search } = Input;
 
 function AdminManageMovie() {
   const navigate = useNavigate();
-  const [movies, setMovies] = useState([]);
-  const [totalMovies, setTotalMovies] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("title");
-  const [searchTrigger, setSearchTrigger] = useState(0);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
 
-  // Fetch total movies on mount
-  useEffect(() => {
-    const fetchTotalMovies = async () => {
-      try {
-        const response = await MovieService.getAllMovies({
-          perPage: 1,
-          page: 1,
-        });
-        setTotalMovies(response.total || 0);
-      } catch (error) {
-        console.error("Fetch total movies error:", error.message);
-        setTotalMovies(0);
-        toast.error("Unable to fetch total movies", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-      }
-    };
-    fetchTotalMovies();
-  }, []);
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: moviesData, 
+    isLoading, 
+    error, 
+    isSearching 
+  } = useAdminMoviesWithSearch({ 
+    title: searchType === "title" ? searchTerm : undefined,
+    page: pagination.current, 
+    perPage: pagination.pageSize 
+  });
 
-  // Load movies with pagination and search
-  const loadData = useCallback(async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      let response;
-      if (searchTerm) {
-        if (searchType === "title") {
-          response = await MovieService.searchByTitleFE({
-            title: searchTerm,
-            perPage: pagination.pageSize,
-            page: pagination.current,
-          });
-        } else {
-          response = await MovieService.searchMoviesByAdult({
-            adult: searchTerm,
-            perPage: pagination.pageSize,
-            page: pagination.current,
-          });
-        }
-      } else {
-        response = await MovieService.getAllMovies({
-          perPage: pagination.pageSize,
-          page: pagination.current,
-        });
-      }
+  const { mutate: deleteMovie, isLoading: isDeleting } = useDeleteMovie();
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshMovies();
 
-      console.log("API Response:", response);
-      const movieData = response.data || [];
-      setMovies(movieData);
+  // Cập nhật data từ response
+  const movies = moviesData?.data || [];
+  const paginationData = {
+    current: moviesData?.current_page || 1,
+    pageSize: moviesData?.per_page || 10,
+    total: moviesData?.total || 0,
+  };
 
-      if (
-        response.total !== pagination.total ||
-        response.current_page !== pagination.current
-      ) {
-        setPagination((prev) => ({
-          ...prev,
-          total: response.total || 0,
-          current: response.current_page || 1,
-        }));
-      }
-
-      if (searchTerm && movieData.length === 0) {
-        toast.info("No movies found", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-      }
-    } catch (error) {
-      console.error("Load data error:", error.message);
-      setMovies([]);
-      setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
-      toast.error(error.message || "Unable to load movie data", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } finally {
-      setLoading(false);
-      console.log("Movies state:", movies);
-    }
-  }, [searchTerm, searchType, pagination.current, pagination.pageSize]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData, searchTrigger]);
+  // Show error message if there's an error
+  if (error) {
+    toast.error(error.message || "Failed to load movies", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: "#5f2eea" },
+    });
+  }
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-    setSearchTrigger((prev) => prev + 1);
-    setPagination((prev) => ({ ...prev, current: 1 }));
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleSearchChange = (e) => {
@@ -165,127 +95,120 @@ function AdminManageMovie() {
     setSearchType(value);
     setSearchTerm("");
     setInputValue("");
-    setSearchTrigger((prev) => prev + 1);
-    setPagination((prev) => ({ ...prev, current: 1 }));
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleRefresh = () => {
     setSearchTerm("");
     setInputValue("");
     setSearchType("title");
-    setSearchTrigger((prev) => prev + 1);
     setPagination({ current: 1, pageSize: 10, total: 0 });
+    refreshData({ 
+      page: 1, 
+      perPage: 10, 
+      title: undefined 
+    });
   };
 
   const handleDeleteMovie = async (id) => {
-    setDeleting(true);
-    try {
-      await MovieService.softDeleteMovie(id);
-      setMovies(movies.filter((movie) => movie.movie_id !== id));
-      setTotalMovies((prev) => Math.max(0, prev - 1));
-      toast.success("Movie deleted successfully", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } catch (error) {
-      toast.error(error.message || "Failed to delete movie", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } finally {
-      setDeleting(false);
-    }
+    deleteMovie(id, {
+      onSuccess: () => {
+        toast.success("Movie deleted successfully", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to delete movie", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+    });
   };
 
   const handleTableChange = (paginationConfig) => {
-    setPagination((prev) => ({
-      ...prev,
+    setPagination({
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize,
-    }));
+      total: paginationConfig.total,
+    });
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    return date
+      ? new Date(date).toLocaleDateString("en-GB", { dateStyle: "medium" })
+      : "N/A";
   };
 
   const movieColumns = [
     {
-      title: "ID",
-      dataIndex: "movie_id",
-      key: "movie_id",
-      sorter: (a, b) => a.movie_id.localeCompare(b.movie_id),
-      render: (text) => <TypographyText strong>{text}</TypographyText>,
-    },
-    {
-      title: "Movie Title",
-      dataIndex: "title",
-      key: "title",
-      sorter: (a, b) => a.title.localeCompare(b.title),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-      render: (text) => (
-        <TypographyText>{text?.slice(0, 50) + "..."}</TypographyText>
-      ),
-    },
-    {
-      title: "Duration (minutes)",
-      dataIndex: "duration",
-      key: "duration",
-      sorter: (a, b) => a.duration - b.duration,
-      render: (duration) => <TypographyText>{duration} minutes</TypographyText>,
-    },
-    {
-      title: "Release Date",
-      dataIndex: "release_date",
-      key: "release_date",
-      sorter: (a, b) => new Date(a.release_date) - new Date(b.release_date),
-      render: (date) => {
-        const releaseDate = new Date(date);
-        const isReleased = releaseDate <= new Date();
-        return (
-          <TypographyText type={isReleased ? "success" : "warning"}>
-            {formatDate(date)}
-          </TypographyText>
-        );
-      },
+      title: "No.",
+      key: "serial",
+      width: 60,
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
       title: "Poster",
       dataIndex: "poster_url",
       key: "poster_url",
+      width: 100,
       render: (url) => (
         <Image
-          src={url}
-          alt="Poster"
+          width={80}
+          height={120}
+          src={
+            url ||
+            "https://wallpapercave.com/wp/wp1816326.jpg"
+          }
+          alt="Movie Poster"
+          fallback="https://wallpapercave.com/wp/wp1816326.jpg"
           className={styles.posterImage}
-          fallback="https://villagesonmacarthur.com/wp-content/uploads/2020/12/video-player-placeholder-very-large.png"
-          preview
         />
       ),
     },
     {
-      title: "Adult Rating",
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+      sorter: (a, b) => a.title.localeCompare(b.title),
+      render: (title) => (
+        <TypographyText strong className={styles.movieTitle}>
+          {title}
+        </TypographyText>
+      ),
+    },
+    {
+      title: "Genre",
+      dataIndex: "genre",
+      key: "genre",
+      sorter: (a, b) => (a.genre || "").localeCompare(b.genre || ""),
+      render: (genre) => genre || "N/A",
+    },
+    {
+      title: "Adult",
       dataIndex: "adult",
       key: "adult",
-      render: (rating) => <TypographyText>{rating || "N/A"}</TypographyText>,
+      sorter: (a, b) => (a.adult || "").localeCompare(b.adult || ""),
+      render: (adult) => adult || "N/A",
+    },
+    {
+      title: "Release Date",
+      dataIndex: "release_date",
+      key: "release_date",
+      sorter: (a, b) => new Date(a.release_date || 0) - new Date(b.release_date || 0),
+      render: (date) => formatDate(date),
     },
     {
       title: "Actions",
@@ -294,25 +217,33 @@ function AdminManageMovie() {
         <Space>
           <Button
             type="primary"
+            icon={<EyeOutlined />}
+            onClick={() =>
+              navigate(`/admin/manage_movie/details/${record.movie_id}`)
+            }
+            className={styles.viewButton}
+          >
+            View
+          </Button>
+          <Button
+            type="default"
             icon={<EditOutlined />}
             onClick={() =>
               navigate(`/admin/manage_movie/edit/${record.movie_id}`)
             }
             className={styles.editButton}
-            disabled={deleting}
           >
             Edit
           </Button>
           <Popconfirm
-            title="Are you sure you want to delete this movie?"
+            title="Are you sure to delete this movie?"
             onConfirm={() => handleDeleteMovie(record.movie_id)}
-            disabled={deleting}
           >
             <Button
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
-              disabled={deleting}
+              loading={isDeleting}
             >
               Delete
             </Button>
@@ -337,124 +268,127 @@ function AdminManageMovie() {
               icon={<PlusOutlined />}
               onClick={() => navigate("/admin/manage_movie/add")}
               className={styles.addButton}
-              disabled={deleting}
             >
               Add Movie
             </Button>
             <Button
-              type="primary"
-              icon={<EyeOutlined />}
-              onClick={() => navigate("/admin/deleted_movies")}
-              className={styles.viewDeletedButton}
-              disabled={deleting}
+              type="default"
+              onClick={() => navigate("/admin/manage_movie/deleted")}
+              className={styles.deletedButton}
             >
-              View Deleted Movies
-            </Button>
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={handleRefresh}
-              loading={loading}
-              className={styles.refreshButton}
-              disabled={deleting}
-            >
-              Refresh
+              Deleted Movies
             </Button>
           </Space>
         </Col>
       </Row>
-      <Row gutter={[16, 16]} className={styles.mainContent}>
+
+      {/* Statistics */}
+      <Row gutter={[16, 16]} className={styles.statsRow}>
         <Col xs={24} lg={8}>
-          <Card className={styles.statisticCard} hoverable>
+          <Card className={styles.statCard} hoverable>
             <Statistic
-              title={
-                <span className={styles.statisticTitle}>Total Movies</span>
-              }
-              value={totalMovies}
+              title="Total Movies"
+              value={paginationData.total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
         </Col>
-      </Row>
-      <Row gutter={[16, 16]} className={styles.mainContent}>
-        <Col xs={24} md={12}>
-          <Space style={{ marginBottom: 16, width: "100%" }}>
-            <Select
-              value={searchType}
-              onChange={handleSearchTypeChange}
-              style={{ width: 150 }}
-              className={styles.select}
-            >
-              <Option value="title">Search by Title</Option>
-              <Option value="adult">Search by Rating</Option>
-            </Select>
-            {searchType === "title" ? (
-              <Search
-                placeholder="Enter movie title"
-                value={inputValue}
-                onChange={handleSearchChange}
-                onSearch={handleSearch}
-                enterButton={<SearchOutlined />}
-                allowClear
-                className={styles.search}
-                disabled={deleting}
-              />
-            ) : (
-              <Select
-                value={inputValue}
-                onChange={(value) => {
-                  setInputValue(value);
-                  handleSearch(value);
-                }}
-                style={{ width: 200 }}
-                className={styles.select}
-                placeholder="Select rating"
-                allowClear
-              >
-                <Option value="G">G</Option>
-                <Option value="PG">PG</Option>
-                <Option value="PG-13">PG-13</Option>
-                <Option value="R">R</Option>
-                <Option value="NC-17">NC-17</Option>
-              </Select>
-            )}
-          </Space>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Current Page"
+              value={movies.length}
+              suffix={`/ ${paginationData.total}`}
+              valueStyle={{ color: "#4b9bff" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Search Results"
+              value={isSearching ? movies.length : 0}
+              suffix={isSearching ? " found" : "No search"}
+              valueStyle={{ color: "#ff6a6a" }}
+            />
+          </Card>
         </Col>
       </Row>
-      {loading ? (
-        <div className={styles.loading}>
-          <Spin size="large" />
-        </div>
-      ) : (
-        <Row gutter={[16, 16]} className={styles.mainContent}>
-          <Col xs={24}>
-            <Card className={styles.tableCard}>
+
+      {/* Search and Controls */}
+      <Row gutter={[16, 16]} className={styles.controlsRow}>
+        <Col xs={24} lg={8}>
+          <Select
+            value={searchType}
+            onChange={handleSearchTypeChange}
+            style={{ width: "100%" }}
+            className={styles.searchTypeSelect}
+          >
+            <Option value="title">Search by Title</Option>
+            <Option value="adult">Search by Adult</Option>
+          </Select>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Search
+            placeholder={`Search by ${searchType}...`}
+            value={inputValue}
+            onChange={handleSearchChange}
+            onSearch={handleSearch}
+            enterButton={<SearchOutlined />}
+            className={styles.searchInput}
+            allowClear
+          />
+        </Col>
+        <Col xs={24} lg={4}>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            loading={isRefreshing}
+            className={styles.refreshButton}
+            block
+          >
+            Refresh
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Movies Table */}
+      <Row gutter={[16, 16]} className={styles.mainContent}>
+        <Col xs={24}>
+          <Card className={styles.tableCard}>
+            {isLoading ? (
+              <div className={styles.loading}>
+                <Spin size="large" />
+              </div>
+            ) : movies.length === 0 ? (
+              <div className={styles.empty}>
+                <TypographyText>
+                  {isSearching ? "No movies found" : "No movies available"}
+                </TypographyText>
+              </div>
+            ) : (
               <Table
                 columns={movieColumns}
                 dataSource={movies}
                 rowKey="movie_id"
                 pagination={{
-                  ...pagination,
+                  current: paginationData.current,
+                  pageSize: paginationData.pageSize,
+                  total: paginationData.total,
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Total ${total} movies`,
-                  onChange: (page, pageSize) =>
-                    handleTableChange({ current: page, pageSize }),
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} movies`,
                 }}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
-                locale={{
-                  emptyText: (
-                    <TypographyText className={styles.emptyText}>
-                      No movies found
-                    </TypographyText>
-                  ),
-                }}
               />
-            </Card>
-          </Col>
-        </Row>
-      )}
+            )}
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

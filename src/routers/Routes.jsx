@@ -19,8 +19,7 @@ const AdminSettings = lazy(() => import('../pages/AdminPages/Setting/AdminSettin
 const AdminManageUser = lazy(() => import('../pages/AdminPages/User/AdminManageUser.jsx'));
 const AdminManageUserDetails = lazy(() => import('../pages/AdminPages/User/AdminManageUserDetails.jsx'));
 const AdminManageMovie = lazy(() => import('../pages/AdminPages/Movie/AdminManageMovie.jsx'));
-const AdminAddMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminAddMovieForm.jsx'));
-const AdminEditMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminEditMovieForm.jsx'));
+const AdminMovieForm = lazy(() => import('../pages/AdminPages/Movie/AdminMovieForm.jsx'));
 const DeletedMovies = lazy(() => import('../pages/AdminPages/Movie/DeletedMovies.jsx'));
 const AdminAddCinemaForm = lazy(() => import('../pages/AdminPages/Cinema/AdminAddCinemaForm.jsx'));
 const AdminEditCinemaForm = lazy(() => import('../pages/AdminPages/Cinema/AdminEditCinemaForm.jsx'));
@@ -56,8 +55,8 @@ const routeConfig = [
   { path: '/admin/manage_user', element: <ProtectedAdminRoute><Admin><AdminManageUser /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_user/details/:id', element: <ProtectedAdminRoute><Admin><AdminManageUserDetails /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_movie', element: <ProtectedAdminRoute><Admin><AdminManageMovie /></Admin></ProtectedAdminRoute> },
-  { path: '/admin/manage_movie/add', element: <ProtectedAdminRoute><Admin><AdminAddMovieForm /></Admin></ProtectedAdminRoute> },
-  { path: '/admin/manage_movie/edit/:id', element: <ProtectedAdminRoute><Admin><AdminEditMovieForm /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_movie/add', element: <ProtectedAdminRoute><Admin><AdminMovieForm /></Admin></ProtectedAdminRoute> },
+  { path: '/admin/manage_movie/edit/:id', element: <ProtectedAdminRoute><Admin><AdminMovieForm /></Admin></ProtectedAdminRoute> },
   { path: '/admin/deleted_movies', element: <ProtectedAdminRoute><Admin><DeletedMovies /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_cinema', element: <ProtectedAdminRoute><Admin><AdminManageCinema /></Admin></ProtectedAdminRoute> },
   { path: '/admin/manage_cinema/add_cinema', element: <ProtectedAdminRoute><Admin><AdminAddCinemaForm /></Admin></ProtectedAdminRoute> },

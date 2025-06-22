@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Card,
@@ -19,7 +19,10 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
 } from "@ant-design/icons";
-import BookingService from "../../../services/BookingService";
+import {
+  useBookingById,
+  useUpdateBookingStatus,
+} from "../../../hooks/useBookings";
 import styles from "./AdminManageBookingDetails.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -29,42 +32,32 @@ const { Option } = Select;
 function AdminManageBookingDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null);
 
+  // Custom hooks
+  const {
+    data: booking,
+    isLoading: loading,
+    isError,
+    error,
+  } = useBookingById(id);
+
+  const updateStatusMutation = useUpdateBookingStatus();
+
+  // Update local status when booking data changes
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const data = await BookingService.getBookingById(id);
-        if (data) {
-          setBooking(data);
-          setStatus(data.status);
-        } else {
-          message.error("Booking not found");
-        }
-      } catch (error) {
-        message.error(error.message || "Failed to fetch booking");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [id]);
+    if (booking?.status) {
+      setStatus(booking.status);
+    }
+  }, [booking]);
 
   const handleStatusChange = async (newStatus) => {
     try {
-      const updatedBooking = await BookingService.updateBookingStatus(
-        id,
-        newStatus
-      );
-      setStatus(newStatus);
-      setBooking({
-        ...booking,
+      await updateStatusMutation.mutateAsync({
+        bookingId: id,
         status: newStatus,
-        updated_at: updatedBooking.updated_at || new Date().toISOString(),
       });
+      setStatus(newStatus);
       message.success(`Booking status updated to ${newStatus}`);
     } catch (error) {
       message.error(error.message || "Failed to update booking status");
@@ -80,6 +73,26 @@ function AdminManageBookingDetails() {
       : "N/A";
   };
 
+  // Handle error state
+  if (isError) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <TypographyText type="danger">
+            Error: {error?.message || "Failed to load booking details"}
+          </TypographyText>
+          <Button 
+            type="primary" 
+            onClick={() => window.location.reload()}
+            style={{ marginTop: 16 }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -89,7 +102,20 @@ function AdminManageBookingDetails() {
   }
 
   if (!booking) {
-    return <div className={styles.error}>Booking not found</div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <TypographyText type="danger">Booking not found</TypographyText>
+          <Button 
+            type="primary" 
+            onClick={() => navigate("/admin/manage_booking")}
+            style={{ marginTop: 16 }}
+          >
+            Back to Bookings
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -159,7 +185,7 @@ function AdminManageBookingDetails() {
             </Col>
             <Col span={16}>
               <TypographyText className={styles.value}>
-                {booking.showtime?.room_id || "N/A"}
+                {booking.showtime?.room?.room_name || booking.showtime?.room_id || "N/A"}
               </TypographyText>
             </Col>
           </Row>
@@ -182,7 +208,7 @@ function AdminManageBookingDetails() {
             <Col span={16}>
               <TypographyText className={styles.value}>
                 {booking.booking_seats
-                  ?.map((seat) => seat.seat_id)
+                  ?.map((seat) => seat.seat?.seat_number || seat.seat_id)
                   .join(", ") || "N/A"}
               </TypographyText>
             </Col>
@@ -218,6 +244,7 @@ function AdminManageBookingDetails() {
                 value={status}
                 onChange={handleStatusChange}
                 className={styles.statusSelect}
+                loading={updateStatusMutation.isPending}
               >
                 <Option value="PENDING">Pending</Option>
                 <Option value="CONFIRMED">Confirmed</Option>

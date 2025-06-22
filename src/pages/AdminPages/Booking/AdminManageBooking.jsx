@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -21,7 +21,11 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import BookingService from "../../../services/BookingService";
+import {
+  useBookingsWithSearch,
+  useDeleteBooking,
+  useRefreshBookings,
+} from "../../../hooks/useBookings";
 import styles from "./AdminManageBooking.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -29,56 +33,59 @@ const { Title, Text: TypographyText } = Typography;
 
 function AdminManageBooking() {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
-  const [loading, setLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
 
+  // Custom hooks
+  const {
+    data: bookingsData,
+    isLoading: loading,
+    isError,
+    error,
+    isSearching,
+  } = useBookingsWithSearch({
+    keyword: searchKeyword,
+    page: pagination.current,
+    perPage: pagination.pageSize,
+  });
+
+  const deleteBookingMutation = useDeleteBooking();
+  const refreshBookingsMutation = useRefreshBookings();
+
+  // Update pagination when data changes
+  const bookings = bookingsData?.data || [];
+  const total = bookingsData?.pagination?.total || 0;
+
+  // Update pagination state when data changes
   useEffect(() => {
-    loadData(pagination.current, pagination.pageSize);
-  }, []);
-
-  const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
-    setLoading(true);
-    try {
-      let response;
-      if (keyword) {
-        response = await BookingService.searchBooking(keyword, page, pageSize);
-        setIsSearching(true);
-      } else {
-        response = await BookingService.getAllBookings(page, pageSize);
-        setIsSearching(false);
-      }
-      setBookings(response.data);
-      setPagination({
-        current: response.pagination.current,
-        pageSize: response.pagination.pageSize,
-        total: response.pagination.total,
-      });
-    } catch (error) {
-      message.error(error.message || "Failed to load bookings");
-    } finally {
-      setLoading(false);
+    if (bookingsData?.pagination) {
+      setPagination(prev => ({
+        ...prev,
+        current: bookingsData.pagination.current,
+        total: bookingsData.pagination.total,
+      }));
     }
-  };
+  }, [bookingsData]);
 
   const handleDeleteBooking = async (id) => {
     try {
-      await BookingService.deleteBooking(id);
+      await deleteBookingMutation.mutateAsync(id);
       message.success("Booking deleted successfully");
-      loadData(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error(error.message || "Failed to delete booking");
     }
   };
 
-  const handleTableChange = (pagination) => {
-    loadData(pagination.current, pagination.pageSize);
+  const handleTableChange = (newPagination) => {
+    setPagination(prev => ({
+      ...prev,
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+    }));
   };
 
   const handleSearch = () => {
@@ -86,13 +93,24 @@ function AdminManageBooking() {
       message.warning("Please enter a phone number or username to search");
       return;
     }
-    loadData(1, pagination.pageSize, searchKeyword);
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleClearSearch = () => {
     setSearchKeyword("");
-    setIsSearching(false);
-    loadData(1, pagination.pageSize, "");
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await refreshBookingsMutation.mutateAsync({
+        page: pagination.current,
+        perPage: pagination.pageSize,
+        keyword: searchKeyword,
+      });
+    } catch (error) {
+      message.error("Failed to refresh data");
+    }
   };
 
   const formatDateTime = (dateTime) => {
@@ -103,6 +121,26 @@ function AdminManageBooking() {
         })
       : "N/A";
   };
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <TypographyText type="danger">
+            Error: {error?.message || "Failed to load bookings"}
+          </TypographyText>
+          <Button 
+            type="primary" 
+            onClick={handleRefresh}
+            style={{ marginTop: 16 }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const bookingColumns = [
     {
@@ -230,6 +268,7 @@ function AdminManageBooking() {
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.cancelButton}
+              loading={deleteBookingMutation.isPending}
             >
               Delete
             </Button>
@@ -277,10 +316,8 @@ function AdminManageBooking() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={() =>
-                loadData(pagination.current, pagination.pageSize, searchKeyword)
-              }
-              loading={loading}
+              onClick={handleRefresh}
+              loading={refreshBookingsMutation.isPending || loading}
               className={styles.refreshButton}
             >
               Refresh
@@ -293,7 +330,7 @@ function AdminManageBooking() {
           <Card className={styles.statisticCard}>
             <Statistic
               title="Total Bookings"
-              value={pagination.total}
+              value={total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
@@ -306,14 +343,24 @@ function AdminManageBooking() {
               </div>
             ) : bookings.length === 0 ? (
               <div className={styles.empty}>
-                <TypographyText>No bookings found</TypographyText>
+                <TypographyText>
+                  {isSearching ? "No bookings found for your search" : "No bookings found"}
+                </TypographyText>
               </div>
             ) : (
               <Table
                 columns={bookingColumns}
                 dataSource={bookings}
                 rowKey="booking_id"
-                pagination={pagination}
+                pagination={{
+                  current: pagination.current,
+                  pageSize: pagination.pageSize,
+                  total: total,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} items`,
+                }}
                 onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}

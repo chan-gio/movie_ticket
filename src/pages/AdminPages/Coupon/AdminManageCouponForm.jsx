@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Row,
@@ -14,9 +14,13 @@ import {
   Spin,
   InputNumber,
 } from "antd";
+import {
+  useCouponById,
+  useCreateCoupon,
+  useUpdateCoupon,
+} from "../../../hooks/useCoupons";
 import styles from "./AdminManageCouponForm.module.scss";
 import dayjs from "dayjs";
-import CouponService from "../../../services/CouponService";
 
 const { Title, Text } = Typography;
 
@@ -24,7 +28,17 @@ function AdminManageCouponForm({ isEditMode }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [couponForm] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+
+  // Custom hooks
+  const {
+    data: coupon,
+    isLoading: loading,
+    isError,
+    error,
+  } = useCouponById(isEditMode ? id : null);
+
+  const createCouponMutation = useCreateCoupon();
+  const updateCouponMutation = useUpdateCoupon();
 
   // Watch form field values for real-time preview updates
   const code = Form.useWatch("code", couponForm);
@@ -35,39 +49,27 @@ function AdminManageCouponForm({ isEditMode }) {
   const isUsed = Form.useWatch("is_used", couponForm);
   const quantity = Form.useWatch("quantity", couponForm);
 
+  // Set form values when coupon data is loaded (edit mode)
   useEffect(() => {
-    if (isEditMode) {
-      loadCouponData();
-    } else {
+    if (isEditMode && coupon) {
+      // Parse expiry_date with dayjs
+      const expiryDateDayjs = coupon.expiry_date
+        ? dayjs(coupon.expiry_date)
+        : null;
+
+      couponForm.setFieldsValue({
+        ...coupon,
+        expiry_date: expiryDateDayjs,
+      });
+    } else if (!isEditMode) {
+      // Set default values for add mode
       couponForm.setFieldsValue({
         is_active: true,
         is_used: 0,
         quantity: 1,
       });
     }
-  }, [id, isEditMode, couponForm]);
-
-  const loadCouponData = async () => {
-    setLoading(true);
-    try {
-      const coupon = await CouponService.getCouponById(id);
-      if (coupon) {
-        // Parse expiry_date with dayjs
-        const expiryDateDayjs = coupon.expiry_date
-          ? dayjs(coupon.expiry_date)
-          : null;
-
-        couponForm.setFieldsValue({
-          ...coupon,
-          expiry_date: expiryDateDayjs,
-        });
-      }
-    } catch (error) {
-      message.error(error.message || "Failed to load coupon");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [coupon, isEditMode, couponForm]);
 
   const handleAddCoupon = async (values) => {
     try {
@@ -77,7 +79,7 @@ function AdminManageCouponForm({ isEditMode }) {
           ? values.expiry_date.format("YYYY-MM-DD")
           : null,
       };
-      await CouponService.createCoupon(couponData);
+      await createCouponMutation.mutateAsync(couponData);
       couponForm.resetFields();
       navigate("/admin/manage_coupon");
       message.success("Coupon added successfully");
@@ -94,7 +96,10 @@ function AdminManageCouponForm({ isEditMode }) {
           ? values.expiry_date.format("YYYY-MM-DD")
           : null,
       };
-      await CouponService.updateCoupon(id, couponData);
+      await updateCouponMutation.mutateAsync({
+        couponId: id,
+        couponData,
+      });
       couponForm.resetFields();
       navigate("/admin/manage_coupon");
       message.success("Coupon updated successfully");
@@ -104,9 +109,29 @@ function AdminManageCouponForm({ isEditMode }) {
   };
 
   const disabledDate = (current) => {
-    // Disable dates before today (June 1, 2025)
+    // Disable dates before today
     return current && current < dayjs().startOf("day");
   };
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <Text type="danger">
+            Error: {error?.message || "Failed to load coupon details"}
+          </Text>
+          <Button 
+            type="primary" 
+            onClick={() => window.location.reload()}
+            style={{ marginTop: 16 }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -226,7 +251,11 @@ function AdminManageCouponForm({ isEditMode }) {
                   />
                 </Form.Item>
                 <Form.Item>
-                  <Button type="primary" htmlType="submit" loading={loading}>
+                  <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    loading={createCouponMutation.isPending || updateCouponMutation.isPending}
+                  >
                     {isEditMode ? "Update Coupon" : "Add Coupon"}
                   </Button>
                   <Button

@@ -1,13 +1,27 @@
 import React from "react";
 import styles from "./LeftContainer.module.scss";
-import { useSettings } from "../../../../Context/SettingContext";
+import { useSettings } from "../../../../hooks/useSettings";
 
 const LeftContainer = () => {
-  const { settings } = useSettings();
+  const { data: settings, isLoading, error } = useSettings();
+  
+  // Fallback settings nếu chưa load được hoặc có lỗi
+  const fallbackSettings = {
+    name: "https://via.placeholder.com/150x50?text=MovieLogo"
+  };
+  
+  const currentSettings = settings || fallbackSettings;
+
   return (
     <div className={styles.leftContainer}>
       <div className={styles.leftContent}>
-        <img src={settings.name} alt="Movie" />
+        <img 
+          src={currentSettings.name} 
+          alt="Movie" 
+          onError={(e) => {
+            e.target.src = fallbackSettings.name;
+          }}
+        />
         <p className={styles.tagline}>wait, watch, wow!</p>
         <p className={styles.subTagline}>Lets build your account</p>
         <ul className={styles.steps}>

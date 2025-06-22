@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -20,7 +20,7 @@ import {
   SearchOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
-import UserService from "../../../services/UserService";
+import { useUsersWithSearch, useDeleteUser, useRefreshUsers } from "../../../hooks/useUsers";
 import styles from "./AdminManageUser.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -28,59 +28,54 @@ const { Title, Text: TypographyText } = Typography;
 
 function AdminManageUser() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
-  const [loading, setLoading] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState(""); // State for keyword search
-  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
+  const [searchKeyword, setSearchKeyword] = useState("");
 
-  useEffect(() => {
-    loadData(pagination.current, pagination.pageSize);
-  }, []);
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: usersData, 
+    isLoading, 
+    error, 
+    isSearching 
+  } = useUsersWithSearch({ 
+    keyword: searchKeyword, 
+    page: pagination.current, 
+    perPage: pagination.pageSize 
+  });
 
-  const loadData = async (page = 1, pageSize = 10, keyword = searchKeyword) => {
-    setLoading(true);
-    try {
-      let response;
-      if (keyword) {
-        // Search by keyword (username or phone)
-        response = await UserService.searchUser(keyword, page, pageSize);
-        setIsSearching(true);
-      } else {
-        // Load all users
-        response = await UserService.getAllUsers(page, pageSize);
-        setIsSearching(false);
-      }
-      setUsers(response.data);
-      setPagination({
-        current: response.pagination.current,
-        pageSize: response.pagination.pageSize,
-        total: response.pagination.total,
-      });
-    } catch (error) {
-      message.error(error.message || "Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser();
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshUsers();
+
+  // Cập nhật pagination từ data
+  const users = usersData?.data || [];
+  const paginationData = usersData?.pagination || { current: 1, pageSize: 10, total: 0 };
+
+  // Show error message if there's an error
+  if (error) {
+    message.error(error.message || "Failed to load users");
+  }
 
   const handleDeleteUser = async (id) => {
-    try {
-      await UserService.deleteUser(id);
-      message.success("User deleted successfully");
-      // Reload data to reflect accurate pagination
-      loadData(pagination.current, pagination.pageSize);
-    } catch (error) {
-      message.error(error.message || "Failed to delete user");
-    }
+    deleteUser(id, {
+      onSuccess: () => {
+        message.success("User deleted successfully");
+      },
+      onError: (error) => {
+        message.error(error.message || "Failed to delete user");
+      },
+    });
   };
 
-  const handleTableChange = (pagination) => {
-    loadData(pagination.current, pagination.pageSize);
+  const handleTableChange = (newPagination) => {
+    setPagination({
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+      total: newPagination.total,
+    });
   };
 
   const handleSearch = () => {
@@ -88,13 +83,20 @@ function AdminManageUser() {
       message.warning("Please enter a username or phone number to search");
       return;
     }
-    loadData(1, pagination.pageSize, searchKeyword); // Reset to page 1 on new search
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to page 1 on new search
   };
 
   const handleClearSearch = () => {
     setSearchKeyword("");
-    setIsSearching(false);
-    loadData(1, pagination.pageSize, ""); // Reset to full list
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to page 1
+  };
+
+  const handleRefresh = () => {
+    refreshData({ 
+      page: pagination.current, 
+      perPage: pagination.pageSize, 
+      keyword: searchKeyword 
+    });
   };
 
   const userColumns = [
@@ -182,6 +184,7 @@ function AdminManageUser() {
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
+              loading={isDeleting}
             >
               Delete
             </Button>
@@ -229,10 +232,8 @@ function AdminManageUser() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={() =>
-                loadData(pagination.current, pagination.pageSize, searchKeyword)
-              }
-              loading={loading}
+              onClick={handleRefresh}
+              loading={isRefreshing}
               className={styles.refreshButton}
             >
               Refresh
@@ -243,7 +244,7 @@ function AdminManageUser() {
       <Row gutter={[16, 16]} className={styles.mainContent}>
         <Col xs={24}>
           <Card className={styles.tableCard}>
-            {loading ? (
+            {isLoading ? (
               <div className={styles.loading}>
                 <Spin size="large" />
               </div>
@@ -256,7 +257,15 @@ function AdminManageUser() {
                 columns={userColumns}
                 dataSource={users}
                 rowKey="user_id"
-                pagination={pagination}
+                pagination={{
+                  current: paginationData.current,
+                  pageSize: paginationData.pageSize,
+                  total: paginationData.total,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} users`,
+                }}
                 onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}

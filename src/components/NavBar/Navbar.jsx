@@ -4,12 +4,12 @@ import { Input, Avatar } from "antd";
 import { UserOutlined, SearchOutlined, MenuOutlined } from "@ant-design/icons";
 import styles from "./Navbar.module.scss";
 import SelectCinemaModal from "../Modal/SelectCinemaModal";
-import { useSettings } from "../../Context/SettingContext";
+import { useSettingsContext } from "../../Context/SettingContext";
 import MovieService from "../../services/MovieService";
 import { toastError } from "../../utils/toastNotifier";
 
 function Navbar() {
-  const { settings } = useSettings();
+  const { settings, loading } = useSettingsContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || ""); // Local state for search input
@@ -91,7 +91,11 @@ function Navbar() {
         </button>
         <div className={styles.navbarLogo}>
           <Link to="/">
-            <img src={settings.name} alt="Movie" />
+            <img 
+              src={settings?.name || "https://via.placeholder.com/150x50?text=MovieLogo"} 
+              alt="Movie" 
+              style={{ opacity: loading ? 0.5 : 1 }}
+            />
           </Link>
         </div>
         <div className={`${styles.navLinks} ${menuOpen ? styles.open : ""}`}>

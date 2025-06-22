@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Form, Input, Button, Row, Col, Typography, Spin, Select } from 'antd';
-import { toastSuccess, toastError, toastInfo } from  '../../../utils/toastNotifier';
-import CinemaService from '../../../services/CinemaService';
+import { toast } from 'react-toastify';
+import { useCinemaById, useUpdateCinema } from '../../../hooks/useCinemas';
 import styles from './AdminEditCinemaForm.module.scss';
 import { VietnamCities } from '../../../../public/assets/VietnamCities';
 
@@ -14,69 +14,104 @@ const AdminEditCinemaForm = () => {
   const { id } = useParams();
   const [form] = Form.useForm();
   const [originalData, setOriginalData] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: cinema, 
+    isLoading: isLoadingCinema, 
+    error: cinemaError 
+  } = useCinemaById(id);
+
+  const { mutate: updateCinema, isLoading: isUpdating } = useUpdateCinema();
+
+  // Show error message if there's an error
+  if (cinemaError) {
+    toast.error(cinemaError.message || 'Failed to load cinema data', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: '#5f2eea' },
+    });
+  }
 
   useEffect(() => {
-    const fetchCinema = async () => {
-      setLoading(true);
-      try {
-        const cinema = await CinemaService.getCinemaById(id);
-        // Split address into address and city
-        let address = cinema.address || '';
-        let city = '';
-        let cinemaAddress = address;
+    if (cinema) {
+      // Split address into address and city
+      let address = cinema.address || '';
+      let city = '';
+      let cinemaAddress = address;
 
-        const addressParts = address.split(',').map(part => part.trim());
-        if (addressParts.length > 1) {
-          const possibleCity = addressParts[addressParts.length - 1];
-          if (VietnamCities.includes(possibleCity)) {
-            city = possibleCity;
-            cinemaAddress = addressParts.slice(0, -1).join(',').trim();
-          }
+      const addressParts = address.split(',').map(part => part.trim());
+      if (addressParts.length > 1) {
+        const possibleCity = addressParts[addressParts.length - 1];
+        if (VietnamCities.includes(possibleCity)) {
+          city = possibleCity;
+          cinemaAddress = addressParts.slice(0, -1).join(',').trim();
         }
-
-        const formData = {
-          name: cinema.name,
-          cinema_address: cinemaAddress,
-          cinema_city: city || VietnamCities[0], 
-        };
-
-        form.setFieldsValue(formData);
-        setOriginalData(formData);
-      } catch (error) {
-        toastError(error.message || 'Failed to load cinema data');
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchCinema();
-  }, [id, form]);
+
+      const formData = {
+        name: cinema.name,
+        cinema_address: cinemaAddress,
+        cinema_city: city || VietnamCities[0], 
+      };
+
+      form.setFieldsValue(formData);
+      setOriginalData(formData);
+    }
+  }, [cinema, form]);
 
   const onFinish = async (values) => {
-    setSubmitting(true);
-    try {
-      // Combine address and city
-      const fullAddress = `${values.cinema_address}, ${values.cinema_city}`;
-      const cinemaData = {};
+    // Combine address and city
+    const fullAddress = `${values.cinema_address}, ${values.cinema_city}`;
+    const cinemaData = {};
 
-      // Only include changed fields
-      if (values.name !== originalData.name) cinemaData.name = values.name;
-      if (fullAddress !== `${originalData.cinema_address}, ${originalData.cinema_city}`) {
-        cinemaData.address = fullAddress;
-      }
+    // Only include changed fields
+    if (values.name !== originalData.name) cinemaData.name = values.name;
+    if (fullAddress !== `${originalData.cinema_address}, ${originalData.cinema_city}`) {
+      cinemaData.address = fullAddress;
+    }
 
-      if (Object.keys(cinemaData).length > 0) {
-        await CinemaService.updateCinema(id, cinemaData);
-        toastSuccess('Cinema updated successfully');
-      } else {
-        toastInfo('No changes detected');
-      }
+    if (Object.keys(cinemaData).length > 0) {
+      updateCinema({ cinemaId: id, data: cinemaData }, {
+        onSuccess: () => {
+          toast.success('Cinema updated successfully', {
+            position: 'top-right',
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progressStyle: { background: '#5f2eea' },
+          });
+          navigate('/admin/manage_cinema');
+        },
+        onError: (error) => {
+          toast.error(error.message || 'Failed to update cinema', {
+            position: 'top-right',
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progressStyle: { background: '#5f2eea' },
+          });
+        },
+      });
+    } else {
+      toast.info('No changes detected', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progressStyle: { background: '#5f2eea' },
+      });
       navigate('/admin/manage_cinema');
-    } catch (error) {
-      toastError(error.message || 'Failed to update cinema');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -91,7 +126,7 @@ const AdminEditCinemaForm = () => {
       </Row>
       <Row gutter={[16, 16]} className={styles.mainContent}>
         <Col xs={24}>
-          {loading ? (
+          {isLoadingCinema ? (
             <div className={styles.loading}>
               <Spin size="large" />
             </div>
@@ -114,6 +149,7 @@ const AdminEditCinemaForm = () => {
                       placeholder="Enter cinema name"
                       autoComplete="off"
                       data-form-type="cinema-name"
+                      disabled={isUpdating}
                     />
                   </Form.Item>
                 </Col>
@@ -129,6 +165,7 @@ const AdminEditCinemaForm = () => {
                       placeholder="Enter cinema address"
                       autoComplete="new-cinema-address"
                       data-form-type="cinema-address"
+                      disabled={isUpdating}
                     />
                   </Form.Item>
                 </Col>
@@ -144,6 +181,7 @@ const AdminEditCinemaForm = () => {
                       optionFilterProp="children"
                       autoComplete="new-cinema-city"
                       data-form-type="cinema-city"
+                      disabled={isUpdating}
                       filterOption={(input, option) =>
                         option.children.toLowerCase().includes(input.toLowerCase())
                       }
@@ -161,16 +199,16 @@ const AdminEditCinemaForm = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={submitting}
+                  loading={isUpdating}
                   className={styles.submitButton}
-                  disabled={submitting}
+                  disabled={isUpdating}
                 >
                   Update Cinema
                 </Button>
                 <Button
                   onClick={() => navigate('/admin/manage_cinema')}
                   style={{ marginLeft: 8 }}
-                  disabled={submitting}
+                  disabled={isUpdating}
                 >
                   Cancel
                 </Button>

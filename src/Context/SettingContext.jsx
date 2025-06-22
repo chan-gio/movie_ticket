@@ -1,51 +1,23 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import SettingService from "../services/SettingService";
+import { createContext, useContext } from "react";
+import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 
 // Create the Settings Context
 const SettingsContext = createContext();
 
-// Default settings to use as a fallback
-const defaultSettings = {
-  name: "https://via.placeholder.com/150x50?text=MovieLogo", // Default logo
-  vip: 20, // Default VIP price increase (20%)
-  couple: 30, // Default Couple price increase (30%)
-  banner: [], // Default banner array
-};
-
 // Create a Provider component to fetch and provide settings data
 export const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState(null); // Initial state is null
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Sử dụng custom hook với react-query
+  const { data: settings, isLoading, error, refetch } = useSettings();
+  const { mutate: updateSettings, isLoading: isUpdating } = useUpdateSettings();
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setLoading(true);
-      try {
-        // Fetch settings from API
-        const settingsData = await SettingService.getSetting();
-        setSettings(settingsData);
-        setError(null);
-        // Cache the settings in localStorage
-        localStorage.setItem("settings", JSON.stringify(settingsData));
-      } catch (err) {
-        console.error("Error fetching settings:", err);
-        setError(err.message || "Failed to fetch settings");
-        // Fallback to default settings on error
-        setSettings(defaultSettings);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
-  // Provide the context value with a fallback for settings
+  // Provide the context value
   const value = {
-    settings: settings || defaultSettings, // Use defaultSettings if settings is null
-    loading,
+    settings,
+    loading: isLoading,
     error,
+    refetch,
+    updateSettings,
+    isUpdating,
   };
 
   return (
@@ -56,10 +28,10 @@ export const SettingsProvider = ({ children }) => {
 };
 
 // Custom hook to use the Settings Context
-export const useSettings = () => {
+export const useSettingsContext = () => {
   const context = useContext(SettingsContext);
   if (!context) {
-    throw new Error("useSettings must be used within a SettingsProvider");
+    throw new Error("useSettingsContext must be used within a SettingsProvider");
   }
   return context;
 };

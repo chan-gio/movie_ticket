@@ -1,12 +1,12 @@
 import { Row, Col, Typography, Skeleton } from "antd";
 import { Link } from "react-router-dom";
 import styles from "./Hero.module.scss";
-import { useSettings } from "../../../../Context/SettingContext";
+import { useSettings } from "../../../../hooks/useSettings";
 
 const { Title, Paragraph } = Typography;
 
 function Hero() {
-  const { settings, error } = useSettings();
+  const { data: settings, isLoading, error } = useSettings();
 
   // Get the banner images
   const bannerImages = () => {
@@ -17,7 +17,7 @@ function Hero() {
   const images = bannerImages();
 
   if (error) {
-    return <div className={styles.heroContainer}>Error loading banners: {error}</div>;
+    return <div className={styles.heroContainer}>Error loading banners: {error.message}</div>;
   }
 
   return (
@@ -34,7 +34,18 @@ function Hero() {
           </Col>
           <Col xs={24} md={16}>
             <div className={styles.imageContainer}>
-              {images.length > 0 ? (
+              {isLoading ? (
+                <div className={styles.skeletonContainer}>
+                  {[...Array(4)].map((_, idx) => (
+                    <Skeleton.Image
+                      key={idx}
+                      active
+                      className={styles.skeletonImage}
+                      style={{ width: 110, height: 350 }}
+                    />
+                  ))}
+                </div>
+              ) : images.length > 0 ? (
                 images.map((url, idx) => (
                   <Link
                     key={idx}
@@ -44,6 +55,9 @@ function Hero() {
                       src={url}
                       alt={`Banner ${idx + 1}`}
                       className={styles.heroImage}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
                     />
                   </Link>
                 ))

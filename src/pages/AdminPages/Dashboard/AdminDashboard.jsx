@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Row,
   Col,
@@ -32,7 +32,7 @@ import {
 } from "recharts";
 import styles from "./AdminDashboard.module.scss";
 import "../GlobalStyles.module.scss";
-import DashboardService from "../../../services/DashboardService";
+import { useDashboardData, useRefreshDashboard } from "../../../hooks/useDashboard";
 import dayjs from "dayjs";
 
 const { Title, Text: TypographyText } = Typography;
@@ -42,64 +42,54 @@ const { Option } = Select;
 const numberFormatter = new Intl.NumberFormat("vi-VN");
 
 function AdminDashboard() {
-  const [dashboardData, setDashboardData] = useState({
-    totalBookings: 0,
-    totalRevenue: 0,
-    recentBookings: [],
-    revenueData: [],
-    topMovies: [],
-    topCinemas: [],
-    topMoviesByCinema: [],
-  });
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("month"); // Default to 'month'
-  const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM")); // Default to current month (2025-06)
+  const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM")); // Default to current month
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Sử dụng custom hook với react-query
+  const { 
+    data: dashboardData = {
+      totalBookings: 0,
+      totalRevenue: 0,
+      recentBookings: [],
+      revenueData: [],
+      topMovies: [],
+      topCinemas: [],
+      topMoviesByCinema: [],
+    }, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useDashboardData({ 
+    filter, 
+    month: filter === "month" ? selectedMonth : null 
+  });
 
-  const loadData = async (newFilter = filter, newMonth = selectedMonth) => {
-    setLoading(true);
-    try {
-      // Validate filter
-      const validFilter = ["day", "week", "month"].includes(newFilter) ? newFilter : "month";
-      if (newFilter !== validFilter) {
-        console.warn("Invalid filter detected, falling back to 'month'", { invalidFilter: newFilter });
-        setFilter("month");
-      }
-
-      const params = { filter: validFilter };
-      if (validFilter === "month" && newMonth) {
-        params.month = newMonth;
-      }
-      const data = await DashboardService.fetchDashboardData(params);
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Load data error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      message.error(error.response?.data?.message || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Hook để refresh data
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshDashboard();
 
   const handleFilterChange = (value) => {
     setFilter(value);
     // Reset month if filter is not 'month', otherwise keep current month
     const newMonth = value === "month" ? selectedMonth : null;
     setSelectedMonth(newMonth);
-    loadData(value, newMonth);
   };
 
   const handleMonthChange = (date) => {
     const month = date ? date.format("YYYY-MM") : null;
     setSelectedMonth(month);
-    loadData(filter, month);
   };
+
+  const handleRefresh = () => {
+    refreshData({ 
+      filter, 
+      month: filter === "month" ? selectedMonth : null 
+    });
+  };
+
+  // Show error message if there's an error
+  if (error) {
+    message.error(error.message || "Failed to load dashboard data");
+  }
 
   const bookingColumns = [
     {
@@ -176,8 +166,8 @@ function AdminDashboard() {
           <Button
             type="primary"
             icon={<ReloadOutlined />}
-            onClick={() => loadData()}
-            loading={loading}
+            onClick={handleRefresh}
+            loading={isRefreshing}
             className={styles.refreshButton}
           >
             Refresh
@@ -185,7 +175,7 @@ function AdminDashboard() {
         </Col>
       </Row>
 
-      {loading ? (
+      {isLoading ? (
         <div className={styles.loading}>
           <Spin size="large" />
         </div>

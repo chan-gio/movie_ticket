@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Card,
@@ -15,8 +14,9 @@ import {
   UserOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
-import UserService from "../../../services/UserService";
+import { useUserById } from "../../../hooks/useUsers";
 import styles from "./AdminManageUserDetails.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -25,27 +25,14 @@ const { Title, Text: TypographyText } = Typography;
 function AdminManageUserDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const data = await UserService.getUserById(id);
-        if (data) {
-          setUser(data);
-        } else {
-          message.error("User not found");
-        }
-      } catch (error) {
-        message.error(error.message || "Failed to fetch user");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [id]);
+  // Sử dụng custom hook với react-query
+  const { data: user, isLoading, error } = useUserById(id);
+
+  // Show error message if there's an error
+  if (error) {
+    message.error(error.message || "Failed to fetch user");
+  }
 
   const formatDateTime = (dateTime) => {
     return dateTime
@@ -62,7 +49,7 @@ function AdminManageUserDetails() {
       : "N/A";
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={styles.loading}>
         <Spin size="large" />
@@ -76,9 +63,20 @@ function AdminManageUserDetails() {
 
   return (
     <div className={styles.container}>
-      <Title level={2} className={styles.pageTitle}>
-        User Details
-      </Title>
+      <div className={styles.header}>
+        <Button
+          type="default"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate("/admin/manage_user")}
+          className={styles.backButton}
+        >
+          Back to Users
+        </Button>
+        <Title level={2} className={styles.pageTitle}>
+          User Details
+        </Title>
+      </div>
+      
       <Card className={styles.card}>
         {/* User Information */}
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
@@ -208,16 +206,6 @@ function AdminManageUserDetails() {
             </Col>
           </Row>
         </Space>
-
-        <Row justify="end" style={{ marginTop: 24 }}>
-          <Button
-            type="primary"
-            className={styles.backButton}
-            onClick={() => navigate("/admin/manage_user")}
-          >
-            Back to Users
-          </Button>
-        </Row>
       </Card>
     </div>
   );

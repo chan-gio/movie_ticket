@@ -1,6 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -22,12 +20,16 @@ import {
   ReloadOutlined,
   PlusOutlined,
   EyeOutlined,
-  ApartmentOutlined,
-  SearchOutlined,
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import styles from "./AdminManageCinema.module.scss";
-import CinemaService from "../../../services/CinemaService";
+import { 
+  useAllCinemas, 
+  useSearchCinemasByName, 
+  useSearchCinemasByAddress,
+  useSoftDeleteCinema,
+  useRefreshCinemas
+} from "../../../hooks/useCinemas";
 
 const { Title, Text: TypographyText } = Typography;
 const { Option } = Select;
@@ -35,142 +37,110 @@ const { Search } = Input;
 
 function AdminManageCinema() {
   const navigate = useNavigate();
-  const [cinemas, setCinemas] = useState([]);
-  const [totalCinemas, setTotalCinemas] = useState(0); // New state for total cinemas
-  const [selectedCinemaId, setSelectedCinemaId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState(""); // For search input while typing
   const [searchTerm, setSearchTerm] = useState(""); // For confirmed search term
   const [searchType, setSearchType] = useState("name"); // name or address
-  const [searchTrigger, setSearchTrigger] = useState(0); // Trigger search on button click
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
 
-  // Fetch total cinemas count on mount
-  useEffect(() => {
-    const fetchTotalCinemas = async () => {
-      try {
-        const response = await CinemaService.getAllCinemas({
-          per_page: 1, // Minimal data to get total
-          page: 1,
-        });
-        setTotalCinemas(response.total || 0);
-      } catch (error) {
-        console.error("Fetch total cinemas error:", error.message);
-        setTotalCinemas(0);
-        toast.error("Unable to retrieve total cinemas", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-      }
-    };
-    fetchTotalCinemas();
-  }, []);
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: allCinemasData, 
+    isLoading: isLoadingAllCinemas, 
+    error: allCinemasError 
+  } = useAllCinemas({ 
+    page: searchTerm ? undefined : pagination.current, 
+    perPage: pagination.pageSize 
+  });
 
-  // Debounced loadData function
-  const loadData = useCallback(async () => {
-    if (loading) return; // Prevent concurrent calls
-    setLoading(true);
-    try {
-      let response;
-      if (searchTerm) {
-        // Search by name or address
-        if (searchType === "name") {
-          response = await CinemaService.searchCinemaByName(
-            searchTerm,
-            pagination.current,
-            {
-              per_page: pagination.pageSize,
-            }
-          );
-        } else {
-          response = await CinemaService.searchCinemaByAddress(
-            searchTerm,
-            pagination.current,
-            {
-              per_page: pagination.pageSize,
-            }
-          );
-        }
+  const { 
+    data: searchByNameData, 
+    isLoading: isLoadingSearchByName, 
+    error: searchByNameError 
+  } = useSearchCinemasByName({ 
+    searchTerm: searchType === "name" ? searchTerm : undefined,
+    page: searchType === "name" ? pagination.current : undefined,
+    perPage: searchType === "name" ? pagination.pageSize : undefined
+  });
+
+  const { 
+    data: searchByAddressData, 
+    isLoading: isLoadingSearchByAddress, 
+    error: searchByAddressError 
+  } = useSearchCinemasByAddress({ 
+    city: searchType === "address" ? searchTerm : undefined,
+    page: searchType === "address" ? pagination.current : undefined,
+    perPage: searchType === "address" ? pagination.pageSize : undefined
+  });
+
+  const { mutate: deleteCinema, isLoading: isDeleting } = useSoftDeleteCinema();
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshCinemas();
+
+  // Xác định data và loading state dựa trên search type
+  const getCurrentData = () => {
+    if (searchTerm) {
+      if (searchType === "name") {
+        return searchByNameData;
       } else {
-        // Get all cinemas
-        response = await CinemaService.getAllCinemas({
-          per_page: pagination.pageSize,
-          page: pagination.current,
-        });
+        return searchByAddressData;
       }
-
-      // Extract cinema data and pagination info
-      const cinemaData = response.data || [];
-      setCinemas(cinemaData);
-
-      // Update pagination if values have changed
-      if (
-        response.total !== pagination.total ||
-        response.current_page !== pagination.current
-      ) {
-        setPagination((prev) => ({
-          ...prev,
-          total: response.total || 0,
-          current: response.current_page || 1,
-        }));
-      }
-
-      // Set selected cinema ID if data exists
-      if (cinemaData.length > 0 && !selectedCinemaId) {
-        setSelectedCinemaId(cinemaData[0].cinema_id);
-      } else if (cinemaData.length === 0) {
-        setSelectedCinemaId(null);
-      }
-
-      // Show toast for no results if search was performed
-      if (searchTerm && cinemaData.length === 0) {
-        toast.info("No matching cinemas found", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-      }
-    } catch (error) {
-      console.error("Load data error:", error.message);
-      setCinemas([]); // Ensure empty array on error
-      setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
-      setSelectedCinemaId(null);
-      toast.error(error.message || "Unable to load cinema data", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } finally {
-      setLoading(false);
     }
-  }, [searchTerm, searchType, pagination.current, pagination.pageSize]);
+    return allCinemasData;
+  };
 
-  useEffect(() => {
-    loadData();
-  }, [loadData, searchTrigger]);
+  const getCurrentLoading = () => {
+    if (searchTerm) {
+      if (searchType === "name") {
+        return isLoadingSearchByName;
+      } else {
+        return isLoadingSearchByAddress;
+      }
+    }
+    return isLoadingAllCinemas;
+  };
+
+  const getCurrentError = () => {
+    if (searchTerm) {
+      if (searchType === "name") {
+        return searchByNameError;
+      } else {
+        return searchByAddressError;
+      }
+    }
+    return allCinemasError;
+  };
+
+  const currentData = getCurrentData();
+  const isLoading = getCurrentLoading();
+  const error = getCurrentError();
+
+  // Cập nhật data từ response
+  const cinemas = currentData?.data || [];
+  const paginationData = {
+    current: currentData?.current_page || 1,
+    pageSize: currentData?.per_page || 10,
+    total: currentData?.total || 0,
+  };
+
+  // Show error message if there's an error
+  if (error) {
+    toast.error(error.message || "Failed to load cinemas", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: "#5f2eea" },
+    });
+  }
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-    setSearchTrigger((prev) => prev + 1); // Trigger search
-    setPagination((prev) => ({ ...prev, current: 1 })); // Reset to first page
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleSearchChange = (e) => {
@@ -181,83 +151,91 @@ function AdminManageCinema() {
     setSearchType(value);
     setSearchTerm(""); // Clear confirmed search term
     setInputValue(""); // Clear input field
-    setSearchTrigger((prev) => prev + 1); // Trigger reload
-    setPagination((prev) => ({ ...prev, current: 1 }));
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleRefresh = () => {
     setSearchTerm(""); // Clear confirmed search term
     setInputValue(""); // Clear input field
     setSearchType("name"); // Reset search type
-    setSearchTrigger((prev) => prev + 1); // Trigger reload
     setPagination({ current: 1, pageSize: 10, total: 0 }); // Reset pagination
+    refreshData();
   };
 
   const handleDeleteCinema = async (id) => {
-    setDeleting(true);
-    try {
-      await CinemaService.softDeleteCinema(id);
-      setCinemas(cinemas.filter((cinema) => cinema.cinema_id !== id));
-      setTotalCinemas((prev) => Math.max(0, prev - 1)); // Decrement total
-      if (selectedCinemaId === id) {
-        const remainingCinemas = cinemas.filter(
-          (cinema) => cinema.cinema_id !== id
-        );
-        setSelectedCinemaId(
-          remainingCinemas.length > 0 ? remainingCinemas[0].cinema_id : null
-        );
-      }
-      toast.success("Cinema deleted successfully", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } catch (error) {
-      toast.error(error.message || "Failed to delete cinema", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } finally {
-      setDeleting(false);
-    }
+    deleteCinema(id, {
+      onSuccess: () => {
+        toast.success("Cinema deleted successfully", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to delete cinema", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+    });
   };
 
   const handleTableChange = (paginationConfig) => {
-    setPagination((prev) => ({
-      ...prev,
+    setPagination({
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize,
-    }));
+      total: paginationConfig.total,
+    });
   };
 
   const cinemaColumns = [
     {
-      title: "ID",
-      dataIndex: "cinema_id",
-      key: "cinema_id",
-      sorter: (a, b) => a.cinema_id.localeCompare(b.cinema_id),
-      render: (text) => <TypographyText strong>{text}</TypographyText>,
+      title: "No.",
+      key: "serial",
+      width: 60,
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
+      render: (name) => (
+        <TypographyText strong className={styles.cinemaName}>
+          {name}
+        </TypographyText>
+      ),
     },
     {
       title: "Address",
       dataIndex: "address",
       key: "address",
-      sorter: (a, b) => a.address.localeCompare(b.address),
+      sorter: (a, b) => (a.address || "").localeCompare(b.address || ""),
+      render: (address) => address || "N/A",
+    },
+    {
+      title: "Status",
+      dataIndex: "is_deleted",
+      key: "is_deleted",
+      render: (isDeleted) => (
+        <span
+          className={`${styles.status} ${
+            isDeleted ? styles.deleted : styles.active
+          }`}
+        >
+          {isDeleted ? "Deleted" : "Active"}
+        </span>
+      ),
     },
     {
       title: "Actions",
@@ -266,34 +244,33 @@ function AdminManageCinema() {
         <Space>
           <Button
             type="primary"
+            icon={<EyeOutlined />}
+            onClick={() =>
+              navigate(`/admin/manage_rooms/${record.cinema_id}`)
+            }
+            className={styles.viewButton}
+          >
+            View Rooms
+          </Button>
+          <Button
+            type="primary"
             icon={<EditOutlined />}
             onClick={() =>
               navigate(`/admin/manage_cinema/edit_cinema/${record.cinema_id}`)
             }
             className={styles.editButton}
-            disabled={deleting}
           >
             Edit
           </Button>
-          <Button
-            type="primary"
-            icon={<ApartmentOutlined />}
-            onClick={() => navigate(`/admin/manage_rooms/${record.cinema_id}`)}
-            className={styles.roomsButton}
-            disabled={deleting}
-          >
-            Manage Rooms
-          </Button>
           <Popconfirm
-            title="Are you sure you want to delete this cinema? All related rooms will also be deleted."
+            title="Are you sure to delete this cinema?"
             onConfirm={() => handleDeleteCinema(record.cinema_id)}
-            disabled={deleting}
           >
             <Button
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
-              disabled={deleting}
+              loading={isDeleting}
             >
               Delete
             </Button>
@@ -318,106 +295,125 @@ function AdminManageCinema() {
               icon={<PlusOutlined />}
               onClick={() => navigate("/admin/manage_cinema/add_cinema")}
               className={styles.addButton}
-              disabled={deleting}
             >
               Add Cinema
-            </Button>
-            <Button
-              type="primary"
-              icon={<EyeOutlined />}
-              onClick={() => navigate("/admin/deleted_cinemas")}
-              className={styles.viewDeletedButton}
-              disabled={deleting}
-            >
-              View Deleted Cinemas
-            </Button>
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={handleRefresh}
-              loading={loading}
-              className={styles.refreshButton}
-              disabled={deleting}
-            >
-              Refresh
             </Button>
           </Space>
         </Col>
       </Row>
-      <Row gutter={[16, 16]} className={styles.mainContent}>
+
+      {/* Statistics */}
+      <Row gutter={[16, 16]} className={styles.statsRow}>
         <Col xs={24} lg={8}>
-          <Card className={styles.statisticCard} hoverable>
+          <Card className={styles.statCard} hoverable>
             <Statistic
-              title={
-                <span className={styles.statisticTitle}>Total Cinemas</span>
-              }
-              value={totalCinemas}
+              title="Total Cinemas"
+              value={paginationData.total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
         </Col>
-      </Row>
-      <Row gutter={[16, 16]} className={styles.mainContent}>
-        <Col xs={24} md={12}>
-          <Space style={{ marginBottom: 16, width: "100%" }}>
-            <Select
-              value={searchType}
-              onChange={handleSearchTypeChange}
-              style={{ width: 150 }}
-              className={styles.select}
-            >
-              <Option value="name">Search by Name</Option>
-              <Option value="address">Search by Address</Option>
-            </Select>
-            <Search
-              placeholder={`Enter ${
-                searchType === "name" ? "cinema name" : "address"
-              }`}
-              value={inputValue}
-              onChange={handleSearchChange}
-              onSearch={handleSearch}
-              enterButton={<SearchOutlined />}
-              allowClear
-              className={styles.search}
-              disabled={deleting}
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Current Page"
+              value={cinemas.length}
+              suffix={`/ ${paginationData.total}`}
+              valueStyle={{ color: "#4b9bff" }}
             />
-          </Space>
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Search Results"
+              value={searchTerm ? cinemas.length : 0}
+              suffix={searchTerm ? " found" : "No search"}
+              valueStyle={{ color: "#ff6a6a" }}
+            />
+          </Card>
         </Col>
       </Row>
-      {loading ? (
-        <div className={styles.loading}>
-          <Spin size="large" />
-        </div>
-      ) : (
-        <Row gutter={[16, 16]} className={styles.mainContent}>
-          <Col xs={24}>
-            <Card className={styles.tableCard}>
+
+      {/* Search and Controls */}
+      <Row gutter={[16, 16]} className={styles.controlsRow}>
+        <Col xs={24} lg={8}>
+          <Select
+            value={searchType}
+            onChange={handleSearchTypeChange}
+            className={styles.searchTypeSelect}
+            disabled={isLoading}
+          >
+            <Option value="name">Search by Name</Option>
+            <Option value="address">Search by Address</Option>
+          </Select>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Search
+            placeholder={
+              searchType === "name"
+                ? "Search by cinema name..."
+                : "Search by address..."
+            }
+            value={inputValue}
+            onChange={handleSearchChange}
+            onSearch={handleSearch}
+            className={styles.searchInput}
+            disabled={isLoading}
+            allowClear
+          />
+        </Col>
+        <Col xs={24} lg={4}>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            loading={isRefreshing}
+            className={styles.refreshButton}
+            block
+          >
+            Refresh
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Cinemas Table */}
+      <Row gutter={[16, 16]} className={styles.mainContent}>
+        <Col xs={24}>
+          <Card className={styles.tableCard}>
+            {isLoading ? (
+              <div className={styles.loading}>
+                <Spin size="large" />
+              </div>
+            ) : cinemas.length === 0 ? (
+              <div className={styles.empty}>
+                <TypographyText>
+                  {searchTerm ? "No cinemas found" : "No cinemas available"}
+                </TypographyText>
+              </div>
+            ) : (
               <Table
                 columns={cinemaColumns}
                 dataSource={cinemas}
                 rowKey="cinema_id"
                 pagination={{
-                  ...pagination,
+                  current: paginationData.current,
+                  pageSize: paginationData.pageSize,
+                  total: paginationData.total,
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Total ${total} cinemas`,
-                  onChange: (page, pageSize) =>
-                    handleTableChange({ current: page, pageSize }),
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} cinemas`,
                 }}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
-                locale={{
-                  emptyText: (
-                    <TypographyText className={styles.emptyText}>
-                      No cinemas found
-                    </TypographyText>
-                  ),
-                }}
+                scroll={{ x: 1200 }}
               />
-            </Card>
-          </Col>
-        </Row>
-      )}
+            )}
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

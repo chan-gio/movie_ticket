@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -23,122 +23,59 @@ import {
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import styles from "./DeletedMovies.module.scss";
-import MovieService from "../../../services/MovieService";
+import { useDeletedMovies, useRestoreMovie } from "../../../hooks/useMovies";
 
 const { Title, Text: TypographyText } = Typography;
 const { Search } = Input;
 
 function DeletedMovies() {
   const navigate = useNavigate();
-  const [movies, setMovies] = useState([]);
-  const [totalDeletedMovies, setTotalDeletedMovies] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [restoring, setRestoring] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchTrigger, setSearchTrigger] = useState(0);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
 
-  // Fetch total deleted movies on mount
-  useEffect(() => {
-    const fetchTotalDeletedMovies = async () => {
-      try {
-        const response = await MovieService.getDeletedMovies({
-          perPage: 1,
-          page: 1,
-        });
-        setTotalDeletedMovies(response.total || 0);
-      } catch (error) {
-        console.error("Fetch total deleted movies error:", error.message);
-        setTotalDeletedMovies(0);
-        toast.error("Unable to retrieve total deleted movies", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-      }
-    };
-    fetchTotalDeletedMovies();
-  }, []);
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: moviesData, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useDeletedMovies({ 
+    title: searchTerm,
+    page: pagination.current, 
+    perPage: pagination.pageSize 
+  });
 
-  // Load movies with pagination and search
-  const loadData = useCallback(async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      let response;
-      if (searchTerm) {
-        response = await MovieService.searchDeletedMovies({
-          title: searchTerm,
-          perPage: pagination.pageSize,
-          page: pagination.current,
-        });
-      } else {
-        response = await MovieService.getDeletedMovies({
-          perPage: pagination.pageSize,
-          page: pagination.current,
-        });
-      }
+  const { mutate: restoreMovie, isLoading: isRestoring } = useRestoreMovie();
 
-      const movieData = response.data || [];
-      setMovies(movieData);
+  // Cập nhật data từ response
+  const movies = moviesData?.data || [];
+  const paginationData = {
+    current: moviesData?.current_page || 1,
+    pageSize: moviesData?.per_page || 10,
+    total: moviesData?.total || 0,
+  };
 
-      if (
-        response.total !== pagination.total ||
-        response.current_page !== pagination.current
-      ) {
-        setPagination((prev) => ({
-          ...prev,
-          total: response.total || 0,
-          current: response.current_page || 1,
-        }));
-      }
-
-      if (searchTerm && movieData.length === 0) {
-        toast.info("No matching movies found", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progressStyle: { background: "#5f2eea" },
-        });
-      }
-    } catch (error) {
-      console.error("Load data error:", error.message);
-      setMovies([]);
-      setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
-      toast.error(error.message || "Unable to load movie data", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [searchTerm, pagination.current, pagination.pageSize]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData, searchTrigger]);
+  // Show error message if there's an error
+  if (error) {
+    toast.error(error.message || "Failed to load deleted movies", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progressStyle: { background: "#5f2eea" },
+    });
+  }
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-    setSearchTrigger((prev) => prev + 1);
-    setPagination((prev) => ({ ...prev, current: 1 }));
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleSearchChange = (e) => {
@@ -148,119 +85,116 @@ function DeletedMovies() {
   const handleRefresh = () => {
     setSearchTerm("");
     setInputValue("");
-    setSearchTrigger((prev) => prev + 1);
     setPagination({ current: 1, pageSize: 10, total: 0 });
+    refetch();
   };
 
   const handleRestoreMovie = async (id) => {
-    setRestoring(true);
-    try {
-      await MovieService.restoreMovie(id);
-      setMovies(movies.filter((movie) => movie.movie_id !== id));
-      setTotalDeletedMovies((prev) => Math.max(0, prev - 1));
-      toast.success("Movie restored successfully", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } catch (error) {
-      toast.error(error.message || "Failed to restore movie", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progressStyle: { background: "#5f2eea" },
-      });
-    } finally {
-      setRestoring(false);
-    }
+    restoreMovie(id, {
+      onSuccess: () => {
+        toast.success("Movie restored successfully", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to restore movie", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "#5f2eea" },
+        });
+      },
+    });
   };
 
   const handleTableChange = (paginationConfig) => {
-    setPagination((prev) => ({
-      ...prev,
+    setPagination({
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize,
-    }));
+      total: paginationConfig.total,
+    });
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    return date
+      ? new Date(date).toLocaleDateString("en-GB", { dateStyle: "medium" })
+      : "N/A";
   };
 
   const movieColumns = [
     {
-      title: "ID",
-      dataIndex: "movie_id",
-      key: "movie_id",
-      sorter: (a, b) => a.movie_id.localeCompare(b.movie_id),
-      render: (text) => <TypographyText strong>{text}</TypographyText>,
+      title: "No.",
+      key: "serial",
+      width: 60,
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
+    {
+      title: "Poster",
+      dataIndex: "poster_url",
+      key: "poster_url",
+      width: 100,
+      render: (url) => (
+        <Image
+          width={80}
+          height={120}
+          src={
+            url ||
+            "https://wallpapercave.com/wp/wp1816326.jpg"
+          }
+          alt="Movie Poster"
+          fallback="https://wallpapercave.com/wp/wp1816326.jpg"
+          className={styles.posterImage}
+        />
+      ),
     },
     {
       title: "Title",
       dataIndex: "title",
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-      render: (text) => (
-        <TypographyText>{text?.slice(0, 50) + "..."}</TypographyText>
+      render: (title) => (
+        <TypographyText strong className={styles.movieTitle}>
+          {title}
+        </TypographyText>
       ),
     },
     {
-      title: "Duration (minutes)",
-      dataIndex: "duration",
-      key: "duration",
-      sorter: (a, b) => a.duration - b.duration,
-      render: (duration) => <TypographyText>{duration} minutes</TypographyText>,
+      title: "Genre",
+      dataIndex: "genre",
+      key: "genre",
+      sorter: (a, b) => (a.genre || "").localeCompare(b.genre || ""),
+      render: (genre) => genre || "N/A",
+    },
+    {
+      title: "Adult",
+      dataIndex: "adult",
+      key: "adult",
+      sorter: (a, b) => (a.adult || "").localeCompare(b.adult || ""),
+      render: (adult) => adult || "N/A",
     },
     {
       title: "Release Date",
       dataIndex: "release_date",
       key: "release_date",
-      sorter: (a, b) => new Date(a.release_date) - new Date(b.release_date),
-      render: (date) => {
-        const releaseDate = new Date(date);
-        const isReleased = releaseDate <= new Date();
-        return (
-          <TypographyText type={isReleased ? "success" : "warning"}>
-            {formatDate(date)}
-          </TypographyText>
-        );
-      },
+      sorter: (a, b) => new Date(a.release_date || 0) - new Date(b.release_date || 0),
+      render: (date) => formatDate(date),
     },
     {
-      title: "Poster",
-      dataIndex: "poster_url",
-      key: "poster_url",
-      render: (url) => (
-        <Image
-          src={url}
-          alt="Poster"
-          className={styles.posterImage}
-          fallback="https://villagesonmacarthur.com/wp-content/uploads/2020/12/video-player-placeholder-very-large.png"
-          preview
-        />
-      ),
-    },
-    {
-      title: "Adult Rating",
-      dataIndex: "adult",
-      key: "adult",
-      render: (rating) => <TypographyText>{rating || "N/A"}</TypographyText>,
+      title: "Deleted At",
+      dataIndex: "deleted_at",
+      key: "deleted_at",
+      sorter: (a, b) => new Date(a.deleted_at || 0) - new Date(b.deleted_at || 0),
+      render: (date) => formatDate(date),
     },
     {
       title: "Actions",
@@ -268,15 +202,14 @@ function DeletedMovies() {
       render: (_, record) => (
         <Space>
           <Popconfirm
-            title="Are you sure you want to restore this movie?"
+            title="Are you sure to restore this movie?"
             onConfirm={() => handleRestoreMovie(record.movie_id)}
-            disabled={restoring}
           >
             <Button
               type="primary"
               icon={<UndoOutlined />}
               className={styles.restoreButton}
-              disabled={restoring}
+              loading={isRestoring}
             >
               Restore
             </Button>
@@ -290,99 +223,113 @@ function DeletedMovies() {
     <div className={styles.container}>
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
-          <Title level={2} className={styles.pageTitle}>
-            Manage Deleted Movies
-          </Title>
-        </Col>
-        <Col>
-          <Space>
+          <div className={styles.headerContent}>
             <Button
-              type="primary"
+              type="default"
               icon={<ArrowLeftOutlined />}
               onClick={() => navigate("/admin/manage_movie")}
               className={styles.backButton}
-              disabled={restoring}
             >
-              Back to Movie Management
+              Back to Movies
             </Button>
+            <Title level={2} className={styles.pageTitle}>
+              Deleted Movies
+            </Title>
+          </div>
+        </Col>
+        <Col>
+          <Space>
+            <Search
+              placeholder="Search by title..."
+              value={inputValue}
+              onChange={handleSearchChange}
+              onSearch={handleSearch}
+              enterButton={<SearchOutlined />}
+              className={styles.searchInput}
+              allowClear
+            />
             <Button
               type="primary"
               icon={<ReloadOutlined />}
               onClick={handleRefresh}
-              loading={loading}
+              loading={isLoading}
               className={styles.refreshButton}
-              disabled={restoring}
             >
               Refresh
             </Button>
           </Space>
         </Col>
       </Row>
-      <Row gutter={[16, 16]} className={styles.mainContent}>
+
+      {/* Statistics */}
+      <Row gutter={[16, 16]} className={styles.statsRow}>
         <Col xs={24} lg={8}>
-          <Card className={styles.statisticCard} hoverable>
+          <Card className={styles.statCard} hoverable>
             <Statistic
-              title={
-                <span className={styles.statisticTitle}>
-                  Total Deleted Movies
-                </span>
-              }
-              value={totalDeletedMovies}
-              valueStyle={{ color: "#5f2eea" }}
+              title="Total Deleted Movies"
+              value={paginationData.total}
+              valueStyle={{ color: "#ff6a6a" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Current Page"
+              value={movies.length}
+              suffix={`/ ${paginationData.total}`}
+              valueStyle={{ color: "#4b9bff" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card className={styles.statCard} hoverable>
+            <Statistic
+              title="Search Results"
+              value={searchTerm ? movies.length : 0}
+              suffix={searchTerm ? " found" : "No search"}
+              valueStyle={{ color: "#ffa726" }}
             />
           </Card>
         </Col>
       </Row>
+
+      {/* Movies Table */}
       <Row gutter={[16, 16]} className={styles.mainContent}>
-        <Col xs={24} md={12}>
-          <Space style={{ marginBottom: 16, width: "100%" }}>
-            <Search
-              placeholder="Enter movie title"
-              value={inputValue}
-              onChange={handleSearchChange}
-              onSearch={handleSearch}
-              enterButton={<SearchOutlined />}
-              allowClear
-              className={styles.search}
-              disabled={restoring}
-            />
-          </Space>
-        </Col>
-      </Row>
-      {loading ? (
-        <div className={styles.loading}>
-          <Spin size="large" />
-        </div>
-      ) : (
-        <Row gutter={[16, 16]} className={styles.mainContent}>
-          <Col xs={24}>
-            <Card className={styles.tableCard}>
+        <Col xs={24}>
+          <Card className={styles.tableCard}>
+            {isLoading ? (
+              <div className={styles.loading}>
+                <Spin size="large" />
+              </div>
+            ) : movies.length === 0 ? (
+              <div className={styles.empty}>
+                <TypographyText>
+                  {searchTerm ? "No deleted movies found" : "No deleted movies available"}
+                </TypographyText>
+              </div>
+            ) : (
               <Table
                 columns={movieColumns}
                 dataSource={movies}
                 rowKey="movie_id"
                 pagination={{
-                  ...pagination,
+                  current: paginationData.current,
+                  pageSize: paginationData.pageSize,
+                  total: paginationData.total,
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total) => `Total ${total} movies`,
-                  onChange: (page, pageSize) =>
-                    handleTableChange({ current: page, pageSize }),
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} deleted movies`,
                 }}
+                onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
-                locale={{
-                  emptyText: (
-                    <TypographyText className={styles.emptyText}>
-                      No movies found
-                    </TypographyText>
-                  ),
-                }}
               />
-            </Card>
-          </Col>
-        </Row>
-      )}
+            )}
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

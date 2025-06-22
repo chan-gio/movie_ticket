@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -23,7 +23,13 @@ import {
   CheckCircleOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import CouponService from "../../../services/CouponService";
+import {
+  useCouponsWithSearch,
+  useSoftDeleteCoupon,
+  useRestoreCoupon,
+  useForceDeleteCoupon,
+  useRefreshCoupons,
+} from "../../../hooks/useCoupons";
 import styles from "./AdminManageCoupon.module.scss";
 import "../GlobalStyles.module.scss";
 
@@ -31,84 +37,63 @@ const { Title, Text: TypographyText } = Typography;
 
 function AdminManageCoupon() {
   const navigate = useNavigate();
-  const [coupons, setCoupons] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
-  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-  const [filteredCoupons, setFilteredCoupons] = useState([]);
-  const [isSearching, setIsSearching] = useState(false); // Track if a search is active
 
+  // Custom hooks
+  const {
+    data: couponsData,
+    isLoading: loading,
+    isError,
+    error,
+    isSearching,
+  } = useCouponsWithSearch({
+    code: searchText,
+    page: pagination.current,
+    perPage: pagination.pageSize,
+  });
+
+  const softDeleteMutation = useSoftDeleteCoupon();
+  const restoreMutation = useRestoreCoupon();
+  const forceDeleteMutation = useForceDeleteCoupon();
+  const refreshCouponsMutation = useRefreshCoupons();
+
+  // Update pagination when data changes
+  const coupons = couponsData?.data || [];
+  const total = couponsData?.pagination?.total || 0;
+
+  // Update pagination state when data changes
   useEffect(() => {
-    loadData(pagination.current, pagination.pageSize);
-  }, []);
-
-  const loadData = async (page = 1, pageSize = 10, searchCode = "") => {
-    setLoading(true);
-    try {
-      let response;
-      if (searchCode) {
-        // Search by coupon code
-        response = await CouponService.searchCouponsByCode(
-          searchCode,
-          page,
-          pageSize
-        );
-        setIsSearching(true);
-      } else {
-        // Load all coupons
-        response = await CouponService.getAllCoupons(page, pageSize);
-        setIsSearching(false);
-      }
-      // Ensure data is an array
-      const couponData = Array.isArray(response.data) ? response.data : [];
-      setCoupons(couponData);
-      setFilteredCoupons(couponData);
-      setPagination({
-        current: response.pagination?.current || page,
-        pageSize: response.pagination?.pageSize || pageSize,
-        total: response.pagination?.total || couponData.length,
-      });
-    } catch (error) {
-      message.error(error.message || "Failed to load coupons");
-      setCoupons([]);
-      setFilteredCoupons([]);
-      setPagination((prev) => ({
+    if (couponsData?.pagination) {
+      setPagination(prev => ({
         ...prev,
-        current: 1,
-        total: 0,
+        current: couponsData.pagination.current,
+        total: couponsData.pagination.total,
       }));
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [couponsData]);
 
   const handleSearch = () => {
     if (!searchText.trim()) {
       message.warning("Please enter a coupon code to search");
       return;
     }
-    loadData(1, pagination.pageSize, searchText); // Reset to page 1 on new search
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleClearSearch = () => {
     setSearchText("");
-    setIsSearching(false);
-    loadData(1, pagination.pageSize, ""); // Reset to full list
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleSoftDeleteCoupon = async (id) => {
     try {
-      await CouponService.softDeleteCoupon(id);
+      await softDeleteMutation.mutateAsync(id);
       message.success("Coupon deactivated successfully");
-      loadData(
-        pagination.current,
-        pagination.pageSize,
-        isSearching ? searchText : ""
-      );
     } catch (error) {
       message.error(error.message || "Failed to deactivate coupon");
     }
@@ -116,13 +101,8 @@ function AdminManageCoupon() {
 
   const handleActivateCoupon = async (id) => {
     try {
-      await CouponService.restoreCoupon(id);
+      await restoreMutation.mutateAsync(id);
       message.success("Coupon activated successfully");
-      loadData(
-        pagination.current,
-        pagination.pageSize,
-        isSearching ? searchText : ""
-      );
     } catch (error) {
       message.error(error.message || "Failed to activate coupon");
     }
@@ -130,24 +110,31 @@ function AdminManageCoupon() {
 
   const handleHardDeleteCoupon = async (id) => {
     try {
-      await CouponService.forceDeleteCoupon(id);
+      await forceDeleteMutation.mutateAsync(id);
       message.success("Coupon deleted successfully");
-      loadData(
-        pagination.current,
-        pagination.pageSize,
-        isSearching ? searchText : ""
-      );
     } catch (error) {
       message.error(error.message || "Failed to delete coupon");
     }
   };
 
-  const handleTableChange = (pagination) => {
-    loadData(
-      pagination.current,
-      pagination.pageSize,
-      isSearching ? searchText : ""
-    );
+  const handleTableChange = (newPagination) => {
+    setPagination(prev => ({
+      ...prev,
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+    }));
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await refreshCouponsMutation.mutateAsync({
+        page: pagination.current,
+        perPage: pagination.pageSize,
+        code: searchText,
+      });
+    } catch (error) {
+      message.error("Failed to refresh data");
+    }
   };
 
   const formatDateTime = (dateTime) => {
@@ -157,6 +144,34 @@ function AdminManageCoupon() {
         })
       : "N/A";
   };
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <TypographyText type="danger">
+            Error: {error?.message || "Failed to load coupons"}
+          </TypographyText>
+          <Button 
+            type="primary" 
+            onClick={handleRefresh}
+            style={{ marginTop: 16 }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate statistics
+  const totalActiveCoupons = coupons.filter(
+    (coupon) => coupon.is_active
+  ).length;
+  const totalUsableCoupons = coupons.filter(
+    (coupon) => coupon.is_used < coupon.quantity
+  ).length;
 
   const couponColumns = [
     {
@@ -245,6 +260,7 @@ function AdminManageCoupon() {
                 type="default"
                 icon={<DeleteOutlined />}
                 className={styles.deactivateButton}
+                loading={softDeleteMutation.isPending}
               >
                 Deactivate
               </Button>
@@ -259,6 +275,7 @@ function AdminManageCoupon() {
                 icon={<CheckCircleOutlined />}
                 style={{ borderColor: "#52c41a", color: "#52c41a" }}
                 className={styles.activateButton}
+                loading={restoreMutation.isPending}
               >
                 Activate
               </Button>
@@ -272,6 +289,7 @@ function AdminManageCoupon() {
               type="danger"
               icon={<DeleteOutlined />}
               className={styles.deleteButton}
+              loading={forceDeleteMutation.isPending}
             >
               Delete
             </Button>
@@ -280,14 +298,6 @@ function AdminManageCoupon() {
       ),
     },
   ];
-
-  // Calculate statistics
-  const totalActiveCoupons = filteredCoupons.filter(
-    (coupon) => coupon.is_active
-  ).length;
-  const totalUsableCoupons = filteredCoupons.filter(
-    (coupon) => coupon.is_used < coupon.quantity
-  ).length;
 
   return (
     <div className={styles.container}>
@@ -336,14 +346,8 @@ function AdminManageCoupon() {
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={() =>
-                loadData(
-                  pagination.current,
-                  pagination.pageSize,
-                  isSearching ? searchText : ""
-                )
-              }
-              loading={loading}
+              onClick={handleRefresh}
+              loading={refreshCouponsMutation.isPending || loading}
               className={styles.refreshButton}
             >
               Refresh
@@ -358,7 +362,7 @@ function AdminManageCoupon() {
               title={
                 <span className={styles.statisticTitle}>Total Coupons</span>
               }
-              value={pagination.total}
+              value={total}
               valueStyle={{ color: "#5f2eea" }}
             />
           </Card>
@@ -391,20 +395,30 @@ function AdminManageCoupon() {
               <div className={styles.loading}>
                 <Spin size="large" />
               </div>
-            ) : filteredCoupons.length === 0 ? (
+            ) : coupons.length === 0 ? (
               <div className={styles.empty}>
-                <TypographyText>No coupons found</TypographyText>
+                <TypographyText>
+                  {isSearching ? "No coupons found for your search" : "No coupons found"}
+                </TypographyText>
               </div>
             ) : (
               <Table
                 columns={couponColumns}
-                dataSource={filteredCoupons}
+                dataSource={coupons}
                 rowKey="coupon_id"
-                pagination={pagination}
+                pagination={{
+                  current: pagination.current,
+                  pageSize: pagination.pageSize,
+                  total: total,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} items`,
+                }}
                 onChange={handleTableChange}
                 rowClassName={styles.tableRow}
                 className={styles.table}
-                scroll={{ x: "max-content" }} // Thêm thanh cuộn ngang
+                scroll={{ x: "max-content" }}
               />
             )}
           </Card>
