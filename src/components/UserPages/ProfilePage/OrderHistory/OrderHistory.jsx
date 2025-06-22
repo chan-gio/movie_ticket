@@ -1,15 +1,34 @@
-import { Card, Row, Col, Typography, Tag, Button, Skeleton, Pagination, Modal } from "antd";
+import { Card, Row, Col, Typography, Tag, Button, Skeleton, Pagination, Modal, Alert, Space } from "antd";
 import { useNavigate } from "react-router-dom";
+import { ReloadOutlined } from "@ant-design/icons";
 import styles from "./OrderHistory.module.scss";
-import { useSettings } from "../../../../Context/SettingContext";
+import { useLogo, useSettingsWithFallback } from "../../../../hooks/useSettings";
+import { useOrderHistory, useCancelBooking } from "../../../../hooks/useOrderHistory";
 import { useState } from "react";
 import moment from "moment";
+import useAuth from "../../../../utils/auth";
 
 const { Title, Paragraph } = Typography;
 
-const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange }) => {
+const OrderHistory = () => {
   const navigate = useNavigate();
-  const { settings } = useSettings();
+  const { userId } = useAuth();
+  const { settings, isLoading: settingsLoading } = useSettingsWithFallback();
+  const { value: cinemaLogo } = useLogo();
+  
+  // Use the custom hook for order history
+  const { 
+    orderHistory, 
+    pagination, 
+    isLoading: orderLoading, 
+    error: orderError, 
+    handlePaginationChange,
+    refreshData
+  } = useOrderHistory(userId);
+  
+  // Use the cancel booking mutation
+  const cancelBookingMutation = useCancelBooking();
+  
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -24,6 +43,9 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
   };
 
   const handleCancelModalOk = () => {
+    if (selectedOrder) {
+      cancelBookingMutation.mutate(selectedOrder.id);
+    }
     setCancelModalVisible(false);
     setSelectedOrder(null);
   };
@@ -43,17 +65,16 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
     }
 
     const showTime = moment(order.date, [
-      "dddd, MMMM DD, YYYY [at] hh:mm A", 
-      "dddd, MMMM D, YYYY [at] h:mm A",   
-      "dddd, MMMM DD, YYYY [at] HH:mm",   
-      "dddd, DD MMMM YYYY, hh:mm A",      
-      "dddd, D MMMM YYYY, h:mm A",        
-      "dddd, DD MMM YYYY, hh:mm A",       
-      "dddd, D MMM YYYY, h:mm A",        
-    ], false); // Lenient parsing
+      "dddd, MMMM DD, YYYY [at] hh:mm A",
+      "dddd, MMMM D, YYYY [at] h:mm A",
+      "dddd, MMMM DD, YYYY [at] HH:mm",
+      "dddd, DD MMMM YYYY, hh:mm A",
+      "dddd, D MMMM YYYY, h:mm A",
+      "dddd, DD MMM YYYY, hh:mm A",
+      "dddd, D MMM YYYY, h:mm A",
+    ], false);
 
     if (!showTime.isValid()) {
-      // Fallback to general parsing
       const fallbackShowTime = moment(order.date);
       if (!fallbackShowTime.isValid()) {
         console.error("Invalid showtime date after fallback:", order.date);
@@ -68,7 +89,8 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
     return hoursDiff >= 2;
   };
 
-  if (loading) {
+  // Show loading state
+  if (orderLoading || settingsLoading) {
     return (
       <div className={styles.tabContent}>
         <Card className={styles.detailCard}>
@@ -84,13 +106,65 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
     );
   }
 
+  // Show error state
+  if (orderError) {
+    return (
+      <div className={styles.tabContent}>
+        <Card className={styles.detailCard}>
+          <Alert
+            message="Error Loading Order History"
+            description={orderError.message || "Failed to load your order history. Please try again."}
+            type="error"
+            showIcon
+            action={
+              <Space>
+                <Button 
+                  size="small" 
+                  icon={<ReloadOutlined />}
+                  onClick={refreshData}
+                  loading={orderLoading}
+                >
+                  Retry
+                </Button>
+                <Button size="small" onClick={() => window.location.reload()}>
+                  Refresh Page
+                </Button>
+              </Space>
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.tabContent}>
       <Card className={styles.detailCard}>
-        <Title level={4}>Order History</Title>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+          <Col>
+            <Title level={4} style={{ margin: 0 }}>Order History</Title>
+          </Col>
+          <Col>
+            <Button 
+              icon={<ReloadOutlined />} 
+              onClick={refreshData}
+              loading={orderLoading}
+              size="small"
+            >
+              Refresh
+            </Button>
+          </Col>
+        </Row>
         <div className={styles.divider} />
         {orderHistory.length === 0 ? (
-          <Paragraph>No bookings found.</Paragraph>
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Paragraph style={{ fontSize: '16px', color: '#666' }}>
+              No bookings found.
+            </Paragraph>
+            <Paragraph style={{ color: '#999' }}>
+              Your booking history will appear here once you make a reservation.
+            </Paragraph>
+          </div>
         ) : (
           <>
             {orderHistory.map((order) => (
@@ -105,7 +179,7 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
                   </Col>
                   <Col xs={24} md={6} style={{ textAlign: "right" }}>
                     <img
-                      src={settings.name}
+                      src={cinemaLogo}
                       alt="Cinema Logo"
                       className={styles.cinemaLogo}
                     />
@@ -140,6 +214,7 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
                             type="default"
                             danger
                             onClick={() => handleCancelClick(order)}
+                            loading={cancelBookingMutation.isLoading}
                           >
                             Cancel Ticket
                           </Button>
@@ -150,17 +225,19 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
                 </Row>
               </Card>
             ))}
-            <div className={styles.pagination}>
-              <Pagination
-                current={pagination.current}
-                pageSize={pagination.pageSize}
-                total={pagination.total}
-                onChange={onPaginationChange}
-                showSizeChanger
-                pageSizeOptions={["5", "10", "20"]}
-                showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
-              />
-            </div>
+            {pagination.total > 0 && (
+              <div className={styles.pagination}>
+                <Pagination
+                  current={pagination.current}
+                  pageSize={pagination.pageSize}
+                  total={pagination.total}
+                  onChange={handlePaginationChange}
+                  showSizeChanger
+                  pageSizeOptions={["5", "10", "20"]}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+                />
+              </div>
+            )}
           </>
         )}
       </Card>
@@ -169,16 +246,29 @@ const OrderHistory = ({ orderHistory, loading, pagination, onPaginationChange })
         open={cancelModalVisible}
         onOk={handleCancelModalOk}
         onCancel={handleCancelModalCancel}
+        confirmLoading={cancelBookingMutation.isLoading}
         footer={[
-          <Button key="ok" type="primary" onClick={handleCancelModalOk}>
-            OK
+          <Button key="cancel" onClick={handleCancelModalCancel}>
+            Cancel
+          </Button>,
+          <Button 
+            key="ok" 
+            type="primary" 
+            danger
+            onClick={handleCancelModalOk}
+            loading={cancelBookingMutation.isLoading}
+          >
+            Confirm Cancellation
           </Button>,
         ]}
       >
         <p>
-          To cancel your ticket for <strong>{selectedOrder?.movie}</strong> on{" "}
-          <strong>{selectedOrder?.date}</strong>, please contact our support team at{" "}
-          <strong>0971665475</strong> for assistance.
+          Are you sure you want to cancel your ticket for <strong>{selectedOrder?.movie}</strong> on{" "}
+          <strong>{selectedOrder?.date}</strong>?
+        </p>
+        <p style={{ color: '#ff4d4f', fontSize: '14px' }}>
+          This action cannot be undone. Please contact our support team at{" "}
+          <strong>0971665475</strong> if you need assistance.
         </p>
       </Modal>
     </div>

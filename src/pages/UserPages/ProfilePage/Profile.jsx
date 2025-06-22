@@ -5,7 +5,7 @@ import styles from './Profile.module.scss';
 import InfoCard from '../../../components/UserPages/ProfilePage/InfoCard/InfoCard';
 import AccountTab from '../../../components/UserPages/ProfilePage/AccountTab/AccountTab';
 import OrderHistory from '../../../components/UserPages/ProfilePage/OrderHistory/OrderHistory';
-import { useUserData, useOrderHistory, useInvalidateUserData } from '../../../hooks/useProfile';
+import { useUserData, useInvalidateUserData } from '../../../hooks/useProfile';
 import useAuth from '../../../utils/auth';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,20 +14,10 @@ const { TabPane } = Tabs;
 const Profile = () => {
   const { userId } = useAuth();
   const navigate = useNavigate();
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-  });
   const [activeTab, setActiveTab] = useState('settings'); // Controlled tab state
 
   // Left section: User data for InfoCard
   const { data: userData, isLoading: isUserLoading, error: userError } = useUserData(userId);
-
-  // Right section: Order history for OrderHistory tab
-  const { data: orderData, isLoading: isOrderLoading, error: orderError } = useOrderHistory(userId, {
-    page: pagination.current,
-    pageSize: pagination.pageSize,
-  });
   const invalidateUserData = useInvalidateUserData();
 
   const handleSignOut = () => {
@@ -39,11 +29,6 @@ const Profile = () => {
 
   const handleProfileUpdate = () => {
     invalidateUserData(userId); // Refresh user data
-  };
-
-  const handlePaginationChange = (page, pageSize) => {
-    setPagination({ current: page, pageSize });
-    setActiveTab('history'); // Keep OrderHistory tab active
   };
 
   const handleTabChange = (key) => {
@@ -104,26 +89,7 @@ const Profile = () => {
             )}
           </TabPane>
           <TabPane tab="Order History" key="history">
-            {orderError ? (
-              <Alert
-                message="Error"
-                description={orderError.message || 'Failed to load order history'}
-                type="error"
-                showIcon
-              />
-            ) : isOrderLoading ? (
-              <Skeleton active paragraph={{ rows: 6 }} />
-            ) : (
-              <OrderHistory
-                orderHistory={orderData?.orders || []}
-                loading={isOrderLoading}
-                pagination={{
-                  ...pagination,
-                  total: orderData?.pagination.total || 0,
-                }}
-                onPaginationChange={handlePaginationChange}
-              />
-            )}
+            <OrderHistory />
           </TabPane>
         </Tabs>
       </Card>

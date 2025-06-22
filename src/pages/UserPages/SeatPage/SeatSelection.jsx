@@ -1,158 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton } from 'antd';
+import { Card, Row, Col, Button, Typography, Tag, Space, Skeleton, Alert } from 'antd';
 import moment from 'moment';
 import styles from './SeatSelection.module.scss';
-import SeatService from '../../../services/SeatService';
-import BookingService from '../../../services/BookingService';
-import BookingSeatService from '../../../services/BookingSeatService';
-import { useSettings } from '../../../Context/SettingContext';
-import { useBookingTimer } from '../../../Context/BookingTimerContext';
-import { toastSuccess, toastError } from '../../../utils/toastNotifier';
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
+import { useSeatSelection } from '../../../hooks/useSeatSelection';
 
 const { Title, Paragraph } = Typography;
 
 function SeatSelection() {
   const { roomId, bookingId } = useParams();
   const navigate = useNavigate();
-  const hasFetched = useRef(false);
-  const { settings, error: settingsError } = useSettings();
-  const { bookings, updateProgress, clearTimer } = useBookingTimer();
 
-  const currentBooking = bookings.find((b) => b.bookingId === bookingId);
-  const initialSeats =
-    currentBooking?.progress.step === 'SeatSelection' &&
-    currentBooking?.progress.bookingId === bookingId &&
-    Array.isArray(currentBooking?.progress.data.selectedSeats)
-      ? currentBooking.progress.data.selectedSeats
-      : [];
+  // Use the custom hook for all data management
+  const {
+    // Data
+    booking,
+    seats,
+    seatBookingStatus,
+    selectedSeats,
+    settings,
+    rows,
+    cols,
+    
+    // Loading and error states
+    isLoading,
+    hasError,
+    bookingError,
+    seatsError,
+    seatStatusError,
+    
+    // Actions
+    toggleSeat,
+    handleCheckout,
+    handleChangeMovie,
+    
+    // Utility functions
+    calculateSeatPrice,
+    calculateTotalPrice,
+    
+    // Mutations
+    createBookingSeatMutation,
+    updateTotalPriceMutation,
+    cancelBookingMutation,
+  } = useSeatSelection(roomId, bookingId);
 
-  const [selectedSeats, setSelectedSeats] = useState(initialSeats);
-  const [seats, setSeats] = useState([]);
-  const [seatBookingStatus, setSeatBookingStatus] = useState([]);
-  const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Setup Laravel Echo with Pusher
-  useEffect(() => {
-    if (!booking?.showtime?.showtime_id) return;
-
-    window.Pusher = Pusher;
-    const echo = new Echo({
-      broadcaster: 'pusher',
-      key: import.meta.env.VITE_PUSHER_KEY,
-      cluster: import.meta.env.VITE_PUSHER_CLUSTER,
-      forceTLS: true,
-      encrypted: true,
-    });
-
-    echo.channel(`showtime.${booking.showtime.showtime_id}`)
-      .listen('.seat.booked', (e) => {
-        setSeatBookingStatus((prev) =>
-          prev.map((s) =>
-            s.seat_number === e.seat_number ? { ...s, is_booked: true } : s
-          )
-        );
-        if (e.booking_id !== bookingId) {
-          setSelectedSeats((prev) => prev.filter((s) => s !== e.seat_number));
-          toastError(`Seat ${e.seat_number} has been booked by another user`);
-        } else {
-          toastSuccess(`Seat ${e.seat_number} booked successfully`);
-        }
-      });
-
-    return () => {
-      echo.leave(`showtime.${booking.showtime.showtime_id}`);
-    };
-  }, [booking, bookingId]);
-
-  // Xử lý hết thời gian đặt vé
-  useEffect(() => {
-    if (currentBooking?.timeLeft === '00:00' && selectedSeats.length > 0) {
-      setSelectedSeats([]);
-      toastError('Booking timed out. Seats have been released.');
-    }
-  }, [currentBooking, selectedSeats]);
-
-  // Tải dữ liệu
-  useEffect(() => {
-    if (hasFetched.current) return;
-
-    const fetchData = async () => {
-      if (!roomId || !bookingId) {
-        toastError('Room ID or Booking ID not provided');
-        setError('Missing required parameters');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        const bookingResponse = await BookingService.getBookingById(bookingId);
-        if (bookingResponse.status === 'CANCELLED') {
-          toastError('This booking has been canceled.');
-          navigate('/');
-          setLoading(false);
-          return;
-        }
-        setBooking(bookingResponse);
-
-        const seatsResponse = await SeatService.getSeatByRoomId(roomId);
-        setSeats(Array.isArray(seatsResponse.data) ? seatsResponse.data : []);
-
-        const showtimeId = bookingResponse.showtime?.showtime_id;
-        if (showtimeId) {
-          const seatStatusResponse = await BookingSeatService.getSeatsByShowtime(showtimeId);
-          setSeatBookingStatus(Array.isArray(seatStatusResponse) ? seatStatusResponse : []);
-        } else {
-          console.warn('Showtime ID not found in booking response');
-          setSeatBookingStatus([]);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        toastError(err.message || 'Failed to fetch data');
-        setError(err.message || 'Failed to fetch data');
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    hasFetched.current = true;
-
-    if (settingsError) {
-      toastError(settingsError);
-      navigate(`/movie/${booking?.showtime?.movie?.movie_id || ''}`);
-    }
-  }, [roomId, bookingId, settingsError, navigate, booking]);
-
-  const parseSeatLayout = () => {
-    const rows = new Set();
-    const cols = new Set();
-
-    if (Array.isArray(seats) && seats.length > 0) {
-      seats.forEach((seat) => {
-        if (seat && typeof seat.seat_number === 'string') {
-          const row = seat.seat_number.charAt(0);
-          const col = parseInt(seat.seat_number.slice(1), 10);
-          rows.add(row);
-          cols.add(col);
-        }
-      });
-    }
-
-    return {
-      rows: Array.from(rows).sort(),
-      cols: Array.from(cols).sort((a, b) => a - b),
-    };
+  const handleGoBack = () => {
+    navigate(-1);
   };
-
-  const { rows, cols } = parseSeatLayout();
 
   const formatTime = (dateString) => {
     return dateString ? moment.utc(dateString).format('HH:mm') : 'Unknown';
@@ -171,7 +65,7 @@ function SeatSelection() {
     ? {
         movieTitle: booking.showtime?.movie?.title || 'Unknown Movie',
         cinema: booking.showtime?.room?.cinema?.name || 'Cinema 1',
-        roomName: booking.showtime?.room?.name || 'Unknown Room',
+        roomName: booking.showtime?.room?.room_name || 'Unknown Room',
         picture: booking.showtime?.movie?.poster_url || 'https://statics.vincom.com.vn/http/vincom-ho/thuong_hieu/anh_logo/CGV-Cinemas.png/8e6196f9adbc621156a5519c267b3e93.webp',
         date: booking.showtime?.start_time ? new Date(booking.showtime.start_time).toISOString().split('T')[0] : 'Unknown Date',
         time: booking.showtime?.start_time ? formatTime(booking.showtime.start_time) : 'Unknown Time',
@@ -187,165 +81,8 @@ function SeatSelection() {
         basePrice: 10,
       };
 
-  const calculateSeatPrice = (seatNumber) => {
-    const seat = seats.find((s) => s.seat_number === seatNumber);
-    if (!seat || !settings) return orderInfo.basePrice;
-
-    const basePrice = orderInfo.basePrice;
-    const seatType = seat.seat_type.toUpperCase();
-
-    switch (seatType) {
-      case 'VIP':
-        return basePrice + (basePrice * settings.vip / 100);
-      case 'COUPLE':
-        return basePrice + (basePrice * settings.couple / 100);
-      case 'STANDARD':
-      default:
-        return basePrice;
-    }
-  };
-
-  const calculateTotalPrice = () => {
-    return selectedSeats.reduce((total, seatNumber) => {
-      const seatPrice = calculateSeatPrice(seatNumber);
-      return total + seatPrice;
-    }, 0);
-  };
-
-  const toggleSeat = (seatNumber) => {
-    const seat = seats.find((s) => s.seat_number === seatNumber);
-    if (!seat) {
-      console.error('Seat not found:', seatNumber);
-      toastError('Seat not found');
-      return;
-    }
-
-    const seatStatus = Array.isArray(seatBookingStatus)
-      ? seatBookingStatus.find((s) => s.seat_number === seatNumber)
-      : null;
-    const isBooked = seatStatus ? seatStatus.is_booked : false;
-    const seatType = seat.seat_type.toUpperCase();
-
-    if (isBooked || seatType === 'UNAVAILABLE') {
-      return;
-    }
-
-    const isSelected = selectedSeats.includes(seatNumber);
-
-    setSelectedSeats((prev) => {
-      let newSeats = [...prev];
-
-      if (seatType === 'COUPLE') {
-        const row = seatNumber.match(/^[A-Z]+/)[0];
-        const col = parseInt(seatNumber.match(/\d+$/)[0], 10);
-        let pairSeat;
-
-        if (col % 2 === 1) {
-          pairSeat = `${row}${col + 1}`;
-        } else {
-          pairSeat = `${row}${col - 1}`;
-        }
-
-        const pairSeatObj = seats.find((s) => s.seat_number === pairSeat);
-        const pairSeatStatus = Array.isArray(seatBookingStatus)
-          ? seatBookingStatus.find((s) => s.seat_number === pairSeat)
-          : null;
-        const isPairBooked = pairSeatStatus ? pairSeatStatus.is_booked : false;
-
-        if (!pairSeatObj || isPairBooked || pairSeatObj.seat_type.toUpperCase() !== 'COUPLE') {
-          toastError('Cannot select couple seat: pair seat is unavailable or not a couple seat.');
-          return prev;
-        }
-
-        if (isSelected) {
-          // Bỏ chọn cả hai ghế couple
-          newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
-          toastSuccess(`Seats ${seatNumber} and ${pairSeat} unselected`);
-        } else {
-          // Chọn cả hai ghế couple
-          if (!newSeats.includes(seatNumber)) {
-            newSeats.push(seatNumber);
-          }
-          if (!newSeats.includes(pairSeat)) {
-            newSeats.push(pairSeat);
-          }
-          toastSuccess(`Seats ${seatNumber} and ${pairSeat} selected`);
-        }
-      } else {
-        if (isSelected) {
-          // Bỏ chọn ghế
-          newSeats = newSeats.filter((s) => s !== seatNumber);
-          toastSuccess(`Seat ${seatNumber} unselected`);
-        } else {
-          // Chọn ghế
-          newSeats = [...newSeats, seatNumber];
-          toastSuccess(`Seat ${seatNumber} selected`);
-        }
-      }
-
-      const path = `/seats/${roomId}/${bookingId}`;
-      updateProgress(bookingId, 'SeatSelection', { selectedSeats: newSeats }, path);
-      return newSeats;
-    });
-  };
-
-  const handleCheckout = async () => {
-    if (selectedSeats.length === 0) {
-      toastError('Please select at least one seat to proceed.');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Gọi createBookingSeat cho tất cả ghế đã chọn
-      const bookingSeatPromises = selectedSeats.map(async (seatNumber) => {
-        const seat = seats.find((s) => s.seat_number === seatNumber);
-        if (!seat) {
-          throw new Error(`Seat not found: ${seatNumber}`);
-        }
-
-        const bookingSeatData = {
-          booking_id: bookingId,
-          seat_id: seat.seat_id,
-        };
-
-        return BookingSeatService.createBookingSeat(bookingSeatData);
-      });
-
-      await Promise.all(bookingSeatPromises);
-
-      const totalPrice = calculateTotalPrice();
-      await BookingService.updateTotalPrice(bookingId, totalPrice);
-
-      const path = `/payment/${bookingId}`;
-      updateProgress(bookingId, 'Payment', { selectedSeats }, path);
-      navigate(path, { state: { totalPrice } });
-      toastSuccess('Seats booked successfully! Proceeding to payment');
-    } catch (err) {
-      console.error('Checkout error:', err);
-      toastError(err.message || 'Failed to book seats. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChangeMovie = async () => {
-    try {
-      await BookingService.updateBookingStatus(bookingId, 'CANCELLED');
-      clearTimer(bookingId);
-      toastError(`Booking ${bookingId}: Your booking has been cancelled.`);
-      navigate('/movies');
-    } catch (error) {
-      toastError(`Failed to cancel booking: ${error.message}`);
-    }
-  };
-
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
-  if (loading) {
+  // Show loading state
+  if (isLoading) {
     return (
       <div className={styles.seatSelection}>
         <div className={styles.secondaryNavbar}>
@@ -435,12 +172,52 @@ function SeatSelection() {
     );
   }
 
-  if (error) {
+  // Show error state
+  if (hasError) {
     return (
       <div className={styles.seatSelection}>
-        <Title level={3}>Error</Title>
-        <Paragraph>{error}</Paragraph>
-        <Button onClick={handleGoBack}>Go Back</Button>
+        <div className={styles.secondaryNavbar}>
+          <Row justify="space-between" align="middle">
+            <Col>
+              <Title level={4} className={styles.movieTitle}>
+                Error Loading Seat Selection
+              </Title>
+            </Col>
+            <Col>
+              <Button className={styles.changeButton} onClick={handleGoBack}>
+                Go back
+              </Button>
+            </Col>
+          </Row>
+        </div>
+
+        <Row gutter={[16, 16]} className={styles.mainContent}>
+          <Col xs={24}>
+            <Alert
+              message="Error Loading Data"
+              description={
+                <div>
+                  {bookingError && <p><strong>Booking Error:</strong> {bookingError.message}</p>}
+                  {seatsError && <p><strong>Seats Error:</strong> {seatsError.message}</p>}
+                  {seatStatusError && <p><strong>Seat Status Error:</strong> {seatStatusError.message}</p>}
+                  <p>Please try refreshing the page or go back and try again.</p>
+                </div>
+              }
+              type="error"
+              showIcon
+              action={
+                <Space>
+                  <Button size="small" onClick={() => window.location.reload()}>
+                    Refresh Page
+                  </Button>
+                  <Button size="small" onClick={handleGoBack}>
+                    Go Back
+                  </Button>
+                </Space>
+              }
+            />
+          </Col>
+        </Row>
       </div>
     );
   }
@@ -576,6 +353,7 @@ function SeatSelection() {
                 block
                 className={styles.changeMovieButton}
                 onClick={handleChangeMovie}
+                loading={cancelBookingMutation.isLoading}
               >
                 Change your movie
               </Button>
@@ -587,7 +365,7 @@ function SeatSelection() {
                 className={styles.checkoutButton}
                 disabled={selectedSeats.length === 0}
                 onClick={handleCheckout}
-                loading={loading}
+                loading={createBookingSeatMutation.isLoading || updateTotalPriceMutation.isLoading}
               >
                 Checkout now
               </Button>
@@ -648,7 +426,7 @@ function SeatSelection() {
             <Row justify="space-between">
               <Paragraph className={styles.totalLabel}>Total Payment</Paragraph>
               <Paragraph className={styles.totalValue}>
-                {calculateTotalPrice()}đ
+                {calculateTotalPrice(orderInfo.basePrice)}đ
               </Paragraph>
             </Row>
           </Card>

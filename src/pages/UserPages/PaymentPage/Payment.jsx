@@ -9,7 +9,7 @@ import BookingService from "../../../services/BookingService";
 import UserService from "../../../services/UserService";
 import PaymentService from "../../../services/PaymentService";
 import CouponService from "../../../services/CouponService";
-import { useSettings } from "../../../Context/SettingContext";
+import { useSettingsWithFallback } from "../../../hooks/useSettings";
 import { useBookingTimer } from "../../../Context/BookingTimerContext";
 import { toastError } from "../../../utils/toastNotifier";
 
@@ -26,7 +26,7 @@ function Payment() {
   const [fetchError, setFetchError] = useState(null);
   const [booking, setBooking] = useState(null);
   const [user, setUser] = useState(null);
-  const { settings, error: settingsError } = useSettings();
+  const { settings, isLoading: settingsLoading, error: settingsError } = useSettingsWithFallback();
   const { bookings, clearTimer, updateProgress } = useBookingTimer();
   const [isShowtimePast, setIsShowtimePast] = useState(false);
   const [coupon, setCoupon] = useState(null);
