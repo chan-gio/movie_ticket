@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Tabs, Row, Col, Input, Button, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import LeftContainer from "../../../components/UserPages/AuthPage/LeftContainer/LeftContainer";
-import AuthService from "../../../services/AuthService";
+import { useAuthContext } from '../../../Context/AuthContext';
 import UserService from "../../../services/UserService"; // Import UserService
 import styles from "./Auth.module.scss";
 import { toastSuccess, toastError } from "../../../utils/toastNotifier";
@@ -13,6 +13,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
   const navigate = useNavigate();
+  const { login, register } = useAuthContext();
 
   // State for Sign In inputs
   const [signInEmail, setSignInEmail] = useState("");
@@ -53,7 +54,7 @@ const Auth = () => {
         phone: signUpPhone,
       };
 
-      const user = await AuthService.register(values);
+      await register(values);
       toastSuccess("Registration successful! Please sign in.");
 
       // Reset Sign Up fields
@@ -76,37 +77,34 @@ const Auth = () => {
 
   // Handle Sign In submission
   const handleSignInSubmit = async (event) => {
-  event.preventDefault();
-  setIsLoading(true);
-  try {
-    if (!signInEmail || !signInPassword) {
-      throw new Error("Please fill in all fields");
+    event.preventDefault();
+    setIsLoading(true);
+    try {
+      if (!signInEmail || !signInPassword) {
+        throw new Error("Please fill in all fields");
+      }
+      if (!/\S+@\S+\.\S+/.test(signInEmail)) {
+        throw new Error("Please enter a valid email");
+      }
+
+      const values = {
+        email: signInEmail,
+        password: signInPassword,
+      };
+
+      const response = await login(values);
+      const { user } = response;
+      localStorage.setItem('user_id', user.user_id);
+      localStorage.setItem('profile_picture_url', user.profile_picture_url);
+      toastSuccess("Login successful!");
+      navigate('/');
+    } catch (error) {
+      console.error("Sign In Error:", error);
+      toastError(error.message || "Login failed");
+    } finally {
+      setIsLoading(false);
     }
-    if (!/\S+@\S+\.\S+/.test(signInEmail)) {
-      throw new Error("Please enter a valid email");
-    }
-
-    const values = {
-      email: signInEmail,
-      password: signInPassword,
-    };
-
-    const response = await AuthService.login(values);
-    const { access_token, user, refresh_token } = response;
-
-    localStorage.setItem('access_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
-    localStorage.setItem('user_id', user.user_id);
-    localStorage.setItem('profile_picture_url', user.profile_picture_url);
-    toastSuccess("Login successful!");
-    navigate('/');
-  } catch (error) {
-    console.error("Sign In Error:", error);
-    toastError(error.message || "Login failed");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // Handle Forgot Password submission
   const handleForgotPasswordSubmit = async () => {

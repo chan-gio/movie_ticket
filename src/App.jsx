@@ -13,6 +13,7 @@ import styles from './App.module.scss';
 import Navbar from './components/NavBar/Navbar';
 import Footer from './components/Footer/Footer';
 import BookingTimer from './components/UserPages/BookingTimer/BookingTimer';
+import { AuthProvider } from './Context/AuthContext';
 
 const { Content } = Layout;
 
@@ -28,47 +29,49 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
         <BrowserRouter>
-          <BookingTimerProvider>
-            <BookingTimer />
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
-              <Suspense fallback={<div className={styles.loading}>Đang tải...</div>}>
-                <ReactRoutes>
-                  {routeConfig.map((route, index) => (
-                    <Route
-                      key={index}
-                      path={route.path}
-                      element={
-                        route.path.startsWith('/admin') ? (
-                          route.element
-                        ) : (
-                          <Layout className={styles.layout}>
-                            <Navbar />
-                            <Content className={styles.content}>
-                              {route.element}
-                            </Content>
-                            <Footer />
-                          </Layout>
-                        )
-                      }
-                    />
-                  ))}
-                </ReactRoutes>
-              </Suspense>
-            </ErrorBoundary>
-            <ToastContainer
-              position="top-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="light"
-              progressStyle={{ background: '#5f2eea' }}
-            />
-          </BookingTimerProvider>
+          <AuthProvider>
+            <BookingTimerProvider>
+              <BookingTimer />
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Suspense fallback={<div className={styles.loading}>Đang tải...</div>}>
+                  <ReactRoutes>
+                    {routeConfig.map((route, index) => (
+                      <Route
+                        key={index}
+                        path={route.path}
+                        element={
+                          route.path.startsWith('/admin') ? (
+                            route.element
+                          ) : (
+                            <Layout className={styles.layout}>
+                              <Navbar />
+                              <Content className={styles.content}>
+                                {route.element}
+                              </Content>
+                              <Footer />
+                            </Layout>
+                          )
+                        }
+                      />
+                    ))}
+                  </ReactRoutes>
+                </Suspense>
+              </ErrorBoundary>
+              <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+                progressStyle={{ background: '#5f2eea' }}
+              />
+            </BookingTimerProvider>
+          </AuthProvider>
         </BrowserRouter>
       </SettingsProvider>
     </QueryClientProvider>
