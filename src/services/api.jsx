@@ -1,4 +1,6 @@
 import axios from "axios";
+import tokenManager from "./TokenManager";
+import AuthService from "./AuthService";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/',
@@ -7,22 +9,7 @@ const api = axios.create({
   },
 });
 
-// Biến để theo dõi trạng thái đang refresh token
-let isRefreshing = false;
-let failedQueue = [];
 
-// Xử lý queue khi refresh thành công/thất bại
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  
-  failedQueue = [];
-};
 
 // Add access token to requests
 api.interceptors.request.use(
@@ -53,10 +40,11 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      if (isRefreshing) {
-        // Nếu đang refresh, thêm request vào queue
+      // Nếu AuthService đang xử lý refresh token, chỉ thêm vào queue
+      // và không gọi refresh token từ interceptor
+      if (tokenManager.getIsRefreshing()) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
+          tokenManager.addToQueue(resolve, reject);
         }).then(token => {
           originalRequest.headers['Authorization'] = 'Bearer ' + token;
           return api(originalRequest);
@@ -66,63 +54,20 @@ api.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        // Gọi API refresh token
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}auth/refresh`,
-          {},
-          {
-            headers: {
-              'Authorization': `Bearer ${refreshToken}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (response.data.code === 200) {
-          const { access_token, refresh_token } = response.data.data;
-          
-          // Cập nhật token mới vào localStorage
-          localStorage.setItem('access_token', access_token);
-          localStorage.setItem('refresh_token', refresh_token);
-          
-          // Cập nhật header cho request gốc
-          originalRequest.headers['Authorization'] = 'Bearer ' + access_token;
-          
-          // Xử lý queue
-          processQueue(null, access_token);
-          
-          // Retry request gốc
-          return api(originalRequest);
-        } else {
-          throw new Error('Refresh token failed');
-        }
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
-        
-        // Xóa token và chuyển về login
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        
-        // Xử lý queue với lỗi
-        processQueue(refreshError, null);
-        
-        // Chuyển về trang login
-        window.location.href = '/auth';
-        
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+      
+      // Thêm request vào queue và trigger refresh nếu cần
+      console.log('Adding request to queue, triggering refresh if needed');
+      
+      return new Promise((resolve, reject) => {
+        tokenManager.addToQueue(resolve, reject);
+        // Trigger refresh nếu cần
+        AuthService.refreshTokenIfNeeded();
+      }).then(token => {
+        originalRequest.headers['Authorization'] = 'Bearer ' + token;
+        return api(originalRequest);
+      }).catch(err => {
+        return Promise.reject(err);
+      });
     }
 
     return Promise.reject(error);
