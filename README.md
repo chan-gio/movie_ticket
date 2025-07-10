@@ -1,5 +1,5 @@
 # movie_ticket
-
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/chan-gio/movie_ticket?utm_source=oss&utm_medium=github&utm_campaign=chan-gio%2Fmovie_ticket&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 ## Table of Contents
 
 1. [Description](#description)
