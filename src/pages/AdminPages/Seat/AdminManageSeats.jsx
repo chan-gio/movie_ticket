@@ -1,13 +1,21 @@
-/* eslint-disable no-unused-vars */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Row, Col, Card, Button, Typography, Tag, Space, InputNumber, Select, Spin } from 'antd';
 import { toastSuccess, toastError, toastInfo, toastWarning } from '../../../utils/toastNotifier';
-import SeatService from '../../../services/SeatService';
-import RoomService from '../../../services/RoomService';
 import styles from './AdminManageSeats.module.scss';
 import '../GlobalStyles.module.scss';
 import { Fragment } from 'react';
+import { 
+  useRoomById, 
+  useSeatsByRoomId, 
+  useUpdateSeat, 
+  useCreateSeats, 
+  useDeleteSeats,
+  useRefreshSeats,
+  useUpdateMultipleSeats,
+  useStoreMultipleSeats,
+  useSoftDeleteBatchSeats
+} from '../../../hooks/useRooms';
 
 const { Title, Paragraph, Text: TypographyText } = Typography;
 const { Option } = Select;
@@ -15,83 +23,134 @@ const { Option } = Select;
 function AdminManageSeats() {
   const navigate = useNavigate();
   const { roomId } = useParams();
-  const [room, setRoom] = useState(null);
-  const [seats, setSeats] = useState([]);
-  const [rows, setRows] = useState(7);
+  
+  // Early return if roomId is invalid
+  if (!roomId) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <Typography.Title level={3} type="danger">
+            Invalid room ID
+          </Typography.Title>
+          <Button onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const [rows, setRows] = useState(0);
   const [cols, setCols] = useState(7);
   const [initialRows, setInitialRows] = useState(0);
-  const [initialCols, setInitialCols] = useState(14);
+  const [initialCols, setInitialCols] = useState(7);
   const [seatMap, setSeatMap] = useState({});
   const [seatIdMap, setSeatIdMap] = useState({});
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [selectedType, setSelectedType] = useState('STANDARD');
-  const [loading, setLoading] = useState(true);
   const [savingGrid, setSavingGrid] = useState(false);
   const [savingSeats, setSavingSeats] = useState(false);
   const [savingSeatType, setSavingSeatType] = useState(false);
   const [firstRowIndex, setFirstRowIndex] = useState(1);
 
+  // Sử dụng custom hooks với react-query
+  const { 
+    data: room, 
+    isLoading: isLoadingRoom, 
+    error: roomError 
+  } = useRoomById(roomId);
+
+  const { 
+    data: seatsData, 
+    isLoading: isLoadingSeats, 
+    error: seatsError 
+  } = useSeatsByRoomId({ 
+    roomId, 
+    page: 1, 
+    perPage: 1000 
+  });
+
+  const { mutate: updateSeat, isLoading: isUpdatingSeat } = useUpdateSeat();
+  const { mutate: createSeats, isLoading: isCreatingSeats } = useCreateSeats();
+  const { mutate: deleteSeats, isLoading: isDeletingSeats } = useDeleteSeats();
+  const { mutate: refreshData, isLoading: isRefreshing } = useRefreshSeats();
+  const { mutate: updateMultipleSeats, isLoading: isUpdatingMultipleSeats } = useUpdateMultipleSeats();
+  const { mutate: storeMultipleSeats, isLoading: isStoringMultipleSeats } = useStoreMultipleSeats();
+  const { mutate: softDeleteBatchSeats, isLoading: isSoftDeletingBatchSeats } = useSoftDeleteBatchSeats();
+
+  // Cập nhật data từ response
+  const seats = seatsData?.data || [];
+
+  // Process seats data when it changes
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const roomResponse = await RoomService.getRoomById(roomId);
-        setRoom(roomResponse);
+    // Only process if seats data is available and not loading
+    if (isLoadingSeats) {
+      return;
+    }
 
-        const seatResponse = await SeatService.getSeatByRoomId(roomId);
-        const fetchedSeats = seatResponse.data || [];
+    // Check if seats array is actually empty (not just undefined)
+    const hasSeats = Array.isArray(seats) && seats.length > 0;
 
-        if (fetchedSeats.length === 0) {
-          setRows(0);
-          setCols(14);
-          setInitialRows(0);
-          setInitialCols(14);
-          setSeatMap({});
-          setSeatIdMap({});
-          setFirstRowIndex(1);
-        } else {
-          const initialSeatMap = {};
-          const initialSeatIdMap = {};
-          fetchedSeats.forEach(seat => {
-            initialSeatMap[seat.seat_number] = seat.seat_type;
-            initialSeatIdMap[seat.seat_number] = seat.seat_id;
-          });
+    if (!hasSeats) {
+      // When no seats, set default values for grid configuration
+      setRows(prev => prev === 0 ? 5 : prev); // Default to 5 rows
+      setCols(prev => prev === 7 ? 7 : prev); // Keep default 7 cols
+      setInitialRows(prev => prev === 0 ? 5 : prev);
+      setInitialCols(prev => prev === 7 ? 7 : prev);
+      setSeatMap(prev => Object.keys(prev).length > 0 ? {} : prev);
+      setSeatIdMap(prev => Object.keys(prev).length > 0 ? {} : prev);
+      setFirstRowIndex(prev => prev !== 1 ? 1 : prev);
+    } else {
+      const initialSeatMap = {};
+      const initialSeatIdMap = {};
+      seats.forEach(seat => {
+        initialSeatMap[seat.seat_number] = seat.seat_type;
+        initialSeatIdMap[seat.seat_number] = seat.seat_id;
+      });
 
-          let minRow = Infinity;
-          let maxRow = 0;
-          let maxCol = 0;
-          fetchedSeats.forEach(seat => {
-            const rowChar = seat.seat_number.match(/^[A-Z]+/)[0];
-            const col = parseInt(seat.seat_number.match(/\d+$/)[0]);
-            const rowIndex = rowChar.split('').reduce((acc, char) => {
-              return acc * 26 + (char.charCodeAt(0) - 64);
-            }, 0);
-            minRow = Math.min(minRow, rowIndex);
-            maxRow = Math.max(maxRow, rowIndex);
-            maxCol = Math.max(maxCol, col);
-          });
+      // Calculate grid dimensions from existing seats
+      let minRow = Infinity;
+      let maxRow = 0;
+      let maxCol = 0;
+      seats.forEach(seat => {
+        const rowChar = seat.seat_number.match(/^[A-Z]+/)[0];
+        const col = parseInt(seat.seat_number.match(/\d+$/)[0]);
+        const rowIndex = rowChar.split('').reduce((acc, char) => {
+          return acc * 26 + (char.charCodeAt(0) - 64);
+        }, 0);
+        minRow = Math.min(minRow, rowIndex);
+        maxRow = Math.max(maxRow, rowIndex);
+        maxCol = Math.max(maxCol, col);
+      });
 
-          const numRows = maxRow > 0 ? maxRow - minRow + 1 : 1;
-          const numCols = maxCol || 14;
-          setFirstRowIndex(minRow === Infinity ? 1 : minRow);
-          setRows(numRows);
-          setCols(numCols);
-          setInitialRows(numRows);
-          setInitialCols(numCols);
-          setSeatMap(initialSeatMap);
-          setSeatIdMap(initialSeatIdMap);
-        }
-        setSeats(fetchedSeats);
-      } catch (error) {
-        toastError(error.message || 'Failed to load room or seats data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [roomId]);
+      const numRows = maxRow > 0 ? maxRow - minRow + 1 : 1;
+      const numCols = maxCol || 7;
+      const newFirstRowIndex = minRow === Infinity ? 1 : minRow;
+      
+      // Only update state if values are different
+      setFirstRowIndex(prev => prev !== newFirstRowIndex ? newFirstRowIndex : prev);
+      setRows(prev => prev !== numRows ? numRows : prev);
+      setCols(prev => prev !== numCols ? numCols : prev);
+      setInitialRows(prev => prev !== numRows ? numRows : prev);
+      setInitialCols(prev => prev !== numCols ? numCols : prev);
+      setSeatMap(prev => JSON.stringify(prev) !== JSON.stringify(initialSeatMap) ? initialSeatMap : prev);
+      setSeatIdMap(prev => JSON.stringify(prev) !== JSON.stringify(initialSeatIdMap) ? initialSeatIdMap : prev);
+    }
+  }, [seats, isLoadingSeats]);
 
-  const toggleSeatSelection = (seat) => {
+  // Show error messages
+  useEffect(() => {
+    if (roomError) {
+      toastError(roomError.message || 'Failed to load room data');
+    }
+  }, [roomError]);
+
+  useEffect(() => {
+    // Only show error for seats if it's a real error (not 404)
+    if (seatsError && !seatsError.message?.includes('No seats found')) {
+      toastError(seatsError.message || 'Failed to load seats data');
+    }
+  }, [seatsError]);
+
+  const toggleSeatSelection = useCallback((seat) => {
     const row = seat.match(/^[A-Z]+/)[0];
     const col = parseInt(seat.match(/\d+$/)[0]);
     const seatType = seatMap[seat] || 'STANDARD';
@@ -132,14 +191,14 @@ function AdminManageSeats() {
 
       return newSeats;
     });
-  };
+  }, [seatMap, cols]);
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     setSelectedSeats([]);
     toastInfo('Selection cleared');
-  };
+  }, []);
 
-  const applySeatType = async () => {
+  const applySeatType = useCallback(async () => {
     if (selectedSeats.length === 0) {
       toastWarning('Please select at least one seat to apply the type.');
       return;
@@ -167,221 +226,124 @@ function AdminManageSeats() {
     }
 
     setSavingSeatType(true);
-    try {
-      const updatedMap = { ...seatMap };
-      const updatePromises = selectedSeats.map(async (seat) => {
-        const seatId = seatIdMap[seat];
-        if (!seatId) {
-          throw new Error(`Seat ID not found for seat ${seat}`);
-        }
-        await SeatService.updateSeat(seatId, { seat_type: selectedType });
-        updatedMap[seat] = selectedType;
-      });
+    
+    // Update local state immediately for better UX
+    const updatedMap = { ...seatMap };
+    selectedSeats.forEach(seat => {
+      updatedMap[seat] = selectedType;
+    });
+    setSeatMap(updatedMap);
+    
+    // Prepare updates for the mutation
+    const updates = selectedSeats.map(seat => {
+      const seatId = seatIdMap[seat];
+      return {
+        seatId,
+        data: { seat_type: selectedType }
+      };
+    }).filter(update => update.seatId); // Filter out seats without IDs
 
-      await Promise.all(updatePromises);
-      setSeatMap(updatedMap);
-      setSelectedSeats([]);
-      toastSuccess(`Applied ${selectedType} to ${selectedSeats.length} seat(s)`);
-    } catch (error) {
-      toastError(error.message || 'Failed to apply seat type');
-    } finally {
-      setSavingSeatType(false);
-    }
-  };
+    // Apply updates using the mutation
+    updateMultipleSeats(updates, {
+      onSuccess: () => {
+        setSelectedSeats([]);
+        toastSuccess(`Applied ${selectedType} to ${selectedSeats.length} seat(s)`);
+      },
+      onError: (error) => {
+        // Revert local state changes on error
+        setSeatMap(seatMap);
+        toastError(error.message || 'Failed to apply seat type to seats');
+      },
+      onSettled: () => {
+        setSavingSeatType(false);
+      }
+    });
+  }, [selectedSeats, selectedType, cols, seatMap, seatIdMap, updateMultipleSeats]);
 
-  const handleSaveGridSize = async () => {
+  const handleSaveGridSize = useCallback(async () => {
     if (rows === initialRows && cols === initialCols) {
       toastWarning('No changes to grid size.');
       return;
     }
 
     setSavingGrid(true);
+
     try {
       const newSeats = [];
-      const updatedSeatMap = { ...seatMap };
-      const updatedSeatIdMap = { ...seatIdMap };
-      let changesMade = false;
+      const newSeatMap = {};
+      const newSeatIdMap = {};
 
-      if (rows > initialRows) {
-        const newRowCount = rows - initialRows;
-        const newRowLabels = Array.from({ length: newRowCount }, (_, i) => {
-          let num = firstRowIndex + initialRows + i;
-          let label = '';
-          while (num > 0) {
-            num--;
-            label = String.fromCharCode(65 + (num % 26)) + label;
-            num = Math.floor(num / 26);
-          }
-          return label;
-        });
-
-        for (const prefix of newRowLabels) {
-          const seatData = {
+      for (let row = 0; row < rows; row++) {
+        const rowChar = String.fromCharCode(65 + row + firstRowIndex - 1);
+        for (let col = 1; col <= cols; col++) {
+          const seatNumber = `${rowChar}${col}`;
+          newSeats.push({
             room_id: roomId,
-            prefix,
-            start_index: 1,
-            end_index: cols,
+            seat_number: seatNumber,
             seat_type: 'STANDARD',
-          };
-          const createdSeats = await SeatService.createBatchSeats(seatData);
-          newSeats.push(...createdSeats);
-          createdSeats.forEach(seat => {
-            updatedSeatMap[seat.seat_number] = seat.seat_type;
-            updatedSeatIdMap[seat.seat_number] = seat.seat_id;
           });
+          newSeatMap[seatNumber] = 'STANDARD';
         }
-        changesMade = true;
       }
 
-      if (cols > initialCols) {
-        const newColCount = cols - initialCols;
-        const rowLabels = Array.from({ length: rows }, (_, i) => {
-          let num = firstRowIndex + i;
-          let label = '';
-          while (num > 0) {
-            num--;
-            label = String.fromCharCode(65 + (num % 26)) + label;
-            num = Math.floor(num / 26);
-          }
-          return label;
-        });
-
-        for (const prefix of rowLabels) {
-          const seatData = {
-            room_id: roomId,
-            prefix,
-            start_index: initialCols + 1,
-            end_index: cols,
-            seat_type: 'STANDARD',
-          };
-          const createdSeats = await SeatService.createBatchSeats(seatData);
-          newSeats.push(...createdSeats);
-          createdSeats.forEach(seat => {
-            updatedSeatMap[seat.seat_number] = seat.seat_type;
-            updatedSeatIdMap[seat.seat_number] = seat.seat_id;
-          });
-        }
-        changesMade = true;
-      }
-
-      if (rows < initialRows) {
-        const rowsToDelete = Array.from({ length: initialRows - rows }, (_, i) => {
-          let num = firstRowIndex + rows + i;
-          let label = '';
-          while (num > 0) {
-            num--;
-            label = String.fromCharCode(65 + (num % 26)) + label;
-            num = Math.floor(num / 26);
-          }
-          return label;
-        });
-
-        const deleteRowPromises = rowsToDelete.map(async (prefix) => {
-          const seatsInRow = seats.filter(seat => seat.seat_number.startsWith(prefix));
-          if (seatsInRow.length === 0) return;
-
-          const maxCol = Math.max(...seatsInRow.map(seat => parseInt(seat.seat_number.match(/\d+$/)[0])));
-          await SeatService.softDeleteBatchSeats({
-            room_id: roomId,
-            prefix,
-            start_index: 1,
-            end_index: maxCol,
+      // Delete existing seats if any
+      if (seats.length > 0) {
+        const seatIds = seats.map(seat => seat.seat_id);
+        
+        await new Promise((resolve, reject) => {
+          deleteSeats(seatIds, {
+            onSuccess: () => {
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
           });
         });
-
-        await Promise.all(deleteRowPromises);
-        changesMade = true;
       }
 
-      if (cols < initialCols) {
-        const rowLabels = Array.from({ length: initialRows }, (_, i) => {
-          let num = firstRowIndex + i;
-          let label = '';
-          while (num > 0) {
-            num--;
-            label = String.fromCharCode(65 + (num % 26)) + label;
-            num = Math.floor(num / 26);
-          }
-          return label;
+      // Create new seats
+      await new Promise((resolve, reject) => {
+        createSeats(newSeats, {
+          onSuccess: (response) => {
+            const createdSeats = response.data || [];
+            createdSeats.forEach(seat => {
+              newSeatIdMap[seat.seat_number] = seat.seat_id;
+            });
+
+            setSeatMap(newSeatMap);
+            setSeatIdMap(newSeatIdMap);
+            setInitialRows(rows);
+            setInitialCols(cols);
+            
+            toastSuccess(`Grid size updated to ${rows}x${cols}`);
+            resolve();
+          },
+          onError: (error) => {
+            toastError(error.message || 'Failed to create new seats');
+            reject(error);
+          },
         });
-
-        const deleteColPromises = rowLabels.map(async (prefix) => {
-          const seatsInRow = seats.filter(seat => seat.seat_number.startsWith(prefix));
-          if (seatsInRow.length === 0) return;
-
-          await SeatService.softDeleteBatchSeats({
-            room_id: roomId,
-            prefix,
-            start_index: cols + 1,
-            end_index: initialCols,
-          });
-        });
-
-        await Promise.all(deleteColPromises);
-        changesMade = true;
-      }
-
-      if (!changesMade) {
-        toastWarning('No changes to grid size were applied.');
-        setSavingGrid(false);
-        return;
-      }
-
-      const response = await SeatService.getSeatByRoomId(roomId);
-      const fetchedSeats = response.data || [];
-      const updatedSeatMapFinal = {};
-      const updatedSeatIdMapFinal = {};
-      fetchedSeats.forEach(seat => {
-        updatedSeatMapFinal[seat.seat_number] = seat.seat_type;
-        updatedSeatIdMapFinal[seat.seat_number] = seat.seat_id;
       });
-
-      let minRow = Infinity;
-      let maxRow = 0;
-      let maxCol = 0;
-      fetchedSeats.forEach(seat => {
-        const rowChar = seat.seat_number.match(/^[A-Z]+/)[0];
-        const col = parseInt(seat.seat_number.match(/\d+$/)[0]);
-        const rowIndex = rowChar.split('').reduce((acc, char) => {
-          return acc * 26 + (char.charCodeAt(0) - 64);
-        }, 0);
-        minRow = Math.min(minRow, rowIndex);
-        maxRow = Math.max(maxRow, rowIndex);
-        maxCol = Math.max(maxCol, col);
-      });
-
-      const numRows = maxRow > 0 ? maxRow - minRow + 1 : (rows || 1);
-      const numCols = maxCol || 14;
-      setFirstRowIndex(minRow === Infinity ? 1 : minRow);
-      setRows(numRows);
-      setCols(numCols);
-      setInitialRows(numRows);
-      setInitialCols(numCols);
-      setSeats(fetchedSeats);
-      setSeatMap(updatedSeatMapFinal);
-      setSeatIdMap(updatedSeatIdMapFinal);
-      setSelectedSeats([]);
-
-      let message = 'Grid size updated successfully';
-      if (rows < initialRows) message += `; deleted ${initialRows - rows} row(s)`;
-      if (cols < initialCols) message += `; deleted ${initialCols - cols} column(s)`;
-      if (rows > initialRows || cols > initialCols) message += `; added new seats`;
-      toastSuccess(message);
     } catch (error) {
       toastError(error.message || 'Failed to update grid size');
     } finally {
       setSavingGrid(false);
     }
-  };
+  }, [rows, initialRows, cols, initialCols, firstRowIndex, roomId, seats, deleteSeats, createSeats]);
 
-  const handleResetGridSize = () => {
+  const handleResetGridSize = useCallback(() => {
     setRows(initialRows);
     setCols(initialCols);
     toastInfo('Grid size reset to initial values');
-  };
+  }, [initialRows, initialCols]);
 
-  const generateSeatGrid = () => {
-    const rowLabels = Array.from({ length: rows }, (_, i) => {
+  const generateSeatGrid = useCallback(() => {
+    // Safety checks for rows and cols
+    const safeRows = Math.max(0, rows || 0);
+    const safeCols = Math.max(1, cols || 1);
+    
+    const rowLabels = Array.from({ length: safeRows }, (_, i) => {
       let num = firstRowIndex + i;
       let label = '';
       while (num > 0) {
@@ -391,11 +353,11 @@ function AdminManageSeats() {
       }
       return label;
     });
-    const colLabels = Array.from({ length: cols }, (_, i) => i + 1);
+    const colLabels = Array.from({ length: safeCols }, (_, i) => i + 1);
     return { rowLabels, colLabels };
-  };
+  }, [rows, cols, firstRowIndex]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setSavingSeats(true);
     try {
       const seatGroups = [];
@@ -451,56 +413,53 @@ function AdminManageSeats() {
         });
       });
 
-      await SeatService.storeMultipleSeats({
+      storeMultipleSeats({
         room_id: roomId,
         seats: seatGroups,
+      }, {
+        onSuccess: () => {
+          toastSuccess('Seat configuration saved successfully');
+        },
+        onError: (error) => {
+          toastError(error.message || 'Failed to save seats');
+        }
       });
-      const response = await SeatService.getSeatByRoomId(roomId);
-      const fetchedSeats = response.data || [];
-      const updatedSeatMap = {};
-      const updatedSeatIdMap = {};
-      fetchedSeats.forEach(seat => {
-        updatedSeatMap[seat.seat_number] = seat.seat_type;
-        updatedSeatIdMap[seat.seat_number] = seat.seat_id;
-      });
-
-      let minRow = Infinity;
-      let maxRow = 0;
-      let maxCol = 0;
-      fetchedSeats.forEach(seat => {
-        const rowChar = seat.seat_number.match(/^[A-Z]+/)[0];
-        const col = parseInt(seat.seat_number.match(/\d+$/)[0]);
-        const rowIndex = rowChar.split('').reduce((acc, char) => {
-          return acc * 26 + (char.charCodeAt(0) - 64);
-        }, 0);
-        minRow = Math.min(minRow, rowIndex);
-        maxRow = Math.max(maxRow, rowIndex);
-        maxCol = Math.max(maxCol, col);
-      });
-
-      const numRows = maxRow > 0 ? maxRow - minRow + 1 : (rows || 1);
-      setFirstRowIndex(minRow === Infinity ? 1 : minRow);
-      setRows(numRows);
-      setCols(maxCol || 14);
-      setInitialRows(numRows);
-      setInitialCols(maxCol);
-      setSeats(fetchedSeats);
-      setSeatMap(updatedSeatMap);
-      setSeatIdMap(updatedSeatIdMap);
-      toastSuccess('Seat configuration saved successfully');
     } catch (error) {
-      toastError(error.message || 'Failed to save seats');
+      toastError(error.message || 'Failed to save seat configuration');
     } finally {
       setSavingSeats(false);
     }
-  };
+  }, [rows, firstRowIndex, seatMap, roomId, storeMultipleSeats]);
 
-  const { rowLabels, colLabels } = generateSeatGrid();
+  const handleRefresh = useCallback(() => {
+    refreshData();
+  }, [refreshData]);
 
-  if (loading) {
+  const isLoading = isLoadingRoom || isLoadingSeats;
+  const isSubmitting = savingGrid || savingSeats || savingSeatType || isUpdatingSeat || isCreatingSeats || isDeletingSeats || isUpdatingMultipleSeats || isStoringMultipleSeats || isSoftDeletingBatchSeats;
+
+  // Early return if still loading room data
+  if (isLoadingRoom) {
     return (
-      <div className={styles.loading}>
-        <Spin size="large" />
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <Spin size="large" />
+          <Typography.Text>Loading room data...</Typography.Text>
+        </div>
+      </div>
+    );
+  }
+
+  // Early return if there are critical errors
+  if (roomError && !isLoadingRoom) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <Typography.Title level={3} type="danger">
+            Error loading room data: {roomError.message}
+          </Typography.Title>
+          <Button onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
       </div>
     );
   }
@@ -513,12 +472,25 @@ function AdminManageSeats() {
     );
   }
 
+  // Safety check for generateSeatGrid
+  let rowLabels = [];
+  let colLabels = [];
+  try {
+    const gridData = generateSeatGrid();
+    rowLabels = gridData.rowLabels || [];
+    colLabels = gridData.colLabels || [];
+  } catch (error) {
+    console.error('Error generating seat grid:', error);
+    rowLabels = [];
+    colLabels = [];
+  }
+
   return (
     <div className={styles.container}>
       <Row justify="space-between" align="middle" className={styles.header}>
         <Col>
           <Title level={2} className={styles.pageTitle}>
-            Manage Seats - {room.cinema.name} - {room.room_name}
+            Manage Seats - {room?.cinema?.name || 'Loading...'} - {room?.room_name || 'Loading...'}
           </Title>
         </Col>
         <Col>
@@ -611,53 +583,65 @@ function AdminManageSeats() {
             <div className={styles.seatGrid}>
               <table>
                 <tbody>
-                  {rowLabels.map((row) => (
-                    <tr key={row}>
-                      <td className={styles.rowLabel}>{row}</td>
-                      {colLabels.map((col) => {
-                        const seat = `${row}${col}`;
-                        const seatType = seatMap[seat] || null;
-                        const isNotAvailable = seatType === 'UNAVAILABLE';
-                        const isSelected = selectedSeats.includes(seat);
-                        const isOddColumn = col % 2 === 1;
-                        const coupleClass = seatType === 'COUPLE' ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : '';
-                        return (
-                          <Fragment key={seat}>
-                            <td>
-                              {seatType ? (
-                                <Button
-                                  className={`${styles.seat} ${coupleClass} ${
-                                    isSelected ? styles.seatSelected :
-                                    isNotAvailable ? styles.seatNotAvailable :
-                                    seatType === 'VIP' ? styles.seatVip :
-                                    seatType === 'COUPLE' ? styles.seatCouple : ''
-                                  }`}
-                                  onClick={() => toggleSeatSelection(seat)}
-                                >
-                                  {col}
-                                </Button>
-                              ) : (
-                                <Button
-                                  className={`${styles.seat} ${isSelected ? styles.seatSelected : ''}`}
-                                  onClick={() => toggleSeatSelection(seat)}
-                                >
-                                  {col}
-                                </Button>
-                              )}
-                            </td>
-                          </Fragment>
-                        );
-                      })}
+                  {rowLabels && rowLabels.length > 0 ? (
+                    rowLabels.map((row) => (
+                      <tr key={row}>
+                        <td className={styles.rowLabel}>{row}</td>
+                        {colLabels && colLabels.length > 0 ? (
+                          colLabels.map((col) => {
+                            const seat = `${row}${col}`;
+                            const seatType = seatMap[seat] || null;
+                            const isNotAvailable = seatType === 'UNAVAILABLE';
+                            const isSelected = selectedSeats.includes(seat);
+                            const isOddColumn = col % 2 === 1;
+                            const coupleClass = seatType === 'COUPLE' ? (isOddColumn ? styles.seatCoupleOdd : styles.seatCoupleEven) : '';
+                            return (
+                              <Fragment key={seat}>
+                                <td>
+                                  {seatType ? (
+                                    <Button
+                                      className={`${styles.seat} ${coupleClass} ${
+                                        isSelected ? styles.seatSelected :
+                                        isNotAvailable ? styles.seatNotAvailable :
+                                        seatType === 'VIP' ? styles.seatVip :
+                                        seatType === 'COUPLE' ? styles.seatCouple : ''
+                                      }`}
+                                      onClick={() => toggleSeatSelection(seat)}
+                                    >
+                                      {col}
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      className={`${styles.seat} ${isSelected ? styles.seatSelected : ''}`}
+                                      onClick={() => toggleSeatSelection(seat)}
+                                    >
+                                      {col}
+                                    </Button>
+                                  )}
+                                </td>
+                              </Fragment>
+                            );
+                          })
+                        ) : (
+                          <td colSpan="1">No columns</td>
+                        )}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="2">No rows configured</td>
                     </tr>
-                  ))}
-                  <tr>
-                    <td></td>
-                    {colLabels.map((col) => (
-                      <Fragment key={col}>
-                        <td className={styles.colLabel}>{col}</td>
-                      </Fragment>
-                    ))}
-                  </tr>
+                  )}
+                  {rowLabels && rowLabels.length > 0 && colLabels && colLabels.length > 0 && (
+                    <tr>
+                      <td></td>
+                      {colLabels.map((col) => (
+                        <Fragment key={col}>
+                          <td className={styles.colLabel}>{col}</td>
+                        </Fragment>
+                      ))}
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -717,11 +701,11 @@ function AdminManageSeats() {
             </Title>
             <Row justify="space-between" className={styles.infoRow}>
               <TypographyText className={styles.label}>Cinema Name</TypographyText>
-              <TypographyText className={styles.value}>{room.cinema.name}</TypographyText>
+              <TypographyText className={styles.value}>{room?.cinema?.name || 'Loading...'}</TypographyText>
             </Row>
             <Row justify="space-between" className={styles.infoRow}>
               <TypographyText className={styles.label}>Room Name</TypographyText>
-              <TypographyText className={styles.value}>{room.room_name}</TypographyText>
+              <TypographyText className={styles.value}>{room?.room_name || 'Loading...'}</TypographyText>
             </Row>
             <Row justify="space-between" className={styles.infoRow}>
               <TypographyText className={styles.label}>Total Seats</TypographyText>

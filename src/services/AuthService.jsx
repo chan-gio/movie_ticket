@@ -1,5 +1,4 @@
 import api from "./api";
-import tokenManager from "./TokenManager";
 
 const AuthService = {
   // Register a new user
@@ -78,14 +77,7 @@ const AuthService = {
 
   // Refresh token manually
   refreshToken: async () => {
-    // Kiểm tra nếu đang refresh thì không gọi lại
-    if (tokenManager.getIsRefreshing()) {
-      console.log('Token refresh already in progress, skipping...');
-      return;
-    }
-
     try {
-      tokenManager.setRefreshing(true);
       const refreshToken = localStorage.getItem('refresh_token');
       
       if (!refreshToken) {
@@ -101,9 +93,6 @@ const AuthService = {
         
         AuthService.setTokens(access_token, refresh_token);
         
-        // Xử lý queue nếu có
-        tokenManager.processQueue(null, access_token);
-        
         return { access_token, refresh_token };
       } else {
         throw new Error(response.data.message || "Failed to refresh token");
@@ -111,28 +100,10 @@ const AuthService = {
     } catch (error) {
       console.error("Refresh Token Error:", error);
       
-      // Xử lý queue với lỗi
-      tokenManager.processQueue(error, null);
-      
       // If refresh fails, clear auth and redirect to login
       AuthService.clearAuth();
       
       throw error;
-    } finally {
-      tokenManager.setRefreshing(false);
-    }
-  },
-
-  // Refresh token khi có request trong queue
-  refreshTokenIfNeeded: async () => {
-    // Kiểm tra nếu có request trong queue và chưa đang refresh
-    if (tokenManager.getQueue().length > 0 && !tokenManager.getIsRefreshing()) {
-      console.log('Requests in queue detected, triggering refresh...');
-      try {
-        await AuthService.refreshToken();
-      } catch (error) {
-        console.error('Failed to refresh token for queued requests:', error);
-      }
     }
   },
 
@@ -158,12 +129,9 @@ const AuthService = {
       
       AuthService.refreshTimer = setTimeout(async () => {
         try {
-          // Kiểm tra nếu đang refresh thì không gọi lại
-          if (!tokenManager.getIsRefreshing()) {
-            await AuthService.refreshToken();
-            // Start the timer again for the new token
-            AuthService.startAutoRefresh();
-          }
+          await AuthService.refreshToken();
+          // Start the timer again for the new token
+          AuthService.startAutoRefresh();
         } catch (error) {
           console.error("Auto refresh failed:", error);
           // Redirect to login if auto refresh fails
@@ -204,12 +172,9 @@ const AuthService = {
     } catch (error) {
       // Token might be expired, try to refresh
       try {
-        // Kiểm tra nếu đang refresh thì không gọi lại
-        if (!tokenManager.getIsRefreshing()) {
-          await AuthService.refreshToken();
-          AuthService.startAutoRefresh();
-          return true;
-        }
+        await AuthService.refreshToken();
+        AuthService.startAutoRefresh();
+        return true;
       } catch (refreshError) {
         console.error("Token refresh failed during initialization:", refreshError);
         AuthService.clearAuth();
@@ -237,6 +202,17 @@ const AuthService = {
     AuthService.stopAutoRefresh();
   },
 
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+
+  isAuthenticated: () => {
+    const accessToken = localStorage.getItem('access_token');
+    const refreshToken = localStorage.getItem('refresh_token');
+    return !!(accessToken && refreshToken);
+  },
+
   getAccessToken: () => {
     return localStorage.getItem('access_token');
   },
@@ -245,13 +221,24 @@ const AuthService = {
     return localStorage.getItem('refresh_token');
   },
 
-  getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  },
+  // Check if token is about to expire (within 5 minutes)
+  isTokenNearExpiry: () => {
+    const accessToken = AuthService.getAccessToken();
+    if (!accessToken) return true;
 
-  // Export isRefreshing để interceptor có thể kiểm tra
-  getIsRefreshing: () => tokenManager.getIsRefreshing(),
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiry = expirationTime - currentTime;
+      
+      // Return true if token expires within 5 minutes
+      return timeUntilExpiry < (5 * 60 * 1000);
+    } catch (error) {
+      console.error("Error checking token expiry:", error);
+      return true;
+    }
+  }
 };
 
 // Static property to hold the refresh timer
