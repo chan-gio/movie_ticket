@@ -13,6 +13,7 @@ import {
   Select,
   Spin,
   Tag,
+  InputNumber,
 } from "antd";
 import styles from "./AdminManageShowtimeForm.module.scss";
 import dayjs from "dayjs";
@@ -313,8 +314,9 @@ function AdminManageShowtimeForm({ isEditMode }) {
                     { type: "number", min: 0, message: "Price must be positive" },
                   ]}
                 >
-                  <Input
-                    type="number"
+                  <InputNumber
+                    min={0}
+                    style={{ width: "100%" }}
                     placeholder="Enter price"
                     disabled={isSubmitting}
                   />
