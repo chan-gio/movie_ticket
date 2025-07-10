@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { createContext, useContext } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,15 +15,11 @@ export const useAuthContext = () => {
 export const AuthProvider = ({ children }) => {
   const auth = useAuth();
 
-  return (
-    <AuthContext.Provider value={auth}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 };
 
 // HOC to protect routes
-export const withAuth = (WrappedComponent) => {
+export const withAuth = WrappedComponent => {
   return function AuthenticatedComponent(props) {
     const { isAuthenticated, isLoading, isInitialized } = useAuthContext();
 
@@ -37,7 +34,7 @@ export const withAuth = (WrappedComponent) => {
 
     // Redirect to login if not authenticated
     if (!isAuthenticated) {
-      window.location.href = '/auth';
+      window.location.href = '/login';
       return null;
     }
 

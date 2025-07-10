@@ -1,63 +1,62 @@
-import api from "./api";
-import tokenManager from "./TokenManager";
+import api from './api';
 
 const AuthService = {
   // Register a new user
-  register: async (userData) => {
+  register: async userData => {
     try {
-      const response = await api.post("/auth/register", userData);
+      const response = await api.post('/auth/register', userData);
 
       if (response.status >= 200 && response.status < 300) {
         if (response.data.code === 201) {
           const { user, access_token, refresh_token } = response.data.data;
-          
+
           // Store tokens and user info
           AuthService.setTokens(access_token, refresh_token);
           AuthService.setUser(user);
-          
+
           // Start auto refresh timer
           AuthService.startAutoRefresh();
-          
+
           return response.data.data;
         } else {
-          throw new Error(response.data.message || "Failed to register user");
+          throw new Error(response.data.message || 'Failed to register user');
         }
       } else {
-        throw new Error(response.data?.message || "Failed to register user");
+        throw new Error(response.data?.message || 'Failed to register user');
       }
     } catch (error) {
-      console.error("Register Error:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to register user";
+      console.error('Register Error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to register user';
       throw new Error(errorMessage);
     }
   },
 
   // Login a user
-  login: async (credentials) => {
+  login: async credentials => {
     try {
-      const response = await api.post("/auth/login", credentials);
+      const response = await api.post('/auth/login', credentials);
 
       if (response.status >= 200 && response.status < 300) {
         if (response.data.code === 200) {
           const { user, access_token, refresh_token } = response.data.data;
-          
+
           // Store tokens and user info
           AuthService.setTokens(access_token, refresh_token);
           AuthService.setUser(user);
-          
+
           // Start auto refresh timer
           AuthService.startAutoRefresh();
-          
+
           return response.data.data;
         } else {
-          throw new Error(response.data.message || "Failed to login");
+          throw new Error(response.data.message || 'Failed to login');
         }
       } else {
-        throw new Error(response.data?.message || "Failed to login");
+        throw new Error(response.data?.message || 'Failed to login');
       }
     } catch (error) {
-      console.error("Login Error:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to login";
+      console.error('Login Error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to login';
       throw new Error(errorMessage);
     }
   },
@@ -66,9 +65,9 @@ const AuthService = {
   logout: async () => {
     try {
       // Call logout API to invalidate token on server
-      await api.post("/auth/logout");
+      await api.post('/auth/logout');
     } catch (error) {
-      console.error("Logout API error:", error);
+      console.error('Logout API error:', error);
       // Continue with local logout even if API fails
     } finally {
       // Clear local storage and stop auto refresh
@@ -78,61 +77,33 @@ const AuthService = {
 
   // Refresh token manually
   refreshToken: async () => {
-    // Kiểm tra nếu đang refresh thì không gọi lại
-    if (tokenManager.getIsRefreshing()) {
-      console.log('Token refresh already in progress, skipping...');
-      return;
-    }
-
     try {
-      tokenManager.setRefreshing(true);
       const refreshToken = localStorage.getItem('refresh_token');
-      
+
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
 
-      const response = await api.post("/auth/refresh", {
+      const response = await api.post('/auth/refresh', {
         refresh_token: refreshToken
       });
-      
+
       if (response.data.code === 200) {
         const { access_token, refresh_token } = response.data.data;
-        
+
         AuthService.setTokens(access_token, refresh_token);
-        
-        // Xử lý queue nếu có
-        tokenManager.processQueue(null, access_token);
-        
+
         return { access_token, refresh_token };
       } else {
-        throw new Error(response.data.message || "Failed to refresh token");
+        throw new Error(response.data.message || 'Failed to refresh token');
       }
     } catch (error) {
-      console.error("Refresh Token Error:", error);
-      
-      // Xử lý queue với lỗi
-      tokenManager.processQueue(error, null);
-      
+      console.error('Refresh Token Error:', error);
+
       // If refresh fails, clear auth and redirect to login
       AuthService.clearAuth();
-      
-      throw error;
-    } finally {
-      tokenManager.setRefreshing(false);
-    }
-  },
 
-  // Refresh token khi có request trong queue
-  refreshTokenIfNeeded: async () => {
-    // Kiểm tra nếu có request trong queue và chưa đang refresh
-    if (tokenManager.getQueue().length > 0 && !tokenManager.getIsRefreshing()) {
-      console.log('Requests in queue detected, triggering refresh...');
-      try {
-        await AuthService.refreshToken();
-      } catch (error) {
-        console.error('Failed to refresh token for queued requests:', error);
-      }
+      throw error;
     }
   },
 
@@ -140,7 +111,7 @@ const AuthService = {
   startAutoRefresh: () => {
     // Clear any existing timer
     AuthService.stopAutoRefresh();
-    
+
     const accessToken = AuthService.getAccessToken();
     if (!accessToken) return;
 
@@ -150,29 +121,25 @@ const AuthService = {
       const expirationTime = payload.exp * 1000; // Convert to milliseconds
       const currentTime = Date.now();
       const timeUntilExpiry = expirationTime - currentTime;
-      
+
       // Refresh token 5 minutes before expiry (or immediately if already expired)
-      const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 1000);
-      
+      const refreshTime = Math.max(timeUntilExpiry - 5 * 60 * 1000, 1000);
+
       console.log(`Token will be refreshed in ${Math.round(refreshTime / 1000)} seconds`);
-      
+
       AuthService.refreshTimer = setTimeout(async () => {
         try {
-          // Kiểm tra nếu đang refresh thì không gọi lại
-          if (!tokenManager.getIsRefreshing()) {
-            await AuthService.refreshToken();
-            // Start the timer again for the new token
-            AuthService.startAutoRefresh();
-          }
+          await AuthService.refreshToken();
+          // Start the timer again for the new token
+          AuthService.startAutoRefresh();
         } catch (error) {
-          console.error("Auto refresh failed:", error);
+          console.error('Auto refresh failed:', error);
           // Redirect to login if auto refresh fails
-          window.location.href = '/auth';
+          window.location.href = '/login';
         }
       }, refreshTime);
-      
     } catch (error) {
-      console.error("Error parsing token for auto refresh:", error);
+      console.error('Error parsing token for auto refresh:', error);
     }
   },
 
@@ -188,7 +155,7 @@ const AuthService = {
   initializeAuth: async () => {
     const accessToken = AuthService.getAccessToken();
     const refreshToken = AuthService.getRefreshToken();
-    
+
     if (!accessToken || !refreshToken) {
       return false;
     }
@@ -201,22 +168,19 @@ const AuthService = {
         AuthService.startAutoRefresh();
         return true;
       }
-    } catch (error) {
+    } catch {
       // Token might be expired, try to refresh
       try {
-        // Kiểm tra nếu đang refresh thì không gọi lại
-        if (!tokenManager.getIsRefreshing()) {
-          await AuthService.refreshToken();
-          AuthService.startAutoRefresh();
-          return true;
-        }
+        await AuthService.refreshToken();
+        AuthService.startAutoRefresh();
+        return true;
       } catch (refreshError) {
-        console.error("Token refresh failed during initialization:", refreshError);
+        console.error('Token refresh failed during initialization:', refreshError);
         AuthService.clearAuth();
         return false;
       }
     }
-    
+
     return false;
   },
 
@@ -226,7 +190,7 @@ const AuthService = {
     localStorage.setItem('refresh_token', refreshToken);
   },
 
-  setUser: (user) => {
+  setUser: user => {
     localStorage.setItem('user', JSON.stringify(user));
   },
 
@@ -234,7 +198,21 @@ const AuthService = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('profile_picture_url');
+    localStorage.removeItem('user_role');
     AuthService.stopAutoRefresh();
+  },
+
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+
+  isAuthenticated: () => {
+    const accessToken = localStorage.getItem('access_token');
+    const refreshToken = localStorage.getItem('refresh_token');
+    return !!(accessToken && refreshToken);
   },
 
   getAccessToken: () => {
@@ -245,13 +223,24 @@ const AuthService = {
     return localStorage.getItem('refresh_token');
   },
 
-  getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  },
+  // Check if token is about to expire (within 5 minutes)
+  isTokenNearExpiry: () => {
+    const accessToken = AuthService.getAccessToken();
+    if (!accessToken) return true;
 
-  // Export isRefreshing để interceptor có thể kiểm tra
-  getIsRefreshing: () => tokenManager.getIsRefreshing(),
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiry = expirationTime - currentTime;
+
+      // Return true if token expires within 5 minutes
+      return timeUntilExpiry < 5 * 60 * 1000;
+    } catch (error) {
+      console.error('Error checking token expiry:', error);
+      return true;
+    }
+  }
 };
 
 // Static property to hold the refresh timer

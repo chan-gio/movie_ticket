@@ -1,26 +1,28 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Input, Avatar } from "antd";
-import { UserOutlined, SearchOutlined, MenuOutlined } from "@ant-design/icons";
-import styles from "./Navbar.module.scss";
-import SelectCinemaModal from "../Modal/SelectCinemaModal";
-import { useSettingsContext } from "../../Context/SettingContext";
-import MovieService from "../../services/MovieService";
-import { toastError } from "../../utils/toastNotifier";
+import React, { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Input, Avatar, Button } from 'antd';
+import { UserOutlined, SearchOutlined, MenuOutlined } from '@ant-design/icons';
+import styles from './Navbar.module.scss';
+import SelectCinemaModal from '../Modal/SelectCinemaModal';
+import { useSettingsContext } from '../../Context/SettingContext';
+import MovieService from '../../services/MovieService';
+import { toastError } from '../../utils/toastNotifier';
 
 function Navbar() {
   const { settings, loading } = useSettingsContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || ""); // Local state for search input
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || ''); // Local state for search input
   const navigate = useNavigate();
   const url = localStorage.getItem('profile_picture_url');
-  
+  const userId = localStorage.getItem('user_id');
+  const isLoggedIn = !!userId;
+
   // Hamburger menu state
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Update local state on input change, don't update URL
-  const handleSearchInputChange = (e) => {
+  const handleSearchInputChange = e => {
     const value = e.target.value;
     setSearchQuery(value); // Only update local state
   };
@@ -29,10 +31,10 @@ function Navbar() {
   const handleSearch = async () => {
     // Update URL search params only when search is triggered
     setSearchParams(searchQuery ? { search: searchQuery } : {});
-    
-    if (searchQuery.trim() === "") {
-      navigate("/movies", {
-        state: { searchQuery: "", searchResults: null },
+
+    if (searchQuery.trim() === '') {
+      navigate('/movies', {
+        state: { searchQuery: '', searchResults: null }
       });
       return;
     }
@@ -40,13 +42,13 @@ function Navbar() {
       const response = await MovieService.searchByTitleFE({
         title: searchQuery,
         perPage: 20,
-        page: 1,
+        page: 1
       });
-      navigate("/movies", {
-        state: { searchQuery, searchResults: response },
+      navigate('/movies', {
+        state: { searchQuery, searchResults: response }
       });
     } catch (error) {
-      toastError(error.message || "Failed to search movies");
+      toastError(error.message || 'Failed to search movies');
     }
   };
 
@@ -57,11 +59,11 @@ function Navbar() {
   };
 
   const handleAvatarClick = () => {
-    navigate("/profile");
+    navigate('/profile');
     setMenuOpen(false); // Close menu in mobile view
   };
 
-  const handleCinemaClick = (e) => {
+  const handleCinemaClick = e => {
     e.preventDefault();
     setIsModalVisible(true);
   };
@@ -82,100 +84,50 @@ function Navbar() {
   return (
     <nav className={styles.navbar}>
       <div className={styles.navbarContainer}>
-        <button
-          className={styles.hamburger}
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label="Open menu"
-        >
+        <button className={styles.hamburger} onClick={() => setMenuOpen(open => !open)} aria-label="Open menu">
           <MenuOutlined />
         </button>
         <div className={styles.navbarLogo}>
           <Link to="/">
-            <img 
-              src={settings?.name || "https://via.placeholder.com/150x50?text=MovieLogo"} 
-              alt="Movie" 
-              style={{ opacity: loading ? 0.5 : 1 }}
-            />
+            <img src={settings?.name || 'https://via.placeholder.com/150x50?text=MovieLogo'} alt="Movie" style={{ opacity: loading ? 0.5 : 1 }} />
           </Link>
         </div>
-        <div className={`${styles.navLinks} ${menuOpen ? styles.open : ""}`}>
-          <Link
-            to="/movies"
-            className={styles.navLink}
-            onClick={handleNavLinkClick}
-          >
+        <div className={`${styles.navLinks} ${menuOpen ? styles.open : ''}`}>
+          <Link to="/movies" className={styles.navLink} onClick={handleNavLinkClick}>
             Movies
           </Link>
-          <Link
-            to="/cinemas"
-            className={styles.navLink}
-            onClick={handleCinemaClick}
-          >
+          <Link to="/cinemas" className={styles.navLink} onClick={handleCinemaClick}>
             Cinemas
           </Link>
-          {/* Search & Avatar in mobile menu */}
+          {/* Search & Avatar/Login in mobile menu */}
           <div className={styles.mobileMenuExtras}>
             <div className={styles.searchForm}>
-              <Input
-                placeholder="Search"
-                className={styles.searchInput}
-                suffix={
-                  <SearchOutlined
-                    className={styles.searchIcon}
-                    onClick={handleSearchButtonClick}
-                  />
-                }
-                value={searchQuery}
-                onChange={handleSearchInputChange}
-                onPressEnter={handleSearch}
-              />
+              <Input placeholder="Search" className={styles.searchInput} suffix={<SearchOutlined className={styles.searchIcon} onClick={handleSearchButtonClick} />} value={searchQuery} onChange={handleSearchInputChange} onPressEnter={handleSearch} />
             </div>
-            <Avatar
-              size={50}
-              src={
-                url ||
-                "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
-              }
-              icon={<UserOutlined />}
-              className={styles.userAvatar}
-              onClick={handleAvatarClick}
-            />
+            {isLoggedIn ? (
+              <Avatar size={50} src={url || 'https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg'} icon={<UserOutlined />} className={styles.userAvatar} onClick={handleAvatarClick} />
+            ) : (
+              <Button type="primary" onClick={() => navigate('/login')} className={styles.loginButton}>
+                Sign In / Sign Up
+              </Button>
+            )}
           </div>
         </div>
         {/* NavActions for desktop */}
         <div className={styles.navActions}>
           <div className={styles.searchForm}>
-            <Input
-              placeholder="Search"
-              className={styles.searchInput}
-              suffix={
-                <SearchOutlined
-                  className={styles.searchIcon}
-                  onClick={handleSearch}
-                />
-              }
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onPressEnter={handleSearch}
-            />
+            <Input placeholder="Search" className={styles.searchInput} suffix={<SearchOutlined className={styles.searchIcon} onClick={handleSearch} />} value={searchQuery} onChange={handleSearchInputChange} onPressEnter={handleSearch} />
           </div>
-          <Avatar
-            size={50}
-            src={
-              url ||
-              "https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg"
-            }
-            icon={<UserOutlined />}
-            className={styles.userAvatar}
-            onClick={handleAvatarClick}
-          />
+          {isLoggedIn ? (
+            <Avatar size={50} src={url || 'https://icon-library.com/images/default-user-icon/default-user-icon-4.jpg'} icon={<UserOutlined />} className={styles.userAvatar} onClick={handleAvatarClick} />
+          ) : (
+            <Button type="primary" onClick={() => navigate('/login')} className={styles.loginButton}>
+              Sign In / Sign Up
+            </Button>
+          )}
         </div>
       </div>
-      <SelectCinemaModal
-        visible={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      />
+      <SelectCinemaModal visible={isModalVisible} onOk={handleOk} onCancel={handleCancel} />
     </nav>
   );
 }

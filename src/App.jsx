@@ -40,14 +40,12 @@ function App() {
                         key={index}
                         path={route.path}
                         element={
-                          route.path.startsWith('/admin') ? (
+                          route.path.startsWith('/admin') || route.path === '/login' ? (
                             route.element
                           ) : (
                             <Layout className={styles.layout}>
                               <Navbar />
-                              <Content className={styles.content}>
-                                {route.element}
-                              </Content>
+                              <Content className={styles.content}>{route.element}</Content>
                               <Footer />
                             </Layout>
                           )
@@ -57,19 +55,7 @@ function App() {
                   </ReactRoutes>
                 </Suspense>
               </ErrorBoundary>
-              <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-                progressStyle={{ background: '#5f2eea' }}
-              />
+              <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" progressStyle={{ background: '#5f2eea' }} />
             </BookingTimerProvider>
           </AuthProvider>
         </BrowserRouter>

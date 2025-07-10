@@ -147,3 +147,40 @@
   font-size: 18px;
   color: #888;
 }
+
+// Tăng kích thước và đổi màu nút mũi tên slick-carousel
+:global(.slick-arrow) {
+  width: 48px !important;
+  height: 48px !important;
+  z-index: 2;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: #fff !important;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border: 2px solid #5f2eea;
+  transition: background 0.2s, border 0.2s;
+
+  &:before {
+    font-size: 32px !important;
+    color: #5f2eea !important;
+    opacity: 1 !important;
+  }
+
+  &:hover, &:focus {
+    background: #5f2eea !important;
+    border-color: #5f2eea;
+    &:before {
+      color: #fff !important;
+    }
+  }
+}
+
+// Đẩy nút ra ngoài một chút cho dễ bấm
+:global(.slick-prev) {
+  left: -28px !important;
+}
+:global(.slick-next) {
+  right: -28px !important;
+}
