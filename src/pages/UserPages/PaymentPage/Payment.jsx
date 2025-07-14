@@ -346,14 +346,23 @@ function Payment() {
 
       if (response && response.checkoutUrl) {
         clearTimer(bookingId);
-        window.location.href = response.checkoutUrl;
+        const url = response.checkoutUrl;
+        try {
+          const checkout = new URL(url, window.location.origin);
+          if (checkout.origin === window.location.origin) {
+            navigate(checkout.pathname + checkout.search + checkout.hash);
+          } else {
+            window.location.href = url;
+          }
+        } catch {
+          window.location.href = url;
+        }
       } else {
         throw new Error('Failed to create payment link: Invalid response structure');
       }
-    } catch (err) {
-      console.error('PayOS Service Error:', err.message);
-      toastError('Payment initiation failed. Please try again.');
-    } finally {
+    } catch (error) {
+      console.error('Payment error:', error);
+      toastError('Failed to create payment link. Please try again.');
       setLoading(false);
     }
   };

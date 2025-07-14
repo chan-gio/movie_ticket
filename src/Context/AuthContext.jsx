@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
 export const withAuth = WrappedComponent => {
   return function AuthenticatedComponent(props) {
     const { isAuthenticated, isLoading, isInitialized } = useAuthContext();
+    const navigate = require('react-router-dom').useNavigate();
 
     // Show loading while initializing
     if (!isInitialized || isLoading) {
@@ -34,7 +35,7 @@ export const withAuth = WrappedComponent => {
 
     // Redirect to login if not authenticated
     if (!isAuthenticated) {
-      window.location.href = '/login';
+      navigate('/login');
       return null;
     }
 

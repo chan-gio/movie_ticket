@@ -240,15 +240,15 @@ function SeatSelection() {
       </div>
 
       <Row gutter={[16, 16]} className={styles.mainContent}>
-        <Col xs={24} lg={16}>
+        <Col xs={24} lg={16} style={{ marginBottom: 16 }}>
           <Title level={3}>Choose Your Seat</Title>
           <Card className={styles.seatCard}>
             <div className={styles.screen}>
               <Paragraph className={styles.screenText}>Screen</Paragraph>
               <div className={styles.screenLine}></div>
             </div>
-            <div className={styles.seatGrid}>
-              <table>
+            <div className={styles.seatGrid} style={{ overflowX: 'auto', width: '100%' }}>
+              <table style={{ minWidth: 340 }}>
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row}>
@@ -285,6 +285,7 @@ function SeatSelection() {
                                 disabled={isBooked || seatType === 'UNAVAILABLE'}
                                 title={`${seatNumber}: ${isBooked ? 'Booked' : seatType}`}
                                 data-col={col}
+                                style={{ minWidth: 32, minHeight: 32, padding: 0 }}
                               >
                                 {col}
                               </Button>
@@ -308,38 +309,38 @@ function SeatSelection() {
             <Title level={4} className={styles.seatingKeyTitle}>
               Seating Key
             </Title>
-            <Row gutter={[16, 16]}>
-              <Col xs={12} sm={5}>
+            <Row gutter={[8, 8]}>
+              <Col xs={12} sm={5} style={{ marginBottom: 8 }}>
                 <Space>
                   <Tag className={styles.availableBox}></Tag>
                   <Paragraph>Standard</Paragraph>
                 </Space>
               </Col>
-              <Col xs={12} sm={5}>
+              <Col xs={12} sm={5} style={{ marginBottom: 8 }}>
                 <Space>
                   <Tag className={styles.vipBox}></Tag>
                   <Paragraph>VIP</Paragraph>
                 </Space>
               </Col>
-              <Col xs={12} sm={5}>
+              <Col xs={12} sm={5} style={{ marginBottom: 8 }}>
                 <Space>
                   <Tag className={styles.loveBox}></Tag>
                   <Paragraph>Couple</Paragraph>
                 </Space>
               </Col>
-              <Col xs={12} sm={5}>
+              <Col xs={12} sm={5} style={{ marginBottom: 8 }}>
                 <Space>
                   <Tag className={styles.selectBox}></Tag>
                   <Paragraph>Selected</Paragraph>
                 </Space>
               </Col>
-              <Col xs={12} sm={5}>
+              <Col xs={12} sm={5} style={{ marginBottom: 8 }}>
                 <Space>
                   <Tag className={styles.notAvailableBox}></Tag>
                   <Paragraph>Sold</Paragraph>
                 </Space>
               </Col>
-              <Col xs={12} sm={5}>
+              <Col xs={12} sm={5} style={{ marginBottom: 8 }}>
                 <Space>
                   <Tag className={styles.unavailableBox}></Tag>
                   <Paragraph>Unavailable</Paragraph>
@@ -347,8 +348,8 @@ function SeatSelection() {
               </Col>
             </Row>
           </Card>
-          <Row gutter={[16, 16]} className={styles.checkoutButtons}>
-            <Col xs={24} md={12}>
+          <Row gutter={[8, 8]} className={styles.checkoutButtons}>
+            <Col xs={24} md={12} style={{ marginBottom: 8 }}>
               <Button
                 block
                 className={styles.changeMovieButton}
@@ -358,7 +359,7 @@ function SeatSelection() {
                 Change your movie
               </Button>
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={12} style={{ marginBottom: 8 }}>
               <Button
                 type="primary"
                 block
@@ -373,7 +374,7 @@ function SeatSelection() {
           </Row>
         </Col>
 
-        <Col xs={24} lg={8}>
+        <Col xs={24} lg={8} style={{ marginBottom: 16 }}>
           <Title level={3}>Order Info</Title>
           <Card className={styles.orderCard}>
             <div className={styles.cinemaInfo}>

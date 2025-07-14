@@ -134,7 +134,11 @@ const AuthService = {
         } catch (error) {
           console.error('Auto refresh failed:', error);
           // Redirect to login if auto refresh fails
-          window.location.href = '/login';
+          if (typeof AuthService.onAuthFailNavigate === 'function') {
+            AuthService.onAuthFailNavigate();
+          } else {
+            window.location.assign('/login');
+          }
         }
       }, refreshTime);
     } catch (error) {

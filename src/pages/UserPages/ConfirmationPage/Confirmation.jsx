@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Typography, Button, Space, Skeleton, message } from 'antd';
 import { DownloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import JsBarcode from 'jsbarcode';
@@ -13,6 +13,7 @@ const { Title, Paragraph } = Typography;
 function Confirmation() {
   const { bookingId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [ticketInfo, setTicketInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -211,7 +212,7 @@ function Confirmation() {
           <Paragraph>
             There was an issue with your payment. Please try again or contact support.
           </Paragraph>
-          <Button type="primary" onClick={() => (window.location.href = `/payment/${bookingId}`)}>
+          <Button type="primary" onClick={() => navigate(`/payment/${bookingId}`)}>
             Retry Payment
           </Button>
         </Card>

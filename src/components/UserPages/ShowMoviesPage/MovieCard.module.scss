@@ -9,17 +9,15 @@
 
   @media (max-width: 991px) {
     min-width: 160px;
-    width: 100%;
+    width: 160px;
   }
-
   @media (max-width: 767px) {
     min-width: 140px;
-    width: 100%;
+    width: 140px;
   }
-
   @media (max-width: 575px) {
-    min-width: 100px;
-    width: 100%;
+    min-width: 120px;
+    width: 120px;
   }
 }
 
@@ -36,13 +34,11 @@
   @media (max-width: 991px) {
     height: 220px;
   }
-
   @media (max-width: 767px) {
-    height: 180px;
+    height: 160px;
   }
-
   @media (max-width: 575px) {
-    height: 140px;
+    height: 120px;
   }
 }
 
@@ -52,7 +48,12 @@
   margin: 10px 0 5px;
 
   @media (max-width: 767px) {
-    font-size: 16px;
+    font-size: 15px;
+    margin: 8px 0 4px;
+  }
+  @media (max-width: 575px) {
+    font-size: 13px;
+    margin: 6px 0 3px;
   }
 }
 
@@ -63,5 +64,10 @@
 
   @media (max-width: 767px) {
     font-size: 11px;
+    margin-bottom: 7px;
+  }
+  @media (max-width: 575px) {
+    font-size: 10px;
+    margin-bottom: 5px;
   }
 }
