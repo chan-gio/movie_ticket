@@ -5,7 +5,7 @@ function Admin({ children }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    navigate('/auth');
+    navigate('/login');
   };
 
   return (

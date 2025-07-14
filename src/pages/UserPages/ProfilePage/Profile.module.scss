@@ -178,3 +178,92 @@
       margin-bottom: 0;
     }
   }
+
+@media (max-width: 600px) {
+  .profile {
+    margin: 0;
+    padding: 8px 2px;
+    background: #f5f5f5;
+  }
+  .mainContent {
+    padding-bottom: 16px;
+  }
+  .infoCard, .accountCard, .detailCard, .orderCard {
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+  .profileImage {
+    width: 80px;
+    height: 80px;
+  }
+  .userName {
+    font-size: 18px;
+    margin-top: 6px;
+  }
+  .userRole, .infoLabel, .loyaltyLabel, .progressText, .orderDate {
+    font-size: 12px;
+  }
+  .loyaltyCard {
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .loyaltyTitle {
+    font-size: 15px;
+  }
+  .points {
+    font-size: 16px;
+  }
+  .pointsLabel {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+  .divider {
+    margin: 12px 0;
+  }
+  .tabContent {
+    min-height: 200px;
+    padding: 8px;
+  }
+  .alert {
+    margin-bottom: 10px;
+  }
+  .updateButton {
+    border-radius: 10px;
+    min-height: 40px;
+    font-size: 15px;
+  }
+  .cinemaLogo {
+    height: 28px;
+  }
+  .ticketStatus {
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .orderSelect {
+    width: 100px;
+    font-size: 13px;
+  }
+  :global {
+    .ant-form-item-label > label {
+      font-size: 13px;
+    }
+    .ant-input,
+    .ant-input-password {
+      min-height: 40px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .ant-tabs-nav {
+      margin-bottom: 0;
+    }
+    .ant-tabs-tab {
+      font-size: 14px;
+      padding: 6px 8px;
+    }
+  }
+}

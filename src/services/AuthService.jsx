@@ -125,7 +125,6 @@ const AuthService = {
       // Refresh token 5 minutes before expiry (or immediately if already expired)
       const refreshTime = Math.max(timeUntilExpiry - 5 * 60 * 1000, 1000);
 
-      console.log(`Token will be refreshed in ${Math.round(refreshTime / 1000)} seconds`);
 
       AuthService.refreshTimer = setTimeout(async () => {
         try {
@@ -161,15 +160,18 @@ const AuthService = {
     }
 
     try {
-      // Check if current token is valid by calling /me endpoint
-      const response = await api.get('/auth/me');
-      if (response.data.code === 200) {
-        // Token is valid, start auto refresh
-        AuthService.startAutoRefresh();
-        return true;
+      // Thử decode accessToken để kiểm tra hạn
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      if (expirationTime < currentTime) {
+        // Token đã hết hạn, thử refresh
+        await AuthService.refreshToken();
       }
-    } catch {
-      // Token might be expired, try to refresh
+      AuthService.startAutoRefresh();
+      return true;
+    } catch (error) {
+      // Nếu decode lỗi hoặc refresh lỗi thì clearAuth
       try {
         await AuthService.refreshToken();
         AuthService.startAutoRefresh();
@@ -180,8 +182,6 @@ const AuthService = {
         return false;
       }
     }
-
-    return false;
   },
 
   // Utility methods

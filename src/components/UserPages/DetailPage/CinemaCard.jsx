@@ -88,7 +88,7 @@ const CinemaCard = ({ cinema, address, showtimes, price, titleColor }) => {
   const handleBookNow = async () => {
     if (!isAuthenticated || !userId) {
       message.error("You need to log in to book a movie. Redirecting to login...");
-      navigate('/auth');
+      navigate('/login');
       return;
     }
 

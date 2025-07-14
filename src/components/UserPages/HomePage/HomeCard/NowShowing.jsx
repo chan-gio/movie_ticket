@@ -64,7 +64,7 @@ const NowShowing = () => {
                 responsive={[
                   { breakpoint: 991, settings: { slidesToShow: Math.min(nowShowingMovies.length, 4), arrows: true } },
                   { breakpoint: 767, settings: { slidesToShow: Math.min(nowShowingMovies.length, 3), arrows: true } },
-                  { breakpoint: 575, settings: { slidesToShow: Math.min(nowShowingMovies.length, 1), arrows: true } },
+                  { breakpoint: 575, settings: { slidesToShow: Math.min(nowShowingMovies.length, 2), arrows: true } },
                 ]}
               >
                 {nowShowingMovies.map((movie) => (

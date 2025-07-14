@@ -64,7 +64,7 @@ const UpcomingMovies = () => {
                 responsive={[
                   { breakpoint: 991, settings: { slidesToShow: Math.min(upcomingMovies.length, 4), arrows: true } },
                   { breakpoint: 767, settings: { slidesToShow: Math.min(upcomingMovies.length, 3), arrows: true } },
-                  { breakpoint: 575, settings: { slidesToShow: Math.min(upcomingMovies.length, 1), arrows: true } },
+                  { breakpoint: 575, settings: { slidesToShow: Math.min(upcomingMovies.length, 2), arrows: true } },
                 ]}
               >
                 {upcomingMovies.map((movie) => (

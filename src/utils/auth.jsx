@@ -16,7 +16,7 @@ const useAuth = ({ disableRedirect = false } = {}) => {
       setIsAuthenticated(false);
       setUserId(null);
       if (!disableRedirect) {
-        navigate('/auth');
+        navigate('/login');
       }
     }
   }, [navigate, disableRedirect]);

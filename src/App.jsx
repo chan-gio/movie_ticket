@@ -14,6 +14,7 @@ import Navbar from './components/NavBar/Navbar';
 import Footer from './components/Footer/Footer';
 import BookingTimer from './components/UserPages/BookingTimer/BookingTimer';
 import { AuthProvider } from './Context/AuthContext';
+import { LoadingOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
 
@@ -33,7 +34,12 @@ function App() {
             <BookingTimerProvider>
               <BookingTimer />
               <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <Suspense fallback={<div className={styles.loading}>Đang tải...</div>}>
+                <Suspense fallback={
+                  <div className={styles.loading} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '40vh'}}>
+                    <LoadingOutlined style={{ fontSize: 48, color: '#5f2eea', marginBottom: 16 }} spin />
+                    <span>Đang tải...</span>
+                  </div>
+                }>
                   <ReactRoutes>
                     {routeConfig.map((route, index) => (
                       <Route

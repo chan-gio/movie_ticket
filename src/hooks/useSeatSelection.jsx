@@ -287,7 +287,6 @@ export const useSeatSelection = (roomId, bookingId) => {
 
         if (isSelected) {
           newSeats = newSeats.filter((s) => s !== seatNumber && s !== pairSeat);
-          toastSuccess(`Seats ${seatNumber} and ${pairSeat} unselected`);
         } else {
           if (!newSeats.includes(seatNumber)) {
             newSeats.push(seatNumber);
@@ -295,15 +294,12 @@ export const useSeatSelection = (roomId, bookingId) => {
           if (!newSeats.includes(pairSeat)) {
             newSeats.push(pairSeat);
           }
-          toastSuccess(`Seats ${seatNumber} and ${pairSeat} selected`);
         }
       } else {
         if (isSelected) {
           newSeats = newSeats.filter((s) => s !== seatNumber);
-          toastSuccess(`Seat ${seatNumber} unselected`);
         } else {
           newSeats = [...newSeats, seatNumber];
-          toastSuccess(`Seat ${seatNumber} selected`);
         }
       }
 

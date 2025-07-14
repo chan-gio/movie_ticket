@@ -56,7 +56,6 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       // Thêm request vào queue và trigger refresh nếu cần
-      console.log('Adding request to queue, triggering refresh if needed');
       
       return new Promise((resolve, reject) => {
         tokenManager.addToQueue(resolve, reject);

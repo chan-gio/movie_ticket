@@ -121,3 +121,63 @@
     font-size: 14px;
   }
 }
+
+@media (max-width: 600px) {
+  .profile {
+    width: 100%;
+    margin: 0;
+    padding: 8px 2px;
+    background: #f5f5f5;
+  }
+  .accountCard, .detailCard, :global(.orderCard) {
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+  .tabContent {
+    min-height: 200px;
+    padding: 8px;
+  }
+  :global(.orderCard) {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 12px;
+    border-radius: 6px;
+  }
+  .orderDate {
+    font-size: 12px;
+  }
+  .cinemaLogo {
+    height: 28px;
+  }
+  .divider {
+    margin: 12px 0;
+  }
+  .ticketStatus {
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .orderSelect {
+    width: 100px;
+    font-size: 13px;
+  }
+  .pagination {
+    margin-top: 8px;
+    :global(.ant-pagination-item),
+    :global(.ant-pagination-prev),
+    :global(.ant-pagination-next) {
+      min-width: 24px;
+      height: 24px;
+      font-size: 13px;
+    }
+    :global(.ant-pagination-total-text) {
+      font-size: 12px;
+    }
+    :global(.ant-pagination-options) {
+      margin-left: 6px;
+    }
+  }
+}

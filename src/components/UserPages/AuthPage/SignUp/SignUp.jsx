@@ -59,7 +59,7 @@ const SignUp = ({ form, alert, setAlert, isLoading, handleSubmit }) => {
           </Button>
         </Form.Item>
         <p className={styles.linkText}>
-          Do you already have an account? <Link to="/auth">Log in</Link>
+          Do you already have an account? <Link to="/login">Log in</Link>
         </p>
       </Form>
       <div className={styles.divider}>

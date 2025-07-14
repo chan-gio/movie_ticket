@@ -340,31 +340,121 @@
 
 @media (max-width: 767px) {
   .seatSelection {
-    padding: 20px 10px;
+    padding: 10px 2px;
+    min-height: 100vh;
+  }
+
+  .secondaryNavbar {
+    padding: 8px 8px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    .ant-row {
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-start !important;
+    }
+    .movieTitle {
+      font-size: 16px !important;
+    }
+    .changeButton {
+      width: 100%;
+      margin-top: 8px;
+    }
+  }
+
+  .mainContent {
+    margin-bottom: 20px;
+    flex-direction: column !important;
+    gap: 0 !important;
   }
 
   .seatCard, .orderCard {
-    padding: 16px;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
 
-  .seatGrid table {
-    border-spacing: 6px;
+  .seatGrid {
+    overflow-x: auto;
+    width: 100%;
+    margin-bottom: 16px;
+    table {
+      min-width: 340px;
+      border-spacing: 4px;
+    }
   }
 
-  .seat {
-    width: 36px;
-    height: 36px;
+  .rowLabel, .colLabel {
     font-size: 12px;
   }
 
+  .seat {
+    width: 32px;
+    height: 32px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
   .emptySeat {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .seatingKeyTitle {
+    margin: 16px 0 10px;
+    font-size: 15px;
+  }
+
+  .availableBox, .selectBox, .vipBox, .loveBox, .notAvailableBox, .unavailableBox {
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
   }
 
   .checkoutButtons {
+    margin-top: 12px;
     .ant-col {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
+    .changeMovieButton, .checkoutButton {
+      font-size: 14px;
+      height: 40px;
+      border-radius: 8px;
+    }
+  }
+
+  .cinemaInfo {
+    margin-bottom: 10px;
+    .cinemaLogo {
+      height: 28px;
+    }
+    h4 {
+      font-size: 15px;
+    }
+  }
+
+  .label, .value {
+    font-size: 12px;
+  }
+  .totalLabel {
+    font-size: 14px;
+  }
+  .totalValue {
+    font-size: 17px;
+  }
+  .divider {
+    margin: 10px 0;
+  }
+
+  // Stack order info below seat selection
+  .ant-col-xs-24.ant-col-lg-8 {
+    order: 2;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .ant-col-xs-24.ant-col-lg-16 {
+    order: 1;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }

@@ -10,6 +10,11 @@
   @media (max-width: 768px) {
     padding: 30px 20px 20px;
   }
+
+  @media (max-width: 480px) {
+    padding: 16px 4px 10px;
+    font-size: 15px;
+  }
 }
 
 .waves {
@@ -116,6 +121,16 @@
       height: 80px;
     }
   }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 18px;
+    img {
+      height: 48px;
+      max-width: 90vw;
+    }
+  }
 }
 
 .searchBar {
@@ -163,6 +178,13 @@
   @media (max-width: 768px) {
     margin-top: 10px;
   }
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    a {
+      font-size: 20px;
+    }
+  }
 }
 
 .divider {
@@ -171,6 +193,11 @@
   height: 1px;
   background: rgba(255, 255, 255, 0.2);
   margin: 20px 0;
+
+  @media (max-width: 480px) {
+    margin: 12px 0;
+    height: 0.5px;
+  }
 }
 
 .footerLinks {
@@ -231,10 +258,19 @@
 
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 12px;
     
     .linkColumn {
       width: 100%;
+      margin-bottom: 0;
+      text-align: center;
+      h4 {
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+      ul li a {
+        font-size: 13px;
+      }
     }
   }
 }

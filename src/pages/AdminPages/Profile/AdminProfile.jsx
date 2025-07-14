@@ -48,7 +48,7 @@ function AdminProfile() {
         </Col>
         <Col xs={24} lg={16}>
           <Card className={styles.card}>
-            <Form layout="vertical" onFinish={(values) => console.log('Profile updated:', values)}>
+            <Form layout="vertical">
               <Form.Item label="Name" name="name" initialValue={adminProfile.name}>
                 <Input placeholder="Admin User" />
               </Form.Item>

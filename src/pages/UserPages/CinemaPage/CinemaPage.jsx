@@ -92,14 +92,12 @@ function CinemaPage() {
     e.stopPropagation(); // Ngăn sự kiện lan truyền
 
     if (loading) {
-      console.log("Click ignored: loading is true");
       return;
     }
 
     if (!isAuthenticated || !userId) {
-      console.log("Authentication failed: redirecting to /auth");
       message.error("You need to log in to book a movie. Redirecting to login...");
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 
@@ -121,7 +119,6 @@ function CinemaPage() {
 
     try {
       setLoading(true);
-      console.log("Creating booking with:", bookingData);
       const response = await BookingService.createBooking(bookingData);
       const bookingId = response.booking_id;
       if (!bookingId) {
@@ -129,7 +126,6 @@ function CinemaPage() {
       }
 
       const path = `/seats/${timeObj.roomId}/${bookingId}`;
-      console.log("Navigating to:", path);
       startTimer(bookingId, "SeatSelection", {
         selectedDate: dates.find((d) => d.format("D/M") === activeTab).format("YYYY-MM-DD"),
         selectedTime: timeObj.time,

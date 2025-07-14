@@ -19,30 +19,22 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('settings'); // Controlled tab state
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
-  console.log('AuthContext:', authContext);
-  console.log('Logout function:', logout);
-
   // Left section: User data for InfoCard
   const { data: userData, isLoading: isUserLoading, error: userError } = useUserData(userId);
   const invalidateUserData = useInvalidateUserData();
 
   const handleSignOut = () => {
-    console.log('Logout button clicked');
     setLogoutModalVisible(true);
   };
 
   const handleLogoutConfirm = () => {
-    console.log('User confirmed logout');
-
     // Xóa dữ liệu ngay lập tức
-    console.log('Clearing all data...');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('user_id');
     localStorage.removeItem('profile_picture_url');
     localStorage.removeItem('user_role');
-    console.log('All data cleared');
 
     // Đóng modal
     setLogoutModalVisible(false);
@@ -55,7 +47,6 @@ const Profile = () => {
   };
 
   const handleLogoutCancel = () => {
-    console.log('User cancelled logout');
     setLogoutModalVisible(false);
   };
 

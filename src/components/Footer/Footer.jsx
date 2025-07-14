@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Link } from "react-router-dom"; // Added Link import
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import styles from "./Footer.module.scss";
 import waveImg from "/assets/wave.png";
 import {
@@ -12,6 +12,7 @@ import { useSettingsContext } from "../../Context/SettingContext"; // Updated im
 
 const Footer = () => {
   const { settings, loading } = useSettingsContext(); // Updated hook usage
+  const navigate = useNavigate(); // Add navigate hook
 
   useEffect(() => {
     const navbar = document.querySelector(".navbar");
@@ -88,27 +89,10 @@ const Footer = () => {
             <h4>PHIM</h4>
             <ul>
               <li>
-                <a href="#">Phim đang chiếu</a>
+                <span onClick={() => navigate('/movies')} style={{cursor: 'pointer'}}>Phim đang chiếu</span>
               </li>
               <li>
-                <a href="#">Phim sắp chiếu</a>
-              </li>
-              <li>
-                <a href="#">Suất chiếu đặc biệt</a>
-              </li>
-            </ul>
-          </div>
-          <div className={styles.linkColumn}>
-            <h4>RẠP</h4>
-            <ul>
-              <li>
-                <a href="#">Hệ thống rạp</a>
-              </li>
-              <li>
-                <a href="#">Rạp gần bạn</a>
-              </li>
-              <li>
-                <a href="#">Khuyến mãi</a>
+                <span onClick={() => navigate('/movies')} style={{cursor: 'pointer'}}>Phim sắp chiếu</span>
               </li>
             </ul>
           </div>
@@ -116,13 +100,7 @@ const Footer = () => {
             <h4>THÀNH VIÊN</h4>
             <ul>
               <li>
-                <a href="#">Tài khoản</a>
-              </li>
-              <li>
-                <a href="#">Điểm thưởng</a>
-              </li>
-              <li>
-                <a href="#">Lịch sử đặt vé</a>
+                <span onClick={() => navigate('/profile')} style={{cursor: 'pointer'}}>Tài khoản</span>
               </li>
             </ul>
           </div>
@@ -130,11 +108,19 @@ const Footer = () => {
             <h4>HỖ TRỢ</h4>
             <ul>
               <li>
-                <a href="#">Liên hệ</a>
+                <span style={{cursor: 'pointer'}}>Liên hệ</span>
               </li>
               <li>
-                <a href="#">Câu hỏi thường gặp</a>
+                <span style={{cursor: 'pointer'}}>Câu hỏi thường gặp</span>
               </li>
+            </ul>
+          </div>
+          <div className={styles.linkColumn}>
+            <h4>Chăm sóc khách hàng</h4>
+            <ul>
+              <li>Hotline: 0913963203</li>
+              <li>Giờ làm việc: 8:00 - 22:00 (Tất cả các ngày bao gồm cả Lễ Tết)</li>
+              <li>Email hỗ trợ: <a href="mailto:manhduc889@gmail.com" style={{color: '#D1D5DB'}}>manhduc889@gmail.com</a></li>
             </ul>
           </div>
         </div>

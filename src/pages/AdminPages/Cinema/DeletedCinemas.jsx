@@ -79,7 +79,6 @@ function DeletedCinemas() {
       }
 
       // Log response for debugging
-      console.log("API Response:", response);
 
       // Extract cinema data and pagination info
       const cinemaData = response.data || [];
@@ -124,7 +123,6 @@ function DeletedCinemas() {
       });
     } finally {
       setLoading(false);
-      console.log("Cinemas state:", cinemas);
     }
   }, [searchTerm, searchType, pagination.current, pagination.pageSize]);
 
