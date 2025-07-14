@@ -56,7 +56,7 @@ const NowShowing = () => {
             ) : (
               <Carousel
                 arrows
-                slidesToShow={Math.min(nowShowingMovies.length, 5)}
+                slidesToShow={Math.min(nowShowingMovies.length, 4)}
                 slidesToScroll={1}
                 draggable
                 dots

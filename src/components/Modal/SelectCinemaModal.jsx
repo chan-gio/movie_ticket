@@ -180,12 +180,6 @@ function SelectCinemaModal({ visible, onOk, onCancel }) {
                   className={styles.cinemaItem}
                   onClick={() => handleCinemaClick(cinema)}
                 >
-                  <div className={styles.cinemaImage}>
-                    <img
-                      src="https://via.placeholder.com/50"
-                      alt="Cinema"
-                    />
-                  </div>
                   <div className={styles.cinemaInfo}>
                     <div className={styles.cinemaName}>{cinema.name}</div>
                     <div className={styles.cinemaAddress}>{cinema.address}</div>

@@ -7,6 +7,7 @@ import useAuth from "../../../utils/auth";
 import { useBookingTimer } from "../../../Context/BookingTimerContext";
 import styles from "./CinemaPage.module.scss";
 import moment from "moment";
+import { useSettingsContext } from "../../../Context/SettingContext";
 
 const { TabPane } = Tabs;
 
@@ -19,6 +20,7 @@ function CinemaPage() {
   const [moviesByDate, setMoviesByDate] = useState({});
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(moment().format("D/M"));
+  const { settings } = useSettingsContext();
 
   // Tạo danh sách 7 ngày từ hôm nay
   const dates = Array.from({ length: 7 }, (_, i) =>
@@ -60,7 +62,7 @@ function CinemaPage() {
           movies[movieId] = {
             id: movieId,
             title: showtime.movie.title,
-            type: "2D Phụ Đề Việt", // Giả định, thay bằng dữ liệu thực nếu có
+            type: "2D Phụ Đề Việt",
             times: [],
           };
         }
@@ -159,7 +161,7 @@ function CinemaPage() {
         <div className={styles.cinemaInfo}>
           <div className={styles.cinemaHeader}>
             <img
-              src={`https://play-lh.googleusercontent.com/nxo4BC4BQ5hXuNi-UCdPM5kC0uZH1lq7bglINlWNUA_v8yMfHHOtTjhLTvo5NDjVeqx-?text=Cinema`}
+              src={settings?.name || `https://play-lh.googleusercontent.com/nxo4BC4BQ5hXuNi-UCdPM5kC0uZH1lq7bglINlWNUA_v8yMfHHOtTjhLTvo5NDjVeqx-?text=Cinema`}
               alt="Cinema"
               className={styles.cinemaLogo}
             />
