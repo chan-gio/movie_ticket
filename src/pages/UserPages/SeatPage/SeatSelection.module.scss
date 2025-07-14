@@ -2,19 +2,27 @@
   padding: 40px 20px;
   background-color: #f5f5f5;
   min-height: 100vh;
+  
 }
 
 .secondaryNavbar {
   background-color: #5f2eea;
-  padding: 10px 20px;
+  padding: 16px 20px;
   color: white;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 24px;
+  
+  .ant-row {
+    align-items: center;
+    gap: 16px;
+  }
 }
 
 .movieTitle {
   color: white !important;
   margin: 0;
+  font-size: clamp(16px, 4vw, 24px);
+  line-height: 1.2;
 }
 
 .changeButton {
@@ -24,6 +32,8 @@
   color: #14142b;
   height: 40px;
   font-size: 14px;
+  white-space: nowrap;
+  min-width: 100px;
 
   &:hover {
     background-color: #c0c0c0;
@@ -33,6 +43,15 @@
 
 .mainContent {
   margin-bottom: 40px;
+  
+  .ant-row {
+    margin: 0 -8px;
+    
+    > .ant-col {
+      padding: 0 8px;
+      margin-bottom: 16px;
+    }
+  }
 }
 
 .seatCard {
@@ -40,11 +59,12 @@
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
-  padding: 24px;
+  padding: clamp(16px, 3vw, 24px);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-
+  width: 100%;
+  
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   }
 }
@@ -58,13 +78,13 @@
 
 .screenText {
   margin: 0;
-  font-size: 16px;
+  font-size: clamp(14px, 2.5vw, 16px);
   font-weight: 600;
   color: #6b7280;
 }
 
 .screenLine {
-  width: 80%;
+  width: min(80%, 400px);
   height: 4px;
   background-color: #d9d9d9;
   margin-top: 8px;
@@ -75,34 +95,71 @@
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
+  overflow-x: auto;
+  width: 100%;
+  padding: 8px 0;
+  
+  // Smooth scrolling
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
 
   table {
     border-collapse: separate;
-    border-spacing: 8px;
+    border-spacing: clamp(4px, 1vw, 8px);
+    min-width: fit-content;
   }
 }
 
 .rowLabel, .colLabel {
   text-align: center;
-  font-size: 14px;
+  font-size: clamp(12px, 2vw, 14px);
   font-weight: 600;
   color: #6b7280;
+  min-width: 24px;
 }
 
 .seat {
-  width: 40px;
-  height: 40px;
+  width: clamp(28px, 6vw, 40px);
+  height: clamp(28px, 6vw, 40px);
   padding: 0;
-  border-radius: 8px;
+  border-radius: clamp(4px, 1vw, 8px);
   background-color: #e5e7eb;
   color: #14142b;
   border: none;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+  font-size: clamp(10px, 2vw, 14px);
+  transition: all 0.3s ease;
   position: relative;
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: unset;
+  
   &:hover {
     background-color: #d1d5db;
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 }
 
@@ -118,11 +175,12 @@
     content: "";
     position: absolute;
     top: 50%;
-    right: -8px; // Matches table border-spacing
-    width: 8px;
-    height: 14px;
+    right: calc(-1 * clamp(4px, 1vw, 8px));
+    width: clamp(4px, 1vw, 8px);
+    height: 60%;
     background-color: #ff69b4;
     transform: translateY(-50%);
+    border-radius: 0 2px 2px 0;
   }
 
   &:hover::after {
@@ -135,11 +193,12 @@
     content: "";
     position: absolute;
     top: 50%;
-    left: -8px; // Matches table border-spacing
-    width: 8px;
-    height: 4px;
+    left: calc(-1 * clamp(4px, 1vw, 8px));
+    width: clamp(4px, 1vw, 8px);
+    height: 20%;
     background-color: #ff69b4;
     transform: translateY(-50%);
+    border-radius: 2px 0 0 2px;
   }
 
   &:hover::after {
@@ -161,13 +220,6 @@
   }
 }
 
-.seatCouple {
-  background-color: #ff69b4;
-  &:hover {
-    background-color: #ff4f99;
-  }
-}
-
 .seatSelected {
   background-color: #a0f0a0 !important;
   &:hover {
@@ -177,8 +229,10 @@
 
 .seatNotAvailable {
   background-color: #4eb4eb;
+  cursor: not-allowed;
   &:hover {
-    background-color: #c0c0c0;
+    background-color: #4eb4eb;
+    transform: none;
   }
 }
 
@@ -188,94 +242,108 @@
   color: #ffffff;
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.unavailableBox {
-  background-color: #a4a4a4;
-  width: 30px;
-  height: 30px;
-  border: 1px solid #8c8c8c;
+  
+  &:hover {
+    background-color: #a4a4a4 !important;
+    transform: none;
+  }
 }
 
 .emptySeat {
   display: inline-block;
-  width: 40px;
-  height: 40px;
+  width: clamp(28px, 6vw, 40px);
+  height: clamp(28px, 6vw, 40px);
 }
 
 .seatingKeyTitle {
   margin: 24px 0 16px;
   color: #14142b;
+  font-size: clamp(16px, 3vw, 20px);
+}
+
+// Seating key boxes with responsive sizing
+.availableBox, .selectBox, .vipBox, .loveBox, .notAvailableBox, .unavailableBox {
+  width: clamp(20px, 4vw, 30px);
+  height: clamp(20px, 4vw, 30px);
+  border: none;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .availableBox {
-  width: 30px;
-  height: 30px;
   background-color: #e5e7eb;
-  border: none;
-  border-radius: 4px;
 }
 
 .selectBox {
-  width: 30px;
-  height: 30px;
   background-color: #a0f0a0;
-  border: none;
-  border-radius: 4px;
 }
 
 .vipBox {
-  width: 30px;
-  height: 30px;
   background-color: #ffd700;
-  border: none;
-  border-radius: 4px;
 }
 
 .loveBox {
-  width: 30px;
-  height: 30px;
   background-color: #ff69b4;
-  border: none;
-  border-radius: 4px;
 }
 
 .notAvailableBox {
-  width: 30px;
-  height: 30px;
   background-color: #4eb4eb;
-  border: none;
-  border-radius: 4px;
+}
+
+.unavailableBox {
+  background-color: #a4a4a4;
+  border: 1px solid #8c8c8c;
 }
 
 .checkoutButtons {
   margin-top: 24px;
+  
+  .ant-row {
+    gap: 8px;
+    
+    > .ant-col {
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.changeMovieButton, .checkoutButton {
+  border-radius: 12px;
+  height: clamp(40px, 8vw, 48px);
+  font-size: clamp(14px, 2.5vw, 16px);
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .changeMovieButton {
-  border-radius: 12px;
   background-color: #d9d9d9;
   border-color: #d9d9d9;
   color: #14142b;
-  height: 48px;
-  font-size: 16px;
 
   &:hover {
     background-color: #c0c0c0;
     border-color: #c0c0c0;
+    transform: translateY(-1px);
   }
 }
 
 .checkoutButton {
-  border-radius: 12px;
   background-color: #5f2eea;
   border-color: #5f2eea;
-  height: 48px;
-  font-size: 16px;
 
   &:hover {
     background-color: #3f1dc7;
     border-color: #3f1dc7;
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    &:hover {
+      transform: none;
+    }
   }
 }
 
@@ -284,11 +352,12 @@
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
-  padding: 24px;
+  padding: clamp(16px, 3vw, 24px);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-
+  width: 100%;
+  
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   }
 }
@@ -296,26 +365,34 @@
 .cinemaInfo {
   text-align: center;
   margin-bottom: 20px;
+  
+  h4 {
+    margin-top: 12px;
+    font-size: clamp(16px, 3vw, 20px);
+  }
 }
 
 .cinemaLogo {
-  height: 250px;
+  height: clamp(150px, 25vw, 250px);
   width: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .label {
-  font-size: 14px;
+  font-size: clamp(12px, 2.5vw, 14px);
   color: #6b7280;
   margin: 0;
   font-weight: 600;
 }
 
 .value {
-  font-size: 14px;
+  font-size: clamp(12px, 2.5vw, 14px);
   font-weight: 500;
   text-align: right;
   margin: 0;
   color: #14142b;
+  word-break: break-word;
 }
 
 .divider {
@@ -324,137 +401,276 @@
 }
 
 .totalLabel {
-  font-size: 16px;
+  font-size: clamp(14px, 3vw, 16px);
   font-weight: 600;
   color: #14142b;
   margin: 0;
 }
 
 .totalValue {
-  font-size: 21px;
+  font-size: clamp(16px, 4vw, 21px);
   font-weight: bold;
   color: #5f2eea;
   text-align: right;
   margin: 0;
 }
 
-@media (max-width: 767px) {
+// Responsive breakpoints
+@media (max-width: 480px) {
   .seatSelection {
-    padding: 10px 2px;
-    min-height: 100vh;
+    padding: 16px 8px;
   }
-
+  
   .secondaryNavbar {
-    padding: 8px 8px;
-    border-radius: 8px;
-    margin-bottom: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    
     .ant-row {
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
       align-items: flex-start !important;
     }
-    .movieTitle {
-      font-size: 16px !important;
-    }
+    
     .changeButton {
       width: 100%;
       margin-top: 8px;
     }
   }
-
+  
   .mainContent {
     margin-bottom: 20px;
-    flex-direction: column !important;
-    gap: 0 !important;
-  }
-
-  .seatCard, .orderCard {
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
-
-  .seatGrid {
-    overflow-x: auto;
-    width: 100%;
-    margin-bottom: 16px;
-    table {
-      min-width: 340px;
-      border-spacing: 4px;
+    
+    .ant-row {
+      flex-direction: column !important;
+      
+      > .ant-col {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
     }
   }
-
-  .rowLabel, .colLabel {
-    font-size: 12px;
+  
+  .seatGrid {
+    margin-bottom: 16px;
+    
+    table {
+      min-width: 320px;
+    }
   }
+  
+  .checkoutButtons {
+    margin-top: 16px;
+  }
+  
+  // Seating key responsive layout
+  .ant-row {
+    .ant-col {
+      &.ant-col-xs-12 {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+    }
+  }
+}
 
+@media (min-width: 481px) and (max-width: 768px) {
+  .seatSelection {
+    padding: 24px 12px;
+  }
+  
+  .secondaryNavbar {
+    padding: 14px 18px;
+    
+    .ant-row {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+  }
+  
+  .mainContent {
+    .ant-row {
+      > .ant-col {
+        &.ant-col-lg-16 {
+          flex: 0 0 100%;
+          max-width: 100%;
+          order: 1;
+        }
+        
+        &.ant-col-lg-8 {
+          flex: 0 0 100%;
+          max-width: 100%;
+          order: 2;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .seatSelection {
+    padding: 32px 16px;
+  }
+  
+  .mainContent {
+    .ant-row {
+      > .ant-col {
+        &.ant-col-lg-16 {
+          flex: 0 0 60%;
+          max-width: 60%;
+        }
+        
+        &.ant-col-lg-8 {
+          flex: 0 0 40%;
+          max-width: 40%;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 1025px) {
+  .seatSelection {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .mainContent {
+    .ant-row {
+      > .ant-col {
+        &.ant-col-lg-16 {
+          flex: 0 0 66.666667%;
+          max-width: 66.666667%;
+        }
+        
+        &.ant-col-lg-8 {
+          flex: 0 0 33.333333%;
+          max-width: 33.333333%;
+        }
+      }
+    }
+  }
+}
+
+// Ultra-wide screens
+@media (min-width: 1400px) {
+  .seatSelection {
+    max-width: 1400px;
+    padding: 40px 24px;
+  }
+  
+  .seatCard, .orderCard {
+    padding: 32px;
+  }
+}
+
+// High DPI screens
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .seat {
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .seatCard, .orderCard {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Landscape orientation on mobile
+@media (max-width: 768px) and (orientation: landscape) {
+  .seatSelection {
+    padding: 16px 8px;
+  }
+  
+  .secondaryNavbar {
+    padding: 8px 16px;
+    margin-bottom: 12px;
+    
+    .ant-row {
+      flex-direction: row;
+      align-items: center !important;
+    }
+    
+    .changeButton {
+      width: auto;
+      margin-top: 0;
+    }
+  }
+  
+  .mainContent {
+    .ant-row {
+      flex-direction: row !important;
+      
+      > .ant-col {
+        &.ant-col-lg-16 {
+          flex: 0 0 65%;
+          max-width: 65%;
+        }
+        
+        &.ant-col-lg-8 {
+          flex: 0 0 35%;
+          max-width: 35%;
+        }
+      }
+    }
+  }
+  
+  .cinemaLogo {
+    height: clamp(120px, 20vw, 180px);
+  }
+}
+
+// Container queries support (modern browsers)
+@container (max-width: 600px) {
+  .seatGrid table {
+    border-spacing: 4px;
+  }
+  
   .seat {
     width: 32px;
     height: 32px;
     font-size: 11px;
-    border-radius: 6px;
   }
+  
   .emptySeat {
     width: 32px;
     height: 32px;
   }
+}
 
-  .seatingKeyTitle {
-    margin: 16px 0 10px;
-    font-size: 15px;
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .seat, .seatCard, .orderCard, .changeMovieButton, .checkoutButton {
+    transition: none;
   }
+  
+  .seat:hover, .seatCard:hover, .orderCard:hover {
+    transform: none;
+  }
+}
 
-  .availableBox, .selectBox, .vipBox, .loveBox, .notAvailableBox, .unavailableBox {
-    width: 22px;
-    height: 22px;
-    border-radius: 3px;
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .seatSelection {
+    background-color: #1a1a1a;
   }
-
-  .checkoutButtons {
-    margin-top: 12px;
-    .ant-col {
-      margin-bottom: 8px;
-    }
-    .changeMovieButton, .checkoutButton {
-      font-size: 14px;
-      height: 40px;
-      border-radius: 8px;
-    }
+  
+  .seatCard, .orderCard {
+    background-color: #2a2a2a;
+    color: #ffffff;
   }
-
-  .cinemaInfo {
-    margin-bottom: 10px;
-    .cinemaLogo {
-      height: 250px;
-    }
-    h4 {
-      font-size: 15px;
-    }
+  
+  .label {
+    color: #a0a0a0;
   }
-
-  .label, .value {
-    font-size: 12px;
+  
+  .value {
+    color: #ffffff;
   }
-  .totalLabel {
-    font-size: 14px;
+  
+  .screenText {
+    color: #a0a0a0;
   }
-  .totalValue {
-    font-size: 17px;
-  }
-  .divider {
-    margin: 10px 0;
-  }
-
-  // Stack order info below seat selection
-  .ant-col-xs-24.ant-col-lg-8 {
-    order: 2;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  .ant-col-xs-24.ant-col-lg-16 {
-    order: 1;
-    width: 100% !important;
-    max-width: 100% !important;
+  
+  .rowLabel, .colLabel {
+    color: #a0a0a0;
   }
 }
