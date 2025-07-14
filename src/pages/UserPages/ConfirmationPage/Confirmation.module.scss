@@ -1,11 +1,14 @@
 .confirmation {
   margin: 0 auto;
   padding: 40px 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .mainCard {
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
 }
 
 .title {
@@ -19,6 +22,8 @@
   background-color: #f5f5f5;
   border-radius: 14px;
   padding: 20px;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .headerInfo {
@@ -28,6 +33,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  max-width: 100%;
 }
 
 .headerPrint {
@@ -46,6 +52,8 @@
 
 .ticketBody {
   padding: 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .info {
@@ -59,6 +67,8 @@
   font-weight: 600;
   color: #14142b;
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .infoValuePrice {
@@ -66,6 +76,8 @@
   font-weight: 700;
   color: #14142b;
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .leftTicket {
@@ -74,6 +86,7 @@
   border-left: 2px dashed #dadde6;
   border-bottom: 2px dashed #dadde6;
   border-radius: 15px;
+  max-width: 100%;
 
   &::before {
     content: '';
@@ -96,17 +109,23 @@
 .barcodeContainer {
   margin-top: 20px;
   display: flex;
-  justify-content: center; /* Center the single barcode */
+  justify-content: center;
   align-items: center;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-
+.barcode {
+  max-width: 100%;
+  height: auto;
+}
 
 .buttons {
   display: flex;
   justify-content: center;
   margin-top: 20px;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .actionButton {
@@ -116,13 +135,63 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  max-width: 200px;
+  min-width: 120px;
 }
 
+/* Tablet styles */
+@media (max-width: 992px) {
+  .confirmation {
+    padding: 20px 15px;
+  }
+  
+  .ticketCard {
+    padding: 15px;
+  }
+  
+  .ticketBody {
+    padding: 15px;
+  }
+}
+
+/* Mobile styles */
 @media (max-width: 767px) {
+  .confirmation {
+    padding: 20px 10px;
+  }
+  
+  .mainCard {
+    margin: 0 5px;
+  }
+  
+  .title {
+    font-size: 18px;
+  }
+  
+  .ticketCard {
+    padding: 10px;
+  }
+  
+  .ticketBody {
+    padding: 10px;
+  }
+  
+  .headerInfo {
+    border-radius: 14px 14px 0 0;
+    padding: 8px;
+    
+    svg {
+      width: 100px;
+      height: 39px;
+    }
+  }
+  
   .leftTicket {
     border-right: none;
     border-bottom: 2px dashed #dadde6;
     margin-bottom: 20px;
+    border-radius: 15px;
 
     &::before,
     &::after {
@@ -130,20 +199,94 @@
     }
   }
 
-  .ticketCard {
-    padding: 10px;
-  }
-
   .barcodeContainer {
-    justify-content: center; /* Ensure centering on mobile */
+    justify-content: center;
+    margin-top: 15px;
   }
-
-  :global(.barcode) {
-    width: auto !important;
+  
+  .barcode {
+    max-width: 90%;
+    height: auto;
+  }
+  
+  .info {
+    font-size: 12px;
+  }
+  
+  .infoValue {
+    font-size: 14px;
+  }
+  
+  .infoValuePrice {
+    font-size: 18px;
+  }
+  
+  .buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .actionButton {
+    width: 100%;
+    max-width: none;
+    justify-content: center;
   }
 }
 
-:global(.ant-col-md-16){
+/* Small mobile styles */
+@media (max-width: 480px) {
+  .confirmation {
+    padding: 15px 5px;
+  }
+  
+  .title {
+    font-size: 16px;
+  }
+  
+  .ticketCard {
+    padding: 8px;
+  }
+  
+  .ticketBody {
+    padding: 8px;
+  }
+  
+  .headerInfo {
+    padding: 6px;
+    
+    svg {
+      width: 80px;
+      height: 31px;
+    }
+  }
+  
+  .info {
+    font-size: 11px;
+  }
+  
+  .infoValue {
+    font-size: 13px;
+  }
+  
+  .infoValuePrice {
+    font-size: 16px;
+  }
+}
+
+/* Global overrides */
+:global(.ant-col-md-16) {
   max-width: none !important;
   flex: none;
+}
+
+:global(.ant-card) {
+  max-width: 100% !important;
+}
+
+:global(.ant-row) {
+  max-width: 100% !important;
+}
+
+:global(.ant-col) {
+  max-width: 100% !important;
 }

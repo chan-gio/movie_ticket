@@ -83,17 +83,27 @@ function Confirmation() {
       try {
         const canvas = barcodeRef.current;
         const context = canvas.getContext('2d');
+        
+        // Set responsive canvas dimensions
+        const isMobile = window.innerWidth <= 767;
+        const canvasWidth = isMobile ? 280 : 400;
+        const canvasHeight = isMobile ? 80 : 100;
+        
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Generate barcode
+        // Generate barcode with responsive settings
         JsBarcode(canvas, bookingId, {
           format: 'CODE128',
-          width: 2,
-          height: 100,
+          width: isMobile ? 1.5 : 2,
+          height: isMobile ? 60 : 80,
           displayValue: true,
           background: '#f9f5ff',
           lineColor: '#5f2eea',
-          margin: 10,
+          margin: isMobile ? 5 : 10,
+          fontSize: isMobile ? 12 : 14,
         });
 
         // Step 2: Upload barcode to Cloudinary
@@ -157,37 +167,37 @@ function Confirmation() {
         <Card className={styles.mainCard}>
           <Skeleton active title={{ width: "30%" }} paragraph={{ rows: 0 }} />
           <Card className={styles.ticketCard}>
-            <Row>
-              <Col xs={24} md={16} className={styles.leftTicket}>
+            <Row gutter={[8, 8]}>
+              <Col xs={24} className={styles.leftTicket}>
                 <div className={styles.headerInfo}>
                   <Skeleton.Image active style={{ width: 126, height: 49 }} />
                 </div>
                 <div className={styles.ticketBody}>
                   <Row gutter={[8, 8]}>
-                    <Col xs={12}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={24} sm={12}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "50%" }} />
                     </Col>
-                    <Col xs={6}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={12} sm={6}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "70%" }} />
                     </Col>
-                    <Col xs={6}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={12} sm={6}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "70%" }} />
                     </Col>
-                    <Col xs={6}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={12} sm={6}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "70%" }} />
                     </Col>
-                    <Col xs={6}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={12} sm={6}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "70%" }} />
                     </Col>
-                    <Col xs={6}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={12} sm={6}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "70%" }} />
                     </Col>
-                    <Col xs={6}>
-                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "30%" }} />
+                    <Col xs={12} sm={6}>
+                      <Skeleton active paragraph={{ rows: 1 }} title={{ width: "70%" }} />
                     </Col>
                   </Row>
                   <div className={styles.barcodeContainer}>
-                    <Skeleton.Image active style={{ width: 50, height: 200 }} />
+                    <Skeleton.Image active style={{ width: 200, height: 100 }} />
                   </div>
                 </div>
               </Col>
@@ -227,7 +237,7 @@ function Confirmation() {
           Proof of Payment
         </Title>
         <Card className={styles.ticketCard}>
-          <Row>
+          <Row gutter={[8, 8]}>
             <Col xs={24} md={16} className={styles.leftTicket}>
               <div className={styles.headerInfo}>
                 <svg width="126" height="49" viewBox="0 0 126 49" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -237,31 +247,31 @@ function Confirmation() {
               </div>
               <div className={styles.ticketBody}>
                 <Row gutter={[8, 8]}>
-                  <Col xs={12}>
+                  <Col xs={24} sm={12}>
                     <Paragraph className={styles.info}>Movie</Paragraph>
                     <Paragraph className={styles.infoValue}>{ticketInfo.movieTitle}</Paragraph>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={12} sm={6}>
                     <Paragraph className={styles.info}>Date</Paragraph>
                     <Paragraph className={styles.infoValue}>{formatDate(ticketInfo.date)}</Paragraph>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={12} sm={6}>
                     <Paragraph className={styles.info}>Time</Paragraph>
                     <Paragraph className={styles.infoValue}>{ticketInfo.time}</Paragraph>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={12} sm={6}>
                     <Paragraph className={styles.info}>Category</Paragraph>
                     <Paragraph className={styles.infoValue}>{ticketInfo.category}</Paragraph>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={12} sm={6}>
                     <Paragraph className={styles.info}>Count</Paragraph>
                     <Paragraph className={styles.infoValue}>{ticketInfo.seats.length} pieces</Paragraph>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={12} sm={6}>
                     <Paragraph className={styles.info}>Seats</Paragraph>
                     <Paragraph className={styles.infoValue}>{ticketInfo.seats.join(', ')}</Paragraph>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={12} sm={6}>
                     <Paragraph className={styles.info}>Price</Paragraph>
                     <Paragraph className={styles.infoValue}>IDR {ticketInfo.price?.toLocaleString('id-ID')}</Paragraph>
                   </Col>
