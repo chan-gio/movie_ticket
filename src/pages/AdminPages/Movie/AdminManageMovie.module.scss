@@ -13,7 +13,9 @@
   color: #14142b;
 }
 
-.addButton, .refreshButton, .viewDeletedButton {
+.addButton,
+.refreshButton,
+.viewDeletedButton {
   border-radius: 12px;
   background-color: #5f2eea;
   border-color: #5f2eea;
@@ -97,6 +99,7 @@
   border-radius: 8px;
   background-color: #5f2eea;
   border-color: #5f2eea;
+  color: white;
 
   &:hover {
     background-color: #3f1dc7;
@@ -116,7 +119,8 @@
   }
 }
 
-.loading, .emptyText {
+.loading,
+.emptyText {
   text-align: center;
   padding: 40px 0;
   font-size: 18px;
@@ -169,5 +173,72 @@
 
   &:hover .ant-input {
     border-color: #5f2eea;
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding: 12px 2px;
+    min-height: unset;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .pageTitle {
+    font-size: 20px;
+  }
+  .mainContent {
+    margin-bottom: 20px;
+  }
+  .statisticCard,
+  .tableCard {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .table {
+    overflow-x: auto;
+    width: 100%;
+    font-size: 13px;
+  }
+  .addButton,
+  .refreshButton,
+  .viewDeletedButton {
+    width: 100%;
+    font-size: 14px;
+    height: 40px;
+    padding: 0 8px;
+    margin-bottom: 8px;
+  }
+  .search {
+    .ant-input {
+      height: 32px;
+      font-size: 14px;
+    }
+    .ant-input-search-button {
+      height: 32px;
+      font-size: 14px;
+    }
+  }
+  .ant-pagination {
+    justify-content: center !important;
+    flex-wrap: wrap;
+    font-size: 13px;
+    padding: 8px 0 0 0;
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next,
+    .ant-pagination-jump-next,
+    .ant-pagination-jump-prev {
+      min-width: 28px;
+      height: 28px;
+      line-height: 28px;
+      margin: 0 2px;
+      font-size: 13px;
+    }
+  }
+  .tableCard {
+    overflow-x: auto;
   }
 }
